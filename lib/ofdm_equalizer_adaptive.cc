@@ -1,0 +1,167 @@
+/* -*- c++ -*- */
+/*
+ * Copyright 2022 DTL.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <gnuradio/digital/constellation.h>
+#include <gnuradio/dtl/ofdm_equalizer_adaptive.h>
+
+#include <algorithm>
+#include <functional>
+
+namespace gr {
+namespace dtl {
+
+
+using namespace gr::digital;
+
+
+template <class T>
+struct constellation_helper {
+    static std::function<constellation_sptr()> constructor()
+    {
+        return []() { return T::make(); };
+    }
+};
+
+
+std::map<constellation_type_t, std::function<constellation_sptr()>>
+    constellation_constructor = {
+        { constellation_type_t::BPSK,
+          constellation_helper<constellation_bpsk>::constructor() },
+        { constellation_type_t::QPSK,
+          constellation_helper<constellation_qpsk>::constructor() },
+        { constellation_type_t::PSK8,
+          constellation_helper<constellation_8psk>::constructor() },
+        { constellation_type_t::QAM16,
+          constellation_helper<constellation_16qam>::constructor() },
+    };
+
+
+ofdm_equalizer_adaptive::sptr
+ofdm_equalizer_adaptive::make(int fft_len,
+                               const std::vector<constellation_type_t>& constellations,
+                               const std::vector<std::vector<int>>& occupied_carriers,
+                               const std::vector<std::vector<int>>& pilot_carriers,
+                               const std::vector<std::vector<gr_complex>>& pilot_symbols,
+                               int symbols_skipped,
+                               float alpha,
+                               bool input_is_shifted,
+                               bool enable_soft_output)
+{
+    return ofdm_equalizer_adaptive::sptr(
+        new ofdm_equalizer_adaptive(fft_len,
+                                     constellations,
+                                     occupied_carriers,
+                                     pilot_carriers,
+                                     pilot_symbols,
+                                     symbols_skipped,
+                                     alpha,
+                                     input_is_shifted,
+                                     enable_soft_output));
+}
+
+
+ofdm_equalizer_adaptive::ofdm_equalizer_adaptive(
+    int fft_len,
+    const std::vector<constellation_type_t>& constellations,
+    const std::vector<std::vector<int>>& occupied_carriers,
+    const std::vector<std::vector<int>>& pilot_carriers,
+    const std::vector<std::vector<gr_complex>>& pilot_symbols,
+    int symbols_skipped,
+    float alpha,
+    bool input_is_shifted,
+    bool enable_soft_output)
+    : ofdm_equalizer_1d_pilots(fft_len,
+                               occupied_carriers,
+                               pilot_carriers,
+                               pilot_symbols,
+                               symbols_skipped,
+                               input_is_shifted),
+      d_alpha(alpha),
+      d_enable_soft_output(enable_soft_output)
+{
+    // Populate constellation dictionary
+    for (const auto& c : constellations) {
+        if (constellation_constructor.find(c) != constellation_constructor.end()) {
+            d_constellations[c] = constellation_constructor[c]();
+        } else {
+            throw std::invalid_argument("Unknown constellation");
+        }
+    }
+}
+
+
+ofdm_equalizer_adaptive::~ofdm_equalizer_adaptive() {}
+
+
+void ofdm_equalizer_adaptive::equalize(gr_complex* frame,
+                                        int n_sym,
+                                        const std::vector<gr_complex>& initial_taps,
+                                        const std::vector<tag_t>& tags)
+{
+    if (!initial_taps.empty()) {
+        d_channel_state = initial_taps;
+    }
+    gr_complex sym_eq, sym_est;
+    bool enable_soft_output = d_enable_soft_output;
+
+    auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
+        return t.key == pmt::string_to_symbol("frame_constellation");
+    });
+
+    if (it == tags.end()) {
+        throw std::invalid_argument("Missing constellation tag.");
+    }
+
+    constellation_type_t constellation_type_tag_value =
+        static_cast<constellation_type_t>(pmt::to_long(it->value));
+
+    if (d_constellations.find(constellation_type_tag_value) ==
+        d_constellations.end()) {
+        throw std::invalid_argument("Unknown constellation");
+    }
+
+    constellation_sptr constellation = d_constellations[constellation_type_tag_value];
+
+    for (int i = 0; i < n_sym; i++)
+    {
+        for (int k = 0; k < d_fft_len; k++) {
+            if (!d_occupied_carriers[k]) {
+                continue;
+            }
+            if (!d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k]) {
+                d_channel_state[k] = d_alpha * d_channel_state[k] +
+                                     (1 - d_alpha) * frame[i * d_fft_len + k] /
+                                         d_pilot_symbols[d_pilot_carr_set][k];
+                frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
+            } else {
+                sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
+                // The `map_to_points` function will treat `sym_est` as an array
+                // pointer.  This call is "safe" because `map_to_points` is limited
+                // by the dimensionality of the constellation. This class calls the
+                // `constellation` class default constructor, which initializes the
+                // dimensionality value to `1`. Thus, Only the single `gr_complex`
+                // value will be dereferenced.
+
+                constellation->map_to_points(constellation->decision_maker(&sym_eq),
+                                             &sym_est);
+                d_channel_state[k] = d_alpha * d_channel_state[k] +
+                                     (1 - d_alpha) * frame[i * d_fft_len + k] / sym_est;
+                frame[i * d_fft_len + k] = enable_soft_output ? sym_eq : sym_est;
+            }
+        }
+        if (!d_pilot_carriers.empty()) {
+            d_pilot_carr_set = (d_pilot_carr_set + 1) % d_pilot_carriers.size();
+        }
+    }
+}
+
+} // namespace dtl
+} /* namespace gr */
