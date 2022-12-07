@@ -107,12 +107,8 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
                     (x,)) if x != 0 else -1 for x in syms]
             rx_data = demod(out_syms)
 
-
             self.assertEqual(tx_data, rx_data)
             self.assertEqual(len(sink.tags()), 2)
-
-
-
 
 
 if __name__ == '__main__':

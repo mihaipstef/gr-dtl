@@ -40,3 +40,4 @@ add_custom_target(
           ${CMAKE_BINARY_DIR}/test_modules/gnuradio/dtl/
 )
 GR_ADD_TEST(qa_ofdm_frame_equalizer_vcvc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_frame_equalizer_vcvc.py)
+GR_ADD_TEST(qa_ofdm_adaptive_packet_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_packet_header.py)
