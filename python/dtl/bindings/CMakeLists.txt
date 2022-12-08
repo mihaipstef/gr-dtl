@@ -31,7 +31,8 @@ include(GrPybind)
 list(APPEND dtl_python_files
     ofdm_equalizer_adaptive_python.cc
     ofdm_frame_equalizer_vcvc_python.cc
-    ofdm_adaptive_packet_header_python.cc python_bindings.cc)
+    ofdm_adaptive_packet_header_python.cc
+    ofdm_adaptive_utils_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..

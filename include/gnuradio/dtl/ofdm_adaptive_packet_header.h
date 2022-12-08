@@ -10,6 +10,7 @@
 
 #include <gnuradio/digital/packet_header_ofdm.h>
 #include <gnuradio/dtl/api.h>
+#include <gnuradio/dtl/ofdm_adaptive_packet_header.h>
 
 namespace gr {
 namespace dtl {
@@ -30,7 +31,6 @@ public:
               const std::string& frame_len_tag_key,
               const std::string& num_tag_key,
               int bits_per_header_sym,
-              int bits_per_payload_sym,
               bool scramble_header);
 
     ofdm_adaptive_packet_header(const std::vector<std::vector<int>>& occupied_carriers,
@@ -39,7 +39,6 @@ public:
                                 const std::string& frame_len_tag_key,
                                 const std::string& num_tag_key,
                                 int bits_per_header_sym,
-                                int bits_per_payload_sym,
                                 bool scramble_header);
     ~ofdm_adaptive_packet_header();
 

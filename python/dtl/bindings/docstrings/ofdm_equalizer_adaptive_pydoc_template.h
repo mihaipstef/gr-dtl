@@ -7,7 +7,7 @@
  *
  */
 #include "pydoc_macros.h"
-#define D(...) DOC(gr,dtl, __VA_ARGS__ )
+#define D(...) DOC(gr, dtl, __VA_ARGS__)
 /*
   This file contains placeholders for docstrings for the Python bindings.
   Do not edit! These were automatically extracted during the binding process
@@ -15,19 +15,18 @@
  */
 
 
- 
- static const char *__doc_gr_dtl_ofdm_equalizer_adaptive = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_equalizer_adaptive = R"doc()doc";
 
 
- static const char *__doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_0 = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_0 =
+    R"doc()doc";
 
 
- static const char *__doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_1 = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_1 =
+    R"doc()doc";
 
 
- static const char *__doc_gr_dtl_ofdm_equalizer_adaptive_equalize = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_equalize = R"doc()doc";
 
 
- static const char *__doc_gr_dtl_ofdm_equalizer_adaptive_make = R"doc()doc";
-
-  
+static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_make = R"doc()doc";

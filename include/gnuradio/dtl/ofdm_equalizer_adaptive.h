@@ -13,18 +13,12 @@
 #include <gnuradio/digital/api.h>
 #include <gnuradio/digital/constellation.h>
 #include <gnuradio/digital/ofdm_equalizer_base.h>
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
 #include <map>
 
 namespace gr {
 namespace dtl {
-
-enum class constellation_type_t {
-    BPSK = 0,
-    QPSK,
-    PSK8,
-    QAM16,
-};
 
 
 /*!

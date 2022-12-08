@@ -13,7 +13,8 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND dtl_sources
     ofdm_equalizer_adaptive.cc
     ofdm_frame_equalizer_vcvc_impl.cc
-    ofdm_adaptive_packet_header.cc )
+    ofdm_adaptive_packet_header.cc
+    ofdm_adaptive_utils.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

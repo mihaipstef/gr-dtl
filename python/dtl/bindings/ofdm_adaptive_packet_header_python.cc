@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_packet_header.h) */
-/* BINDTOOL_HEADER_FILE_HASH(5109b4a236bcb05e8c5a7e3697dfc600)                     */
+/* BINDTOOL_HEADER_FILE_HASH(055ae091abec540f91b94b5ad026c4d1)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -45,7 +45,6 @@ void bind_ofdm_adaptive_packet_header(py::module& m)
              py::arg("frame_len_tag_key"),
              py::arg("num_tag_key"),
              py::arg("bits_per_header_sym"),
-             py::arg("bits_per_payload_sym"),
              py::arg("scramble_header"),
              D(ofdm_adaptive_packet_header, make))
 

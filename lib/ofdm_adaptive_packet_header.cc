@@ -7,10 +7,18 @@
 
 #include <gnuradio/dtl/ofdm_adaptive_packet_header.h>
 
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
 #include <gnuradio/logger.h>
 
 #include <algorithm>
+
+
+#define LOG_TAGS(title, tags) \
+    _logger.debug(title); \
+    for (auto& t: tags) { \
+        _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
+    }
 
 namespace gr {
 namespace dtl {
@@ -28,7 +36,6 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
                                   const std::string& frame_len_tag_key,
                                   const std::string& num_tag_key,
                                   int bits_per_header_sym,
-                                  int bits_per_payload_sym,
                                   bool scramble_header)
 {
     return ofdm_adaptive_packet_header::sptr(
@@ -38,7 +45,6 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
                                         frame_len_tag_key,
                                         num_tag_key,
                                         bits_per_header_sym,
-                                        bits_per_payload_sym,
                                         scramble_header));
 }
 
@@ -50,7 +56,6 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
     const std::string& frame_len_tag_key,
     const std::string& num_tag_key,
     int bits_per_header_sym,
-    int bits_per_payload_sym,
     bool scramble_header)
     : packet_header_ofdm(occupied_carriers,
                          n_syms,
@@ -58,7 +63,7 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
                          frame_len_tag_key,
                          num_tag_key,
                          bits_per_header_sym,
-                         bits_per_payload_sym,
+                         0,
                          scramble_header),
       d_constellation_tag_key(pmt::string_to_symbol("frame_constellation"))
 {
@@ -71,9 +76,12 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
                                                    unsigned char* out,
                                                    const std::vector<tag_t>& tags)
 {
+    // Use default
     unsigned int previous_header_number = d_header_number;
+    LOG_TAGS("Before default formatter", tags);
     bool ret_val = packet_header_default::header_formatter(packet_len, out, tags);
-    _logger.warn("bits_per_byte: {}", d_bits_per_byte);
+    LOG_TAGS("After default formatter", tags);
+    _logger.warn("bits_per_byte: {}, packet_len: {}", d_bits_per_byte, packet_len);
     // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
         return t.key == pmt::string_to_symbol("frame_constellation");
@@ -122,23 +130,11 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                                 std::vector<tag_t>& tags)
 {
+    LOG_TAGS("Before default parser", tags);
+
     packet_header_default::header_parser(in, tags);
 
-    // Convert bytes to complex symbols:
-    int packet_len = 0; // # of complex symbols in this frame
-    for (size_t i = 0; i < tags.size(); i++) {
-        if (pmt::equal(tags[i].key, d_len_tag_key)) {
-            packet_len = pmt::to_long(tags[i].value) * 8 / d_bits_per_payload_sym;
-            if (pmt::to_long(tags[i].value) * 8 % d_bits_per_payload_sym) {
-                packet_len++;
-            }
-            tags[i].value = pmt::from_long(packet_len);
-            break;
-        }
-    }
-
-    // Determine frame length and add the tag
-    add_frame_length_tag(packet_len, tags);
+    LOG_TAGS("After default parser", tags);
 
     // Determine constellation type and add the tag
     int k = 24; // Constellation type starts on bit 24
@@ -146,19 +142,46 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         constellation_type |= (((int)in[k]) & d_mask) << i;
     }
-
+    d_bits_per_payload_sym = compute_no_of_bits_per_symbol(
+        static_cast<constellation_type_t>(constellation_type)
+    );
     tag_t tag;
     tag.key = pmt::string_to_symbol("frame_constellation");
     tag.value = pmt::from_long(constellation_type);
     tags.push_back(tag);
 
     // Compute CRC from tags and verify
+    // The packet length in tags is in bytes at this point
     unsigned char crc_calcd = compute_crc(tags);
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         if ((((int)in[k]) & d_mask) != (((int)crc_calcd >> i) & d_mask)) {
             return false;
         }
     }
+
+    // Update length tag to number of symbols in packet
+    int no_of_symbols = 0; // # of complex symbols in this frame
+    auto it = std::find_if(tags.begin(), tags.end(), [this](auto& t) {
+        return pmt::equal(t.key, this->d_len_tag_key);
+    });
+
+    if (it == tags.end()) {
+        throw std::invalid_argument("Missing packet length tag.");
+    }
+    no_of_symbols = pmt::to_long(it->value) * 8 / d_bits_per_payload_sym;
+    if (pmt::to_long(it->value) * 8 % d_bits_per_payload_sym) {
+        no_of_symbols++;
+    }
+    _logger.debug("d_bits_per_payload_sym: {}, tag_value: {}, no_of_symbols: {}",
+                  d_bits_per_payload_sym,
+                  pmt::to_long(it->value),
+                  no_of_symbols);
+    it->value = pmt::from_long(no_of_symbols);
+
+    // Determine frame length and add the tag
+    add_frame_length_tag(no_of_symbols, tags);
+
+    LOG_TAGS("After parser", tags);
 
     return true;
 }

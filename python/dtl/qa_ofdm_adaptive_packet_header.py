@@ -13,6 +13,7 @@ from gnuradio import (
 )
 from gnuradio.gr import (
     packet_utils,
+    sizeof_gr_complex,
     tag_t,
     top_block,
 )
@@ -32,6 +33,12 @@ except ImportError:
 
 class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
 
+    def setup_data_tags(self, data):
+        return packet_utils.packets_to_vectors(
+            data,
+            "self.tsb_key"
+        )
+
     def setUp(self):
         self.tb = top_block()
         self._occupied_carriers_real = (list(range(-26, -21)) + list(range(-20, -7)) + list(
@@ -42,26 +49,32 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
     def tearDown(self):
         self.tb = None
 
+
     def test_pass_constellation_through_header(self):
         packets = ((1, 2, 3, 4), (1, 2), (1, 2, 3, 4))
+        constellations = ((3, 4), (2, 3), (1, 2))
+        packet_lenghts_in_symbols = []
 
         data, tags = packet_utils.packets_to_vectors(
             packets, "len_key"
         )
         offset = 0
-
+        for t in tags:
+            print(t.key, t.value, t.offset)
         # Add frame constellation tag to each packet
-        for p in packets:
+        for p, c in zip(packets, constellations):
             tag = tag_t()
             tag.offset = offset
             tag.key = pmt.string_to_symbol("frame_constellation")
-            tag.value = pmt.from_long(5)
+            tag.value = pmt.from_long(c[0])
             tags.append(tag)
             offset = offset + len(p)
-
+            packet_lenghts_in_symbols.append(len(p) * 8 // c[1] + int(len(p) * 8 % c[1] > 0))
+        for t in tags:
+            print(t.key, t.value, t.offset)
         src = blocks.vector_source_b(data, tags=tags)
         formatter = ofdm_adaptive_packet_header(
-            self._occupied_carriers_dummy_40, 1, "len_key", "frame_len_key", "head_num", 1, 1, False)
+            self._occupied_carriers_dummy_40, 1, "len_key", "frame_len_key", "head_num", 1, False)
         self.assertEqual(formatter.header_len(), 40)
         self.assertEqual(
             pmt.symbol_to_string(
@@ -72,30 +85,40 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         sink_format = blocks.vector_sink_b()
         self.tb.connect(src, header_gen, sink_format)
 
+        stop_tags_gate = blocks.tag_gate(1, False)
+        self.tb.connect(header_gen, stop_tags_gate)
+
         # Connect parser to test
+        tag_sink = blocks.tag_debug(1, "len_key")
+        self.tb.connect(src, tag_sink)
         header_parser = digital.packet_headerparser_b(
             formatter.formatter())
         sink_parse = blocks.message_debug()
-        self.tb.connect(header_gen, header_parser)
+        self.tb.connect(stop_tags_gate, header_parser)
         self.tb.msg_connect(header_parser, "header_data", sink_parse, "store")
 
         self.tb.run()
 
-        # 0x04 0x00 0x00 0x00 0x05 0xad
-        # 0x02 0x00 0x01 0x00 0x05 0x8d
-        # 0x04 0x00 0x02 0x00 0x05 0x7b
+        print("tags")
+        for t in tag_sink.current_tags():
+            print(t.key, t.value)
+
+        # 0x04 0x00 0x00 0x00 0x03 0xbf
+        # 0x02 0x00 0x01 0x00 0x02 0x98
+        # 0x04 0x00 0x02 0x00 0x01 0x7b
         expected_format_data = [
             #                                  |                                   |                       |
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1,
-            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1,
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0,
         ]
         self.assertEqual(sink_format.data(), expected_format_data)
         for i in range(len(packets)):
             msg = pmt.to_python(sink_parse.get_message(i))
+            print(msg)
             self.assertEqual(
                 msg, {
-                    "len_key": len(packets[i]), "head_num": i, "frame_constellation": 5, "frame_len_key": 8})
+                    "len_key": packet_lenghts_in_symbols[i], "head_num": i, "frame_constellation": constellations[i][0  ], "frame_len_key": 1})
 
 if __name__ == '__main__':
     gr_unittest.run(qa_ofdm_adaptive_packet_header)

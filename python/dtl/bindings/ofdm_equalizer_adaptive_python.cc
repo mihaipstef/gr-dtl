@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_equalizer_adaptive.h) */
-/* BINDTOOL_HEADER_FILE_HASH(cf61eff0641bc989abd92d28fe1000b4)                     */
+/* BINDTOOL_HEADER_FILE_HASH(ee94ad30190d645666089f47bf6a9e67)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -50,20 +50,15 @@ void bind_ofdm_equalizer_adaptive(py::module& m)
              py::arg("enable_soft_output") = false,
              D(ofdm_equalizer_adaptive, make))
 
+
         .def("equalize",
              &ofdm_equalizer_adaptive::equalize,
              py::arg("frame"),
              py::arg("n_sym"),
              py::arg("initial_taps") = std::vector<gr_complex>(),
-             py::arg("tags") = std::vector<::gr::tag_t>(),
-             D(ofdm_equalizer_adaptive, equalize));
+             py::arg("tags") = std::vector<gr::tag_t>(),
+             D(ofdm_equalizer_adaptive, equalize))
 
-    py::enum_<::gr::dtl::constellation_type_t>(m, "constellation_type_t")
-        .value("BPSK", ::gr::dtl::constellation_type_t::BPSK)   // 0
-        .value("QPSK", ::gr::dtl::constellation_type_t::QPSK)   // 1
-        .value("PSK8", ::gr::dtl::constellation_type_t::PSK8)   // 2
-        .value("QAM16", ::gr::dtl::constellation_type_t::QAM16) // 3
-        .export_values();
 
-    py::implicitly_convertible<int, ::gr::dtl::constellation_type_t>();
+        ;
 }
