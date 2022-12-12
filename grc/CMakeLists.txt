@@ -8,5 +8,6 @@
 install(FILES
     dtl_frame_eq_vcvc.block.yml
     dtl_ofdm_frame_equalizer_vcvc.block.yml
-    dtl_ofdm_adaptive_packet_header.block.yml DESTINATION share/gnuradio/grc/blocks
+    dtl_ofdm_adaptive_packet_header.block.yml
+    dtl_ofdm_adaptive_repack_bits_bb.block.yml DESTINATION share/gnuradio/grc/blocks
 )

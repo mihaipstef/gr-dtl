@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(d3143b65c87727230a9d66b39af7c071)                     */
+/* BINDTOOL_HEADER_FILE_HASH(cad389a24a3491cb2798090eb1922c90)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -32,10 +32,11 @@ void bind_ofdm_adaptive_utils(py::module& m)
 
 
     py::enum_<::gr::dtl::constellation_type_t>(m, "constellation_type_t")
-        .value("BPSK", ::gr::dtl::constellation_type_t::BPSK)   // 0
-        .value("QPSK", ::gr::dtl::constellation_type_t::QPSK)   // 1
-        .value("PSK8", ::gr::dtl::constellation_type_t::PSK8)   // 2
-        .value("QAM16", ::gr::dtl::constellation_type_t::QAM16) // 3
+        .value("UNKNOWN", ::gr::dtl::constellation_type_t::UNKNOWN) // 0
+        .value("BPSK", ::gr::dtl::constellation_type_t::BPSK)       // 1
+        .value("QPSK", ::gr::dtl::constellation_type_t::QPSK)       // 2
+        .value("PSK8", ::gr::dtl::constellation_type_t::PSK8)       // 3
+        .value("QAM16", ::gr::dtl::constellation_type_t::QAM16)     // 4
         .export_values();
 
     py::implicitly_convertible<int, ::gr::dtl::constellation_type_t>();
@@ -45,4 +46,16 @@ void bind_ofdm_adaptive_utils(py::module& m)
           &::gr::dtl::compute_no_of_bits_per_symbol,
           py::arg("constellation"),
           D(compute_no_of_bits_per_symbol));
+
+
+    m.def("determine_constellation",
+          &::gr::dtl::determine_constellation,
+          py::arg("constellation"),
+          D(determine_constellation));
+
+
+    m.def("get_constellation_type",
+          &::gr::dtl::get_constellation_type,
+          py::arg("tags"),
+          D(get_constellation_type));
 }

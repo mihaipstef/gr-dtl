@@ -15,10 +15,11 @@
  */
 
 
-static const char* __doc_gr_dtl_compute_no_of_bits_per_symbol = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_repack_bits_bb = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_determine_constellation = R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_repack_bits_bb_ofdm_adaptive_repack_bits_bb = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_get_constellation_type = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_repack_bits_bb_make = R"doc()doc";

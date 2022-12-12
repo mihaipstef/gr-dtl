@@ -9,8 +9,8 @@
 #include "config.h"
 #endif
 
-#include <gnuradio/digital/constellation.h>
 #include <gnuradio/dtl/ofdm_equalizer_adaptive.h>
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
 #include <algorithm>
 #include <functional>
@@ -21,27 +21,6 @@ namespace dtl {
 
 using namespace gr::digital;
 
-
-template <class T>
-struct constellation_helper {
-    static std::function<constellation_sptr()> constructor()
-    {
-        return []() { return T::make(); };
-    }
-};
-
-
-std::map<constellation_type_t, std::function<constellation_sptr()>>
-    constellation_constructor = {
-        { constellation_type_t::BPSK,
-          constellation_helper<constellation_bpsk>::constructor() },
-        { constellation_type_t::QPSK,
-          constellation_helper<constellation_qpsk>::constructor() },
-        { constellation_type_t::PSK8,
-          constellation_helper<constellation_8psk>::constructor() },
-        { constellation_type_t::QAM16,
-          constellation_helper<constellation_16qam>::constructor() },
-    };
 
 
 ofdm_equalizer_adaptive::sptr
@@ -88,12 +67,12 @@ ofdm_equalizer_adaptive::ofdm_equalizer_adaptive(
       d_enable_soft_output(enable_soft_output)
 {
     // Populate constellation dictionary
-    for (const auto& c : constellations) {
-        if (constellation_constructor.find(c) != constellation_constructor.end()) {
-            d_constellations[c] = constellation_constructor[c]();
-        } else {
+    for (const auto& constellation_type : constellations) {
+        auto constellation = determine_constellation(constellation_type);
+        if (constellation == nullptr) {
             throw std::invalid_argument("Unknown constellation");
         }
+        d_constellations[constellation_type] = constellation;
     }
 }
 
@@ -120,8 +99,7 @@ void ofdm_equalizer_adaptive::equalize(gr_complex* frame,
         throw std::invalid_argument("Missing constellation tag.");
     }
 
-    constellation_type_t constellation_type_tag_value =
-        static_cast<constellation_type_t>(pmt::to_long(it->value));
+    constellation_type_t constellation_type_tag_value = get_constellation_type(tags);
 
     if (d_constellations.find(constellation_type_tag_value) ==
         d_constellations.end()) {

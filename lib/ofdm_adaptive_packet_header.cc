@@ -17,7 +17,12 @@
 #define LOG_TAGS(title, tags) \
     _logger.debug(title); \
     for (auto& t: tags) { \
-        _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
+        if(pmt::is_integer(t.value)) { \
+            _logger.debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
+        } \
+        else { \
+            _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
+        } \
     }
 
 namespace gr {
@@ -26,7 +31,7 @@ namespace dtl {
 using namespace gr::digital;
 
 
-gr::logger _logger(__FILE__);
+static gr::logger _logger(__FILE__);
 
 
 ofdm_adaptive_packet_header::sptr

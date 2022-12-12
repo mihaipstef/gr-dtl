@@ -52,7 +52,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
 
     def test_pass_constellation_through_header(self):
         packets = ((1, 2, 3, 4), (1, 2), (1, 2, 3, 4))
-        constellations = ((3, 4), (2, 3), (1, 2))
+        constellations = ((4, 4), (3, 3), (2, 2))
         packet_lenghts_in_symbols = []
 
         data, tags = packet_utils.packets_to_vectors(
@@ -103,14 +103,14 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         for t in tag_sink.current_tags():
             print(t.key, t.value)
 
-        # 0x04 0x00 0x00 0x00 0x03 0xbf
-        # 0x02 0x00 0x01 0x00 0x02 0x98
-        # 0x04 0x00 0x02 0x00 0x01 0x7b
+        # 0x04 0x00 0x00 0x00 0x04 0xaa
+        # 0x02 0x00 0x01 0x00 0x03 0x9f
+        # 0x04 0x00 0x02 0x00 0x02 0x6e
         expected_format_data = [
             #                                  |                                   |                       |
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1,
-            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0,
         ]
         self.assertEqual(sink_format.data(), expected_format_data)
         for i in range(len(packets)):

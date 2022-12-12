@@ -25,6 +25,7 @@ namespace py = pybind11;
     void bind_ofdm_frame_equalizer_vcvc(py::module& m);
     void bind_ofdm_adaptive_packet_header(py::module& m);
     void bind_ofdm_adaptive_utils(py::module& m);
+    void bind_ofdm_adaptive_repack_bits_bb(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -57,5 +58,6 @@ PYBIND11_MODULE(dtl_python, m)
     bind_ofdm_frame_equalizer_vcvc(m);
     bind_ofdm_adaptive_packet_header(m);
     bind_ofdm_adaptive_utils(m);
+    bind_ofdm_adaptive_repack_bits_bb(m);
     // ) END BINDING_FUNCTION_CALLS
 }

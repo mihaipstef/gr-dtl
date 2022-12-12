@@ -13,5 +13,6 @@ install(FILES
     api.h
     ofdm_frame_equalizer_vcvc.h
     ofdm_adaptive_packet_header.h
-    ofdm_adaptive_utils.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_utils.h
+    ofdm_adaptive_repack_bits_bb.h DESTINATION include/gnuradio/dtl
 )
