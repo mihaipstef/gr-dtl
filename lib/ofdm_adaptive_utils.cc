@@ -59,8 +59,7 @@ std::size_t DTL_API compute_no_of_bits_per_symbol(constellation_type_t constella
     return 0;
 }
 
-constellation_sptr DTL_API
-create_constellation(constellation_type_t constellation_type)
+constellation_sptr DTL_API create_constellation(constellation_type_t constellation_type)
 {
     if (auto it = constellation_constructor.find(constellation_type);
         it != constellation_constructor.end()) {
@@ -69,8 +68,7 @@ create_constellation(constellation_type_t constellation_type)
     return nullptr;
 }
 
-constellation_type_t DTL_API
-get_constellation_type(const std::vector<tag_t>& tags)
+constellation_type_t DTL_API get_constellation_type(const std::vector<tag_t>& tags)
 {
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
         return t.key == pmt::string_to_symbol("frame_constellation");
@@ -83,7 +81,7 @@ get_constellation_type(const std::vector<tag_t>& tags)
     return static_cast<constellation_type_t>(pmt::to_long(it->value));
 }
 
-std::vector<tag_t>::iterator get_constellation_tag(std::vector<tag_t>& tags)
+std::vector<tag_t>::iterator DTL_API get_constellation_tag(std::vector<tag_t>& tags)
 {
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
         return t.key == pmt::string_to_symbol("frame_constellation");

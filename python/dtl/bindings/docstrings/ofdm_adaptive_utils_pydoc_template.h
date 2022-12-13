@@ -22,3 +22,6 @@ static const char* __doc_gr_dtl_create_constellation = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_get_constellation_type = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_get_constellation_tag = R"doc()doc";
