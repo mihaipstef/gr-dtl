@@ -35,11 +35,7 @@ class qa_ofdm_adaptive_chunks_to_symbols_bc(gr_unittest.TestCase):
         self.tb = None
 
     def test_bc_001(self):
-        const = [1 + 0j, 0 + 1j,
-                 -1 + 0j, 0 - 1j]
-        src_data = (0, 1, 2, 3, 3, 2, 1, 0)
-        expected_result = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j,
-                           0 - 1j, -1 + 0j, 0 + 1j, 1 + 0j]
+        src_data = [0, 1, 2, 3, 3, 2, 1, 0]
 
         cnst_tag = gr.tag_t()
         cnst_tag.offset = 0
@@ -55,7 +51,7 @@ class qa_ofdm_adaptive_chunks_to_symbols_bc(gr_unittest.TestCase):
         mod = ofdm_adaptive_chunks_to_symbols_bc([constellation_type_t.QPSK], "len_tag")
         demod = ofdm_adaptive_constellation_decoder_cb([constellation_type_t.QPSK], "len_tag")
 
-        dst = blocks.vector_sink_c()
+        dst = blocks.vector_sink_b()
         self.tb.connect(src, mod)
         self.tb.connect(mod, demod)
         self.tb.connect(demod, dst)
