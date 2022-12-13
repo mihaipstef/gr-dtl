@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(cad389a24a3491cb2798090eb1922c90)                     */
+/* BINDTOOL_HEADER_FILE_HASH(dacaee5e989164f06650284a77f11e5e)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -48,10 +48,10 @@ void bind_ofdm_adaptive_utils(py::module& m)
           D(compute_no_of_bits_per_symbol));
 
 
-    m.def("determine_constellation",
-          &::gr::dtl::determine_constellation,
+    m.def("create_constellation",
+          &::gr::dtl::create_constellation,
           py::arg("constellation"),
-          D(determine_constellation));
+          D(create_constellation));
 
 
     m.def("get_constellation_type",

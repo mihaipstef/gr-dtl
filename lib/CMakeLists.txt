@@ -15,7 +15,9 @@ list(APPEND dtl_sources
     ofdm_frame_equalizer_vcvc_impl.cc
     ofdm_adaptive_packet_header.cc
     ofdm_adaptive_utils.cc
-    ofdm_adaptive_repack_bits_bb_impl.cc )
+    ofdm_adaptive_repack_bits_bb_impl.cc
+    ofdm_adaptive_chunks_to_symbols_bc_impl.cc
+    ofdm_adaptive_constellation_decoder_cb_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

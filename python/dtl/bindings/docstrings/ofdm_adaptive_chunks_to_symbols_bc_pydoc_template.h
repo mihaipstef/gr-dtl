@@ -15,10 +15,12 @@
  */
 
 
-static const char* __doc_gr_dtl_compute_no_of_bits_per_symbol = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_chunks_to_symbols_bc = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_create_constellation = R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_chunks_to_symbols_bc_ofdm_adaptive_chunks_to_symbols_bc =
+        R"doc()doc";
 
 
-static const char* __doc_gr_dtl_get_constellation_type = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_chunks_to_symbols_bc_make = R"doc()doc";

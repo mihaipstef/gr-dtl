@@ -31,10 +31,6 @@ protected:
     void parse_length_tags(const std::vector<std::vector<tag_t>>& tags,
                                             gr_vector_int& n_input_items_reqd) override;
 
-    void forecast(int noutput_items,
-                                   gr_vector_int& ninput_items_required) override;
-
-
 public:
     ofdm_adaptive_repack_bits_bb_impl(const std::string& tsb_tag_key,
                                       bool bytes_to_constellation,

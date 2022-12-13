@@ -42,3 +42,5 @@ add_custom_target(
 GR_ADD_TEST(qa_ofdm_frame_equalizer_vcvc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_frame_equalizer_vcvc.py)
 GR_ADD_TEST(qa_ofdm_adaptive_packet_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_packet_header.py)
 GR_ADD_TEST(qa_ofdm_adaptive_repack_bits_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_repack_bits_bb.py)
+GR_ADD_TEST(qa_ofdm_adaptive_chunks_to_symbols_bc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_chunks_to_symbols_bc.py)
+GR_ADD_TEST(qa_ofdm_adaptive_constellation_decoder_cb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_constellation_decoder_cb.py)

@@ -15,7 +15,6 @@
 #include <gnuradio/digital/ofdm_equalizer_base.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
-#include <map>
 
 namespace gr {
 namespace dtl {
@@ -68,8 +67,6 @@ public:
                      bool enable_soft_output = false);
 
 private:
-
-    typedef std::map<constellation_type_t, gr::digital::constellation_sptr> constellation_dictionary_t;
 
     constellation_dictionary_t d_constellations;
     float d_alpha;

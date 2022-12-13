@@ -11,7 +11,7 @@ This is the GNU Radio DTL module. Place your Python package
 description here (python/__init__.py).
 '''
 import os
-
+from gnuradio import digital
 # import pybind11 generated symbols into the dtl namespace
 try:
     # this might fail if the module is python-only

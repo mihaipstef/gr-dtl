@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_equalizer_adaptive.h) */
-/* BINDTOOL_HEADER_FILE_HASH(ee94ad30190d645666089f47bf6a9e67)                     */
+/* BINDTOOL_HEADER_FILE_HASH(cfe125581e3204d3dd9608559bdd586c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -31,7 +31,6 @@ void bind_ofdm_equalizer_adaptive(py::module& m)
 {
 
     using ofdm_equalizer_adaptive = ::gr::dtl::ofdm_equalizer_adaptive;
-
 
     py::class_<ofdm_equalizer_adaptive,
                gr::digital::ofdm_equalizer_1d_pilots,

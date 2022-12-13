@@ -68,7 +68,7 @@ ofdm_equalizer_adaptive::ofdm_equalizer_adaptive(
 {
     // Populate constellation dictionary
     for (const auto& constellation_type : constellations) {
-        auto constellation = determine_constellation(constellation_type);
+        auto constellation = create_constellation(constellation_type);
         if (constellation == nullptr) {
             throw std::invalid_argument("Unknown constellation");
         }
@@ -121,13 +121,9 @@ void ofdm_equalizer_adaptive::equalize(gr_complex* frame,
                 frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
             } else {
                 sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
-                // The `map_to_points` function will treat `sym_est` as an array
-                // pointer.  This call is "safe" because `map_to_points` is limited
-                // by the dimensionality of the constellation. This class calls the
-                // `constellation` class default constructor, which initializes the
-                // dimensionality value to `1`. Thus, Only the single `gr_complex`
-                // value will be dereferenced.
 
+                // NOTE: The `map_to_points` function will treat `sym_est` as an array
+                // pointer.  This call is "safe" only for 1-dimension constellations.
                 constellation->map_to_points(constellation->decision_maker(&sym_eq),
                                              &sym_est);
                 d_channel_state[k] = d_alpha * d_channel_state[k] +

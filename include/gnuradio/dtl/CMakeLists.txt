@@ -14,5 +14,7 @@ install(FILES
     ofdm_frame_equalizer_vcvc.h
     ofdm_adaptive_packet_header.h
     ofdm_adaptive_utils.h
-    ofdm_adaptive_repack_bits_bb.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_repack_bits_bb.h
+    ofdm_adaptive_chunks_to_symbols_bc.h
+    ofdm_adaptive_constellation_decoder_cb.h DESTINATION include/gnuradio/dtl
 )
