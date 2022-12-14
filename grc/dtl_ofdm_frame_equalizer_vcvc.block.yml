@@ -1,47 +1,48 @@
 id: dtl_ofdm_frame_equalizer_vcvc
-label: ofdm_frame_equalizer_vcvc
-category: '[dtl]'
+label: OFDM Frame Equalizer
+category: '[DTL]'
 
 templates:
   imports: from gnuradio import dtl
-  make: dtl.ofdm_frame_equalizer_vcvc()
+  make: dtl.ofdm_frame_equalizer_vcvc(${equalizer}, ${cp_len}, ${len_tag_key},
+        ${propagate_channel_state}, ${fixed_frame_len})
 
-#  Make one 'parameters' list entry for every parameter you want settable from the GUI.
-#     Keys include:
-#     * id (makes the value accessible as keyname, e.g. in the make entry)
-#     * label (label shown in the GUI)
-#     * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
-#     * default
 parameters:
-- id: parametername_replace_me
-  label: FIX ME:
-  dtype: string
-  default: You need to fill in your grc/dtl_ofdm_frame_equalizer_vcvc.block.yaml
-#- id: ...
-#  label: ...
-#  dtype: ...
+-   id: fft_len
+    label: FFT length
+    dtype: int
+    default: fft_len
+    hide: ${ 'part' if fft_len == 1 else 'none' }
+-   id: cp_len
+    label: CP length
+    dtype: int
+    default: fft_len/4
+-   id: equalizer
+    label: Equalizer
+    dtype: raw
+-   id: len_tag_key
+    label: Length Tag Key
+    dtype: string
+-   id: propagate_channel_state
+    label: Propagate Channel State
+    dtype: enum
+    options: ['True', 'False']
+    option_labels: ['Yes', 'No']
+-   id: fixed_frame_len
+    label: Fixed frame length
+    dtype: int
+    default: '0'
+    hide: ${ ('none' if fixed_frame_len else 'part') }
 
-#  Make one 'inputs' list entry per input and one 'outputs' list entry per output.
-#  Keys include:
-#      * label (an identifier for the GUI)
-#      * domain (optional - stream or message. Default is stream)
-#      * dtype (e.g. int, float, complex, byte, short, xxx_vector, ...)
-#      * vlen (optional - data stream vector length. Default is 1)
-#      * optional (optional - set to 1 for optional inputs. Default is 0)
+
 inputs:
-#- label: ...
-#  domain: ...
-#  dtype: ...
-#  vlen: ...
-#  optional: ...
+-   domain: stream
+    dtype: complex
+    vlen: ${ fft_len }
 
 outputs:
-#- label: ...
-#  domain: ...
-#  dtype: ...
-#  vlen: ...
-#  optional: ...
+-   domain: stream
+    dtype: complex
+    vlen: ${ fft_len }
 
-#  'file_format' specifies the version of the GRC yml format used in the file
-#  and should usually not be changed.
 file_format: 1
