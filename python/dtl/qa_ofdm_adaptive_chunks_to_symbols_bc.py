@@ -14,6 +14,7 @@ try:
     ofdm_adaptive_chunks_to_symbols_bc,
     constellation_type_t,
     ofdm_adaptive_constellation_decoder_cb,
+    get_constellation_tag_key,
 )
 except ImportError:
     import os
@@ -24,6 +25,7 @@ except ImportError:
         ofdm_adaptive_chunks_to_symbols_bc,
         constellation_type_t,
         ofdm_adaptive_constellation_decoder_cb,
+        get_constellation_tag_key,
     )
 
 class qa_ofdm_adaptive_chunks_to_symbols_bc(gr_unittest.TestCase):
@@ -39,7 +41,7 @@ class qa_ofdm_adaptive_chunks_to_symbols_bc(gr_unittest.TestCase):
 
         cnst_tag = gr.tag_t()
         cnst_tag.offset = 0
-        cnst_tag.key = pmt.string_to_symbol("frame_constellation")
+        cnst_tag.key = get_constellation_tag_key()
         cnst_tag.value = pmt.from_long(constellation_type_t.QPSK)
         len_tag = gr.tag_t()
         len_tag.offset = 0

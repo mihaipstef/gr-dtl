@@ -22,13 +22,19 @@ import pmt
 
 # from gnuradio import blocks
 try:
-    from gnuradio.dtl import ofdm_adaptive_packet_header
+    from gnuradio.dtl import (
+        ofdm_adaptive_packet_header,
+        get_constellation_tag_key,
+    )
 except ImportError:
     import os
     import sys
     dirname, filename = os.path.split(os.path.abspath(__file__))
     sys.path.append(os.path.join(dirname, "bindings"))
-    from gnuradio.dtl import ofdm_adaptive_packet_header
+    from gnuradio.dtl import (
+        ofdm_adaptive_packet_header,
+        get_constellation_tag_key,
+    )
 
 
 class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
@@ -65,7 +71,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         for p, c in zip(packets, constellations):
             tag = tag_t()
             tag.offset = offset
-            tag.key = pmt.string_to_symbol("frame_constellation")
+            tag.key = get_constellation_tag_key()
             tag.value = pmt.from_long(c[0])
             tags.append(tag)
             offset = offset + len(p)
@@ -118,7 +124,12 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             print(msg)
             self.assertEqual(
                 msg, {
-                    "len_key": packet_lenghts_in_symbols[i], "head_num": i, "frame_constellation": constellations[i][0  ], "frame_len_key": 1})
+                    "len_key": packet_lenghts_in_symbols[i],
+                    "head_num": i,
+                    pmt.symbol_to_string(get_constellation_tag_key()): constellations[i][0 ],
+                    "frame_len_key": 1
+                }
+            )
 
 if __name__ == '__main__':
     gr_unittest.run(qa_ofdm_adaptive_packet_header)

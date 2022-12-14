@@ -10,13 +10,21 @@ from gnuradio import gr, gr_unittest
 from gnuradio import blocks, digital
 import pmt
 try:
-    import gnuradio.dtl as dtl
+    from gnuradio.dtl import (
+        constellation_type_t,
+        get_constellation_tag_key,
+        ofdm_adaptive_repack_bits_bb,
+    )
 except ImportError:
     import os
     import sys
     dirname, filename = os.path.split(os.path.abspath(__file__))
     sys.path.append(os.path.join(dirname, "bindings"))
-    import gnuradio.dtl as dtl
+    from gnuradio.dtl import (
+        constellation_type_t,
+        get_constellation_tag_key,
+        ofdm_adaptive_repack_bits_bb,
+    )
 
 
 class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
@@ -33,12 +41,12 @@ class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
                              0b11111101, 0b11111111, ] 
         expected_data_2packets = [0b101,] + [0b111,] * 4 + [0b001,] +\
                                   [0b01,] + [0b11] * 7
-        cnsts = [dtl.constellation_type_t.PSK8, dtl.constellation_type_t.QPSK]
+        cnsts = [constellation_type_t.PSK8, constellation_type_t.QPSK]
         tags = []
         for i, cnst in enumerate(cnsts):
             cnst_tag = gr.tag_t()
             cnst_tag.offset = i * packet_len
-            cnst_tag.key = pmt.string_to_symbol("frame_constellation")
+            cnst_tag.key = get_constellation_tag_key()
             cnst_tag.value = pmt.from_long(cnst)
             len_tag = gr.tag_t()
             len_tag.offset = i * packet_len
@@ -47,7 +55,7 @@ class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
             tags += [cnst_tag, len_tag]
 
         src = blocks.vector_source_b(src_data_2packets, False, 1, tags)
-        repack = dtl.ofdm_adaptive_repack_bits_bb("len_tag")
+        repack = ofdm_adaptive_repack_bits_bb("len_tag")
         sink = blocks.vector_sink_b()
         self.tb.connect(src, repack, sink)
         self.tb.run()

@@ -10,6 +10,7 @@
 
 #include <gnuradio/digital/constellation.h>
 #include <gnuradio/tags.h>
+#include <pmt/pmt.h>
 
 #include <cstddef>
 #include <tuple>
@@ -34,7 +35,9 @@ gr::digital::constellation_sptr create_constellation(constellation_type_t conste
 
 constellation_type_t get_constellation_type(const std::vector<tag_t>& tags);
 
-std::vector<tag_t>::iterator get_constellation_tag(std::vector<tag_t>& tags);
+std::vector<tag_t>::const_iterator get_constellation_tag(const std::vector<tag_t>& tags);
+
+pmt::pmt_t get_constellation_tag_key();
 
 } // namespace dtl
 } // namespace gr

@@ -17,13 +17,23 @@ import pmt
 
 # from gnuradio import blocks
 try:
-  from gnuradio.dtl import ofdm_frame_equalizer_vcvc, ofdm_equalizer_adaptive, QPSK, PSK8
+    from gnuradio.dtl import (
+        constellation_type_t,
+        get_constellation_tag_key,
+        ofdm_frame_equalizer_vcvc,
+        ofdm_equalizer_adaptive,
+    )
 except ImportError:
     import os
     import sys
     dirname, filename = os.path.split(os.path.abspath(__file__))
     sys.path.append(os.path.join(dirname, "bindings"))
-    from gnuradio.dtl import ofdm_frame_equalizer_vcvc, ofdm_equalizer_adaptive
+    from gnuradio.dtl import (
+        constellation_type_t,
+        get_constellation_tag_key,
+        ofdm_frame_equalizer_vcvc,
+        ofdm_equalizer_adaptive,
+    )
 
 class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
 
@@ -35,8 +45,8 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
 
     def test_happy_flow(self):
         consts = {
-            QPSK: digital.constellation_qpsk(),
-            PSK8: digital.constellation_8psk(),
+            constellation_type_t.QPSK: digital.constellation_qpsk(),
+            constellation_type_t.PSK8: digital.constellation_8psk(),
         }
         fft_len = 8
 
@@ -82,7 +92,7 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
             chan_tag.key = pmt.string_to_symbol("ofdm_sync_chan_taps")
             chan_tag.value = pmt.init_c32vector(fft_len, channel[:fft_len])
             const_tag = gr.tag_t()
-            const_tag.key = pmt.string_to_symbol("frame_constellation")
+            const_tag.key = get_constellation_tag_key()
             const_tag.value = pmt.from_long(c)
             src = blocks.vector_source_c(numpy.multiply(
                 tx_signal, channel), False, fft_len, (chan_tag, const_tag))

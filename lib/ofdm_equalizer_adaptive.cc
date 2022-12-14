@@ -91,9 +91,7 @@ void ofdm_equalizer_adaptive::equalize(gr_complex* frame,
     gr_complex sym_eq, sym_est;
     bool enable_soft_output = d_enable_soft_output;
 
-    auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
-        return t.key == pmt::string_to_symbol("frame_constellation");
-    });
+    auto it = get_constellation_tag(tags);
 
     if (it == tags.end()) {
         throw std::invalid_argument("Missing constellation tag.");

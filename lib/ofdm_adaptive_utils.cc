@@ -18,6 +18,7 @@ namespace dtl {
 
 using namespace gr::digital;
 
+static const pmt::pmt_t CONSTELLATION_TAG_KEY = pmt::string_to_symbol("constellation_tag_key");
 
 template <class T>
 struct constellation_helper {
@@ -71,7 +72,7 @@ constellation_sptr DTL_API create_constellation(constellation_type_t constellati
 constellation_type_t DTL_API get_constellation_type(const std::vector<tag_t>& tags)
 {
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
-        return t.key == pmt::string_to_symbol("frame_constellation");
+        return t.key == CONSTELLATION_TAG_KEY;
     });
 
     if (it == tags.end()) {
@@ -81,14 +82,17 @@ constellation_type_t DTL_API get_constellation_type(const std::vector<tag_t>& ta
     return static_cast<constellation_type_t>(pmt::to_long(it->value));
 }
 
-std::vector<tag_t>::iterator DTL_API get_constellation_tag(std::vector<tag_t>& tags)
+std::vector<tag_t>::const_iterator DTL_API get_constellation_tag(const std::vector<tag_t>& tags)
 {
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
-        return t.key == pmt::string_to_symbol("frame_constellation");
+        return t.key == CONSTELLATION_TAG_KEY;
     });
     return it;
 }
 
+pmt::pmt_t DTL_API get_constellation_tag_key() {
+    return CONSTELLATION_TAG_KEY;
+}
 
 } /* namespace dtl */
 } /* namespace gr */

@@ -70,7 +70,7 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
                          bits_per_header_sym,
                          0,
                          scramble_header),
-      d_constellation_tag_key(pmt::string_to_symbol("frame_constellation"))
+      d_constellation_tag_key(get_constellation_tag_key())
 {
 }
 
@@ -88,9 +88,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     LOG_TAGS("After default formatter", tags);
     _logger.warn("bits_per_byte: {}, packet_len: {}", d_bits_per_byte, packet_len);
     // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
-    auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
-        return t.key == pmt::string_to_symbol("frame_constellation");
-    });
+    auto it = get_constellation_tag(tags);
 
     if (it == tags.end()) {
         throw std::invalid_argument("Missing constellation tag.");
@@ -151,7 +149,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
         static_cast<constellation_type_t>(constellation_type)
     );
     tag_t tag;
-    tag.key = pmt::string_to_symbol("frame_constellation");
+    tag.key = get_constellation_tag_key();
     tag.value = pmt::from_long(constellation_type);
     tags.push_back(tag);
 
