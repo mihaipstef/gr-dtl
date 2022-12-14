@@ -9,7 +9,7 @@
 #include "config.h"
 #endif
 
-#include <gnuradio/dtl/ofdm_equalizer_adaptive.h>
+#include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
 #include <algorithm>
@@ -23,8 +23,8 @@ using namespace gr::digital;
 
 
 
-ofdm_equalizer_adaptive::sptr
-ofdm_equalizer_adaptive::make(int fft_len,
+ofdm_adaptive_equalizer::sptr
+ofdm_adaptive_equalizer::make(int fft_len,
                                const std::vector<constellation_type_t>& constellations,
                                const std::vector<std::vector<int>>& occupied_carriers,
                                const std::vector<std::vector<int>>& pilot_carriers,
@@ -34,8 +34,8 @@ ofdm_equalizer_adaptive::make(int fft_len,
                                bool input_is_shifted,
                                bool enable_soft_output)
 {
-    return ofdm_equalizer_adaptive::sptr(
-        new ofdm_equalizer_adaptive(fft_len,
+    return ofdm_adaptive_equalizer::sptr(
+        new ofdm_adaptive_equalizer(fft_len,
                                      constellations,
                                      occupied_carriers,
                                      pilot_carriers,
@@ -47,7 +47,7 @@ ofdm_equalizer_adaptive::make(int fft_len,
 }
 
 
-ofdm_equalizer_adaptive::ofdm_equalizer_adaptive(
+ofdm_adaptive_equalizer::ofdm_adaptive_equalizer(
     int fft_len,
     const std::vector<constellation_type_t>& constellations,
     const std::vector<std::vector<int>>& occupied_carriers,
@@ -77,10 +77,10 @@ ofdm_equalizer_adaptive::ofdm_equalizer_adaptive(
 }
 
 
-ofdm_equalizer_adaptive::~ofdm_equalizer_adaptive() {}
+ofdm_adaptive_equalizer::~ofdm_adaptive_equalizer() {}
 
 
-void ofdm_equalizer_adaptive::equalize(gr_complex* frame,
+void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
                                         int n_sym,
                                         const std::vector<gr_complex>& initial_taps,
                                         const std::vector<tag_t>& tags)

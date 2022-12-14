@@ -29,7 +29,7 @@ include(GrPybind)
 ########################################################################
 
 list(APPEND dtl_python_files
-    ofdm_equalizer_adaptive_python.cc
+    ofdm_adaptive_equalizer_python.cc
     ofdm_frame_equalizer_vcvc_python.cc
     ofdm_adaptive_packet_header_python.cc
     ofdm_adaptive_utils_python.cc

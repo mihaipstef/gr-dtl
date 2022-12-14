@@ -27,12 +27,12 @@ namespace dtl {
  * \details
  * 
  */
-class DIGITAL_API ofdm_equalizer_adaptive : public gr::digital::ofdm_equalizer_1d_pilots
+class DIGITAL_API ofdm_adaptive_equalizer : public gr::digital::ofdm_equalizer_1d_pilots
 {
 public:
-    typedef std::shared_ptr<ofdm_equalizer_adaptive> sptr;
+    typedef std::shared_ptr<ofdm_adaptive_equalizer> sptr;
 
-    ofdm_equalizer_adaptive(int fft_len,
+    ofdm_adaptive_equalizer(int fft_len,
                              const std::vector<constellation_type_t>& constellations,
                              const std::vector<std::vector<int>>& occupied_carriers =
                                  std::vector<std::vector<int>>(),
@@ -45,7 +45,7 @@ public:
                              bool input_is_shifted = true,
                              bool enable_soft_output = false);
 
-    ~ofdm_equalizer_adaptive() override;
+    ~ofdm_adaptive_equalizer() override;
 
     void equalize(gr_complex* frame,
                   int n_sym,

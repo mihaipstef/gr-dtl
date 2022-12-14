@@ -15,18 +15,18 @@
  */
 
 
-static const char* __doc_gr_dtl_ofdm_equalizer_adaptive = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_0 =
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_ofdm_adaptive_equalizer_0 =
     R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_ofdm_equalizer_adaptive_1 =
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_ofdm_adaptive_equalizer_1 =
     R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_equalize = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_equalizer_adaptive_make = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_make = R"doc()doc";

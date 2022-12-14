@@ -21,7 +21,7 @@ try:
         constellation_type_t,
         get_constellation_tag_key,
         ofdm_frame_equalizer_vcvc,
-        ofdm_equalizer_adaptive,
+        ofdm_adaptive_equalizer,
     )
 except ImportError:
     import os
@@ -32,7 +32,7 @@ except ImportError:
         constellation_type_t,
         get_constellation_tag_key,
         ofdm_frame_equalizer_vcvc,
-        ofdm_equalizer_adaptive,
+        ofdm_adaptive_equalizer,
     )
 
 class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
@@ -65,7 +65,7 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
                 [], [], [cnst.map_to_points_v(x)[0] for x in (1, 0, 3, 0)], []
             )
             #equalizer = digital.ofdm_equalizer_simpledfe(
-            equalizer = ofdm_equalizer_adaptive(
+            equalizer = ofdm_adaptive_equalizer(
                 fft_len,
                 [k for k in consts],
                 occupied_carriers,

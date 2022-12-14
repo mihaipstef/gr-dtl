@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(ofdm_equalizer_adaptive.h) */
-/* BINDTOOL_HEADER_FILE_HASH(cfe125581e3204d3dd9608559bdd586c)                     */
+/* BINDTOOL_HEADER_FILE(ofdm_adaptive_equalizer.h) */
+/* BINDTOOL_HEADER_FILE_HASH(9f875980be284c2a3df20144270ef590)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,21 +23,22 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/ofdm_equalizer_adaptive.h>
+#include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
 // pydoc.h is automatically generated in the build directory
-#include <ofdm_equalizer_adaptive_pydoc.h>
+#include <ofdm_adaptive_equalizer_pydoc.h>
 
-void bind_ofdm_equalizer_adaptive(py::module& m)
+void bind_ofdm_adaptive_equalizer(py::module& m)
 {
 
-    using ofdm_equalizer_adaptive = ::gr::dtl::ofdm_equalizer_adaptive;
+    using ofdm_adaptive_equalizer = ::gr::dtl::ofdm_adaptive_equalizer;
 
-    py::class_<ofdm_equalizer_adaptive,
+
+    py::class_<ofdm_adaptive_equalizer,
                gr::digital::ofdm_equalizer_1d_pilots,
-               std::shared_ptr<ofdm_equalizer_adaptive>>(
-        m, "ofdm_equalizer_adaptive", D(ofdm_equalizer_adaptive))
+               std::shared_ptr<ofdm_adaptive_equalizer>>(
+        m, "ofdm_adaptive_equalizer", D(ofdm_adaptive_equalizer))
 
-        .def(py::init(&ofdm_equalizer_adaptive::make),
+        .def(py::init(&ofdm_adaptive_equalizer::make),
              py::arg("fft_len"),
              py::arg("constellations"),
              py::arg("occupied_carriers") = std::vector<std::vector<int>>(),
@@ -47,16 +48,16 @@ void bind_ofdm_equalizer_adaptive(py::module& m)
              py::arg("alpha") = 0.10000000000000001,
              py::arg("input_is_shifted") = true,
              py::arg("enable_soft_output") = false,
-             D(ofdm_equalizer_adaptive, make))
+             D(ofdm_adaptive_equalizer, make))
 
 
         .def("equalize",
-             &ofdm_equalizer_adaptive::equalize,
+             &ofdm_adaptive_equalizer::equalize,
              py::arg("frame"),
              py::arg("n_sym"),
              py::arg("initial_taps") = std::vector<gr_complex>(),
              py::arg("tags") = std::vector<gr::tag_t>(),
-             D(ofdm_equalizer_adaptive, equalize))
+             D(ofdm_adaptive_equalizer, equalize))
 
 
         ;
