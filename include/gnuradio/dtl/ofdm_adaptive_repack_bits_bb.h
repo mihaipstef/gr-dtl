@@ -31,7 +31,7 @@ public:
      * \param endianness The endianness of the output data stream (LSB or MSB).
      */
     static sptr make(const std::string& tsb_tag_key = "",
-                     bool bytes_to_constellation = true,
+                     bool unpack = true,
                      endianness_t endianness = GR_LSB_FIRST);
 };
 

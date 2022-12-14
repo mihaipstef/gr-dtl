@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_repack_bits_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(ff95cce7bf3dcc062aaa08c2da620a97)                     */
+/* BINDTOOL_HEADER_FILE_HASH(bef943917b4faae85d091180e0ae04f0)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,7 +42,7 @@ void bind_ofdm_adaptive_repack_bits_bb(py::module& m)
 
         .def(py::init(&ofdm_adaptive_repack_bits_bb::make),
              py::arg("tsb_tag_key") = "",
-             py::arg("bytes_to_constellation") = true,
+             py::arg("unpack") = true,
              py::arg("endianness") = ::gr::endianness_t::GR_LSB_FIRST,
              D(ofdm_adaptive_repack_bits_bb, make))
 

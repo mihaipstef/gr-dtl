@@ -20,11 +20,11 @@ INIT_DTL_LOGGER(__FILE__);
 
 ofdm_adaptive_repack_bits_bb::sptr
 ofdm_adaptive_repack_bits_bb::make(const std::string& tsb_tag_key,
-                                   bool bytes_to_constellation,
+                                   bool unpack,
                                    endianness_t endianness)
 {
     return gnuradio::make_block_sptr<ofdm_adaptive_repack_bits_bb_impl>(
-        tsb_tag_key, bytes_to_constellation, endianness);
+        tsb_tag_key, unpack, endianness);
 }
 
 
@@ -39,9 +39,7 @@ ofdm_adaptive_repack_bits_bb_impl::ofdm_adaptive_repack_bits_bb_impl(
       d_bits_per_in_byte(8),
       d_bits_per_out_byte(4),
       d_endianness(endianness),
-      d_in_index(0),
-      d_out_index(0),
-      d_bytes_to_constellation(bytes_to_symbols),
+      d_unpack(bytes_to_symbols),
       d_len_tag_key(len_tag_key)
 {
     set_relative_rate(d_bits_per_in_byte, d_bits_per_out_byte);
@@ -55,7 +53,7 @@ int ofdm_adaptive_repack_bits_bb_impl::calculate_output_stream_length(
     int n_out_bytes =
         (ninput_items[0] * d_bits_per_in_byte) / d_bits_per_out_byte;
     if ((ninput_items[0] * d_bits_per_in_byte) % d_bits_per_out_byte) {
-        n_out_bytes += static_cast<int>(!d_bytes_to_constellation);
+        n_out_bytes += static_cast<int>(!d_unpack);
     }
     return n_out_bytes;
 }
@@ -73,7 +71,7 @@ void ofdm_adaptive_repack_bits_bb_impl::parse_length_tags(const std::vector<std:
         unsigned char bits_per_constellation = compute_no_of_bits_per_symbol(
             constellation_type
         );
-        if (d_bytes_to_constellation) {
+        if (d_unpack) {
             d_bits_per_in_byte = 8;
             d_bits_per_out_byte = bits_per_constellation;
         }
@@ -98,7 +96,7 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
     int bytes_to_write = bytes_to_read * d_bits_per_in_byte / d_bits_per_out_byte;
 
     if (((bytes_to_read * d_bits_per_in_byte) % d_bits_per_out_byte) != 0) {
-        bytes_to_write += static_cast<int>(d_bytes_to_constellation);
+        bytes_to_write += static_cast<int>(d_unpack);
     }
 
     DTL_LOG_BYTES("in:", in, bytes_to_read)
@@ -107,32 +105,32 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
     int n_written = 0;
 
     //TODO: declare this local
-    d_out_index = 0;
-    d_in_index = 0;
+    unsigned char out_index = 0;
+    unsigned in_index = 0;
 
     switch (d_endianness) {
     case GR_LSB_FIRST:
         while (n_written < bytes_to_write && n_read < ninput_items[0]) {
-            if (d_out_index == 0) {
+            if (out_index == 0) {
                 out[n_written] = 0;
             }
-            out[n_written] |= ((in[n_read] >> d_in_index) & 0x01) << d_out_index;
+            out[n_written] |= ((in[n_read] >> in_index) & 0x01) << out_index;
 
-            d_in_index = (d_in_index + 1) % d_bits_per_in_byte;
-            d_out_index = (d_out_index + 1) % d_bits_per_out_byte;
-            if (d_in_index == 0) {
+            in_index = (in_index + 1) % d_bits_per_in_byte;
+            out_index = (out_index + 1) % d_bits_per_out_byte;
+            if (in_index == 0) {
                 n_read++;
-                d_in_index = 0;
+                in_index = 0;
             }
-            if (d_out_index == 0) {
+            if (out_index == 0) {
                 n_written++;
-                d_out_index = 0;
+                out_index = 0;
             }
         }
 
-        if (d_out_index) {
+        if (out_index) {
             n_written++;
-            d_out_index = 0;
+            out_index = 0;
         }
 
         break;
@@ -140,28 +138,28 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
 
     case GR_MSB_FIRST:
         while (n_written < bytes_to_write && n_read < ninput_items[0]) {
-            if (d_out_index == 0) {
+            if (out_index == 0) {
                 out[n_written] = 0;
             }
             out[n_written] |=
-                ((in[n_read] >> (d_bits_per_in_byte - 1 - d_in_index)) & 0x01)
-                << (d_bits_per_out_byte - 1 - d_out_index);
+                ((in[n_read] >> (d_bits_per_in_byte - 1 - in_index)) & 0x01)
+                << (d_bits_per_out_byte - 1 - out_index);
 
-            d_in_index = (d_in_index + 1) % d_bits_per_in_byte;
-            d_out_index = (d_out_index + 1) % d_bits_per_out_byte;
-            if (d_in_index == 0) {
+            in_index = (in_index + 1) % d_bits_per_in_byte;
+            out_index = (out_index + 1) % d_bits_per_out_byte;
+            if (in_index == 0) {
                 n_read++;
-                d_in_index = 0;
+                in_index = 0;
             }
-            if (d_out_index == 0) {
+            if (out_index == 0) {
                 n_written++;
-                d_out_index = 0;
+                out_index = 0;
             }
         }
 
-        if (d_out_index) {
+        if (out_index) {
             n_written++;
-            d_out_index = 0;
+            out_index = 0;
         }
 
         break;
@@ -171,6 +169,7 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
             "ofdm_adaptive_repack_bits_bb: unrecognized endianness value.");
     }
 
+    // Propagate tags
     std::vector<tag_t> tags;
     this->get_tags_in_range(
         tags, 0, this->nitems_read(0), this->nitems_read(0) + ninput_items[0]);
