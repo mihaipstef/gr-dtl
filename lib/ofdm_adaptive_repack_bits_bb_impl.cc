@@ -64,7 +64,7 @@ void ofdm_adaptive_repack_bits_bb_impl::parse_length_tags(const std::vector<std:
 {
     tagged_stream_block::parse_length_tags(tags, n_input_items_reqd);
 
-    constellation_type_t constellation_type = get_constellation_type(
+    constellation_type_t constellation_type = find_constellation_type(
         tags[0]
     );
     if (constellation_type_t::UNKNOWN != constellation_type) {
@@ -173,7 +173,7 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
     std::vector<tag_t> tags;
     this->get_tags_in_range(
         tags, 0, this->nitems_read(0), this->nitems_read(0) + ninput_items[0]);
-    auto it = get_constellation_tag(tags);
+    auto it = find_constellation_tag(tags);
     if (it != tags.end()) {
         add_item_tag(0,
                     nitems_written(0),

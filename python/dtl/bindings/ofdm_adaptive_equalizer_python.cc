@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_equalizer.h) */
-/* BINDTOOL_HEADER_FILE_HASH(9f875980be284c2a3df20144270ef590)                     */
+/* BINDTOOL_HEADER_FILE_HASH(b2e511953d6532ea5a53241be13ef0af)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -30,17 +30,48 @@ namespace py = pybind11;
 void bind_ofdm_adaptive_equalizer(py::module& m)
 {
 
+    using ofdm_adaptive_equalizer_base = ::gr::dtl::ofdm_adaptive_equalizer_base;
     using ofdm_adaptive_equalizer = ::gr::dtl::ofdm_adaptive_equalizer;
 
 
-    py::class_<ofdm_adaptive_equalizer,
+    py::class_<ofdm_adaptive_equalizer_base,
                gr::digital::ofdm_equalizer_1d_pilots,
+               std::shared_ptr<ofdm_adaptive_equalizer_base>>(
+        m, "ofdm_adaptive_equalizer_base", D(ofdm_adaptive_equalizer_base))
+
+     //    .def(py::init<int,
+     //                  std::vector<std::vector<int>> const&,
+     //                  std::vector<std::vector<int>> const&,
+     //                  std::vector<std::vector<std::complex<float>>> const&,
+     //                  int,
+     //                  bool>(),
+     //         py::arg("fft_len"),
+     //         py::arg("occupied_carriers"),
+     //         py::arg("pilot_carriers"),
+     //         py::arg("pilot_symbols"),
+     //         py::arg("symbols_skipped"),
+     //         py::arg("input_is_shifted"),
+     //         D(ofdm_adaptive_equalizer_base, ofdm_adaptive_equalizer_base, 0))
+     //    .def(py::init<gr::dtl::ofdm_adaptive_equalizer_base const&>(),
+     //         py::arg("arg0"),
+     //         D(ofdm_adaptive_equalizer_base, ofdm_adaptive_equalizer_base, 1))
+
+        .def("get_snr",
+             &ofdm_adaptive_equalizer_base::get_snr,
+             D(ofdm_adaptive_equalizer_base, get_snr))
+
+        ;
+
+
+    py::class_<ofdm_adaptive_equalizer,
+               gr::dtl::ofdm_adaptive_equalizer_base,
                std::shared_ptr<ofdm_adaptive_equalizer>>(
         m, "ofdm_adaptive_equalizer", D(ofdm_adaptive_equalizer))
 
         .def(py::init(&ofdm_adaptive_equalizer::make),
              py::arg("fft_len"),
              py::arg("constellations"),
+             py::arg("snr_est"),
              py::arg("occupied_carriers") = std::vector<std::vector<int>>(),
              py::arg("pilot_carriers") = std::vector<std::vector<int>>(),
              py::arg("pilot_symbols") = std::vector<std::vector<gr_complex>>(),
@@ -58,6 +89,11 @@ void bind_ofdm_adaptive_equalizer(py::module& m)
              py::arg("initial_taps") = std::vector<gr_complex>(),
              py::arg("tags") = std::vector<gr::tag_t>(),
              D(ofdm_adaptive_equalizer, equalize))
+
+
+        .def("get_snr",
+             &ofdm_adaptive_equalizer::get_snr,
+             D(ofdm_adaptive_equalizer, get_snr))
 
 
         ;

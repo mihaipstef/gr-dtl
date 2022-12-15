@@ -18,7 +18,7 @@ class ofdm_frame_equalizer_vcvc_impl : public ofdm_frame_equalizer_vcvc
 private:
     const int d_fft_len;
     const int d_cp_len;
-    gr::digital::ofdm_equalizer_base::sptr d_eq;
+    gr::dtl::ofdm_adaptive_equalizer_base::sptr d_eq;
     bool d_propagate_channel_state;
     const int d_fixed_frame_len;
     std::vector<gr_complex> d_channel_state;
@@ -28,7 +28,7 @@ protected:
                            gr_vector_int& n_input_items_reqd) override;
 
 public:
-    ofdm_frame_equalizer_vcvc_impl(gr::digital::ofdm_equalizer_base::sptr equalizer,
+    ofdm_frame_equalizer_vcvc_impl(gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
                                    int cp_len,
                                    const std::string& len_tag_key,
                                    bool propagate_channel_state,

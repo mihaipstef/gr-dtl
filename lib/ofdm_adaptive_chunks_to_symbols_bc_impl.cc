@@ -76,7 +76,7 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
     std::vector<tag_t> tags;
     this->get_tags_in_range(
         tags, 0, this->nitems_read(0), this->nitems_read(0) + ninput_items[0]);
-    constellation_type_t constellation_type = get_constellation_type(tags);
+    constellation_type_t constellation_type = find_constellation_type(tags);
 
     if (constellation_type_t::UNKNOWN == constellation_type) {
         throw std::invalid_argument("Constellation type not found in tags");

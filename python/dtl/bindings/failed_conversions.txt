@@ -1,1 +1,8 @@
 ./include/gnuradio/dtl/ofdm_adaptive_utils.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist

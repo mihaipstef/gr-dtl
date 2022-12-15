@@ -6,6 +6,8 @@
  */
 
 #include "ofdm_frame_equalizer_vcvc_impl.h"
+
+#include "logger.h"
 #include <gnuradio/expj.h>
 #include <gnuradio/io_signature.h>
 #include <gnuradio/math.h>
@@ -14,13 +16,15 @@
 namespace gr {
 namespace dtl {
 
+INIT_DTL_LOGGER(__FILE__);
+
 using namespace gr::digital;
 
 static const pmt::pmt_t CARR_OFFSET_KEY = pmt::mp("ofdm_sync_carr_offset");
 static const pmt::pmt_t CHAN_TAPS_KEY = pmt::mp("ofdm_sync_chan_taps");
 
 ofdm_frame_equalizer_vcvc::sptr
-ofdm_frame_equalizer_vcvc::make(ofdm_equalizer_base::sptr equalizer,
+ofdm_frame_equalizer_vcvc::make(ofdm_adaptive_equalizer_base::sptr equalizer,
                                 int cp_len,
                                 const std::string& tsb_key,
                                 bool propagate_channel_state,
@@ -31,7 +35,7 @@ ofdm_frame_equalizer_vcvc::make(ofdm_equalizer_base::sptr equalizer,
 }
 
 ofdm_frame_equalizer_vcvc_impl::ofdm_frame_equalizer_vcvc_impl(
-    ofdm_equalizer_base::sptr equalizer,
+    ofdm_adaptive_equalizer_base::sptr equalizer,
     int cp_len,
     const std::string& tsb_key,
     bool propagate_channel_state,
@@ -94,7 +98,6 @@ int ofdm_frame_equalizer_vcvc_impl::work(int noutput_items,
     } else {
         frame_len = ninput_items[0];
     }
-
     std::vector<tag_t> tags;
     get_tags_in_window(tags, 0, 0, 1);
     for (unsigned i = 0; i < tags.size(); i++) {
@@ -136,7 +139,7 @@ int ofdm_frame_equalizer_vcvc_impl::work(int noutput_items,
     d_eq->reset();
     try {
         d_eq->equalize(out, frame_len, d_channel_state, tags);
-    } catch (const std::exception& e){
+    } catch (const std::exception& e) {
         d_logger->error(e.what());
     }
     d_eq->get_channel_state(d_channel_state);
@@ -164,6 +167,13 @@ int ofdm_frame_equalizer_vcvc_impl::work(int noutput_items,
                      pmt::string_to_symbol("ofdm_sync_chan_taps"),
                      pmt::init_c32vector(d_fft_len, d_channel_state));
     }
+
+    // Propagate estimated SNR
+    add_item_tag(0,
+                 nitems_written(0),
+                 pmt::string_to_symbol("snr_estimation"),
+                 pmt::from_double(d_eq->get_snr()));
+
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {
         consume_each(frame_len);

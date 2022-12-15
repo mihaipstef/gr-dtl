@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(7eb7eefcbd17b068ccadd02079c67ad2)                     */
+/* BINDTOOL_HEADER_FILE_HASH(b84fe6dc6b633c67cbf84f07ed8955f9)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -54,16 +54,22 @@ void bind_ofdm_adaptive_utils(py::module& m)
           D(create_constellation));
 
 
+    m.def("find_constellation_type",
+          &::gr::dtl::find_constellation_type,
+          py::arg("tags"),
+          D(find_constellation_type));
+
+
     m.def("get_constellation_type",
           &::gr::dtl::get_constellation_type,
-          py::arg("tags"),
+          py::arg("tag"),
           D(get_constellation_type));
 
 
-    m.def("get_constellation_tag",
-          &::gr::dtl::get_constellation_tag,
+    m.def("find_constellation_tag",
+          &::gr::dtl::find_constellation_tag,
           py::arg("tags"),
-          D(get_constellation_tag));
+          D(find_constellation_tag));
 
 
     m.def("get_constellation_tag_key",

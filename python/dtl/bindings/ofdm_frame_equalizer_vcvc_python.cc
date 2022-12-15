@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(ofdm_frame_equalizer_vcvc.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(ab83b81b97eeb03660c934d4af039ee6)                     */
+/* BINDTOOL_HEADER_FILE(ofdm_frame_equalizer_vcvc.h) */
+/* BINDTOOL_HEADER_FILE_HASH(20886720a9fc4377eb73be4242ef7469)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -30,35 +30,24 @@ namespace py = pybind11;
 void bind_ofdm_frame_equalizer_vcvc(py::module& m)
 {
 
-    using ofdm_frame_equalizer_vcvc    = ::gr::dtl::ofdm_frame_equalizer_vcvc;
+    using ofdm_frame_equalizer_vcvc = ::gr::dtl::ofdm_frame_equalizer_vcvc;
 
 
-    py::class_<ofdm_frame_equalizer_vcvc, gr::tagged_stream_block, gr::block, gr::basic_block,
-        std::shared_ptr<ofdm_frame_equalizer_vcvc>>(m, "ofdm_frame_equalizer_vcvc", D(ofdm_frame_equalizer_vcvc))
+    py::class_<ofdm_frame_equalizer_vcvc,
+               gr::tagged_stream_block,
+               gr::block,
+               gr::basic_block,
+               std::shared_ptr<ofdm_frame_equalizer_vcvc>>(
+        m, "ofdm_frame_equalizer_vcvc", D(ofdm_frame_equalizer_vcvc))
 
         .def(py::init(&ofdm_frame_equalizer_vcvc::make),
-           py::arg("equalizer"),
-           py::arg("cp_len"),
-           py::arg("tsb_key") = "frame_len",
-           py::arg("propagate_channel_state") = false,
-           py::arg("fixed_frame_len") = 0,
-           D(ofdm_frame_equalizer_vcvc,make)
-        )
-        
-
+             py::arg("equalizer"),
+             py::arg("cp_len"),
+             py::arg("tsb_key") = "frame_len",
+             py::arg("propagate_channel_state") = false,
+             py::arg("fixed_frame_len") = 0,
+             D(ofdm_frame_equalizer_vcvc, make))
 
 
         ;
-
-
-
-
 }
-
-
-
-
-
-
-
-

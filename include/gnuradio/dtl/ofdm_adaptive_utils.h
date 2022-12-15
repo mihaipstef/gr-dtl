@@ -33,9 +33,11 @@ std::size_t compute_no_of_bits_per_symbol(constellation_type_t constellation);
 
 gr::digital::constellation_sptr create_constellation(constellation_type_t constellation); 
 
-constellation_type_t get_constellation_type(const std::vector<tag_t>& tags);
+constellation_type_t find_constellation_type(const std::vector<tag_t>& tags);
 
-std::vector<tag_t>::const_iterator get_constellation_tag(const std::vector<tag_t>& tags);
+constellation_type_t get_constellation_type(const tag_t& tag);
+
+std::vector<tag_t>::const_iterator find_constellation_tag(const std::vector<tag_t>& tags);
 
 pmt::pmt_t get_constellation_tag_key();
 

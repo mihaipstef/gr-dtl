@@ -88,7 +88,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     LOG_TAGS("After default formatter", tags);
     _logger.warn("bits_per_byte: {}, packet_len: {}", d_bits_per_byte, packet_len);
     // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
-    auto it = get_constellation_tag(tags);
+    auto it = find_constellation_tag(tags);
 
     if (it == tags.end()) {
         throw std::invalid_argument("Missing constellation tag.");

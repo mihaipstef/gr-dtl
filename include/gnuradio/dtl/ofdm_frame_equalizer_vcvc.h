@@ -9,7 +9,7 @@
 #define INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_H
 
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/digital/ofdm_equalizer_base.h>
+#include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
 #include <gnuradio/tagged_stream_block.h>
 
 namespace gr {
@@ -34,7 +34,7 @@ public:
      *                        the TSB tag key can be left empty, but it is useful even
      *                        when using tagged streams at the input.
      */
-    static sptr make(::gr::digital::ofdm_equalizer_base::sptr equalizer,
+    static sptr make(::gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
                      int cp_len,
                      const std::string& tsb_key = "frame_len",
                      bool propagate_channel_state = false,

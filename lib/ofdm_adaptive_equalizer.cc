@@ -22,34 +22,52 @@ namespace dtl {
 using namespace gr::digital;
 
 
-
 ofdm_adaptive_equalizer::sptr
 ofdm_adaptive_equalizer::make(int fft_len,
-                               const std::vector<constellation_type_t>& constellations,
-                               const std::vector<std::vector<int>>& occupied_carriers,
-                               const std::vector<std::vector<int>>& pilot_carriers,
-                               const std::vector<std::vector<gr_complex>>& pilot_symbols,
-                               int symbols_skipped,
-                               float alpha,
-                               bool input_is_shifted,
-                               bool enable_soft_output)
+                              const std::vector<constellation_type_t>& constellations,
+                              const std::shared_ptr<ofdm_adaptive_frame_snr_base> snr_est,
+                              const std::vector<std::vector<int>>& occupied_carriers,
+                              const std::vector<std::vector<int>>& pilot_carriers,
+                              const std::vector<std::vector<gr_complex>>& pilot_symbols,
+                              int symbols_skipped,
+                              float alpha,
+                              bool input_is_shifted,
+                              bool enable_soft_output)
 {
-    return ofdm_adaptive_equalizer::sptr(
-        new ofdm_adaptive_equalizer(fft_len,
-                                     constellations,
-                                     occupied_carriers,
-                                     pilot_carriers,
-                                     pilot_symbols,
-                                     symbols_skipped,
-                                     alpha,
-                                     input_is_shifted,
-                                     enable_soft_output));
+    return ofdm_adaptive_equalizer::sptr(new ofdm_adaptive_equalizer(fft_len,
+                                                                     constellations,
+                                                                     snr_est,
+                                                                     occupied_carriers,
+                                                                     pilot_carriers,
+                                                                     pilot_symbols,
+                                                                     symbols_skipped,
+                                                                     alpha,
+                                                                     input_is_shifted,
+                                                                     enable_soft_output));
+}
+
+
+ofdm_adaptive_equalizer_base::ofdm_adaptive_equalizer_base(
+    int fft_len,
+    const std::vector<std::vector<int>>& occupied_carriers,
+    const std::vector<std::vector<int>>& pilot_carriers,
+    const std::vector<std::vector<gr_complex>>& pilot_symbols,
+    int symbols_skipped,
+    bool input_is_shifted)
+    : ofdm_equalizer_1d_pilots(fft_len,
+                               occupied_carriers,
+                               pilot_carriers,
+                               pilot_symbols,
+                               symbols_skipped,
+                               input_is_shifted)
+{
 }
 
 
 ofdm_adaptive_equalizer::ofdm_adaptive_equalizer(
     int fft_len,
     const std::vector<constellation_type_t>& constellations,
+    const std::shared_ptr<ofdm_adaptive_frame_snr_base> snr_est,
     const std::vector<std::vector<int>>& occupied_carriers,
     const std::vector<std::vector<int>>& pilot_carriers,
     const std::vector<std::vector<gr_complex>>& pilot_symbols,
@@ -57,14 +75,15 @@ ofdm_adaptive_equalizer::ofdm_adaptive_equalizer(
     float alpha,
     bool input_is_shifted,
     bool enable_soft_output)
-    : ofdm_equalizer_1d_pilots(fft_len,
-                               occupied_carriers,
-                               pilot_carriers,
-                               pilot_symbols,
-                               symbols_skipped,
-                               input_is_shifted),
+    : ofdm_adaptive_equalizer_base(fft_len,
+                                   occupied_carriers,
+                                   pilot_carriers,
+                                   pilot_symbols,
+                                   symbols_skipped,
+                                   input_is_shifted),
       d_alpha(alpha),
-      d_enable_soft_output(enable_soft_output)
+      d_enable_soft_output(enable_soft_output),
+      d_snr_estimator(snr_est)
 {
     // Populate constellation dictionary
     for (const auto& constellation_type : constellations) {
@@ -81,9 +100,9 @@ ofdm_adaptive_equalizer::~ofdm_adaptive_equalizer() {}
 
 
 void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
-                                        int n_sym,
-                                        const std::vector<gr_complex>& initial_taps,
-                                        const std::vector<tag_t>& tags)
+                                       int n_sym,
+                                       const std::vector<gr_complex>& initial_taps,
+                                       const std::vector<tag_t>& tags)
 {
     if (!initial_taps.empty()) {
         d_channel_state = initial_taps;
@@ -91,35 +110,42 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
     gr_complex sym_eq, sym_est;
     bool enable_soft_output = d_enable_soft_output;
 
-    auto it = get_constellation_tag(tags);
+    auto cnst_tag_it = find_constellation_tag(tags);
 
-    if (it == tags.end()) {
+    if (cnst_tag_it == tags.end()) {
         throw std::invalid_argument("Missing constellation tag.");
     }
 
-    constellation_type_t constellation_type_tag_value = get_constellation_type(tags);
-
-    if (d_constellations.find(constellation_type_tag_value) ==
+    if (d_constellations.find(get_constellation_type(*cnst_tag_it)) ==
         d_constellations.end()) {
         throw std::invalid_argument("Unknown constellation");
     }
 
-    constellation_sptr constellation = d_constellations[constellation_type_tag_value];
+    constellation_sptr constellation =
+        d_constellations[get_constellation_type(*cnst_tag_it)];
 
-    for (int i = 0; i < n_sym; i++)
-    {
+    // Reallocate only if the number of pilot symbols/carrier is higher in this frame
+    // compared to previous frame.
+    size_t n_pilots_count = 0;
+    if (d_pilots.capacity() < n_sym * d_pilot_symbols[d_pilot_carr_set].size()) {
+        d_pilots.reserve(n_sym * d_pilot_symbols[d_pilot_carr_set].size());
+    }
+
+    for (int i = 0; i < n_sym; i++) {
         for (int k = 0; k < d_fft_len; k++) {
             if (!d_occupied_carriers[k]) {
                 continue;
             }
             if (!d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k]) {
+                // Update SNR estimation with each pilot
+                d_snr_estimator->update(1, &d_pilot_symbols[d_pilot_carr_set][k]);
+                // Update channel state
                 d_channel_state[k] = d_alpha * d_channel_state[k] +
                                      (1 - d_alpha) * frame[i * d_fft_len + k] /
                                          d_pilot_symbols[d_pilot_carr_set][k];
                 frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
             } else {
                 sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
-
                 // NOTE: The `map_to_points` function will treat `sym_est` as an array
                 // pointer.  This call is "safe" only for 1-dimension constellations.
                 constellation->map_to_points(constellation->decision_maker(&sym_eq),
@@ -134,6 +160,10 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
         }
     }
 }
+
+
+double ofdm_adaptive_equalizer::get_snr() { return d_snr_estimator->snr(); }
+
 
 } // namespace dtl
 } /* namespace gr */

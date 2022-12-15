@@ -69,20 +69,21 @@ constellation_sptr DTL_API create_constellation(constellation_type_t constellati
     return nullptr;
 }
 
-constellation_type_t DTL_API get_constellation_type(const std::vector<tag_t>& tags)
+constellation_type_t DTL_API get_constellation_type(const tag_t& tag)
 {
-    auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
-        return t.key == CONSTELLATION_TAG_KEY;
-    });
+    return static_cast<constellation_type_t>(pmt::to_long(tag.value));
+}
 
+constellation_type_t DTL_API find_constellation_type(const std::vector<tag_t>& tags)
+{
+    auto it = find_constellation_tag(tags);
     if (it == tags.end()) {
         return constellation_type_t::UNKNOWN;
     }
-
-    return static_cast<constellation_type_t>(pmt::to_long(it->value));
+    return get_constellation_type(*it);
 }
 
-std::vector<tag_t>::const_iterator DTL_API get_constellation_tag(const std::vector<tag_t>& tags)
+std::vector<tag_t>::const_iterator DTL_API find_constellation_tag(const std::vector<tag_t>& tags)
 {
     auto it = std::find_if(tags.begin(), tags.end(), [](auto& t) {
         return t.key == CONSTELLATION_TAG_KEY;
