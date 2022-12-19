@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "logger.h"
+
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
@@ -15,6 +17,7 @@
 namespace gr {
 namespace dtl {
 
+INIT_DTL_LOGGER("ofdm_adaptive_utils")
 
 using namespace gr::digital;
 

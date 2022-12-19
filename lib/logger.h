@@ -10,6 +10,8 @@
 
 #include <gnuradio/logger.h>
 
+#include <iomanip>
+
 namespace gr {
 namespace dtl {
 
@@ -35,9 +37,9 @@ namespace dtl {
         { \
             std::stringstream ss; \
             for(int i=0; i<length; ++i) { \
-                ss << "," << std::hex << buffer[i]; \
+                ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buffer[i]; \
             } \
-            _logger.debug(ss.str()); \
+            _logger.debug("{}", ss.str()); \
         }
 
 #else

@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_H
-#define INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_H
+#ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_H
+#define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_H
 
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
@@ -20,10 +20,10 @@ namespace dtl {
  * \ingroup dtl
  *
  */
-class DTL_API ofdm_frame_equalizer_vcvc : virtual public ::gr::tagged_stream_block
+class DTL_API ofdm_adaptive_frame_equalizer_vcvc : virtual public ::gr::tagged_stream_block
 {
 public:
-    typedef std::shared_ptr<ofdm_frame_equalizer_vcvc> sptr;
+    typedef std::shared_ptr<ofdm_adaptive_frame_equalizer_vcvc> sptr;
 
     /*!
      * \param equalizer The equalizer object that will do the actual work
@@ -44,4 +44,4 @@ public:
 } // namespace dtl
 } // namespace gr
 
-#endif /* INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_H */
+#endif /* INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_H */

@@ -20,7 +20,7 @@ try:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        ofdm_frame_equalizer_vcvc,
+        ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
     )
@@ -32,12 +32,12 @@ except ImportError:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        ofdm_frame_equalizer_vcvc,
+        ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
     )
 
-class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
+class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
@@ -48,7 +48,7 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
     def test_happy_flow(self):
         consts = {
             constellation_type_t.QPSK: digital.constellation_qpsk(),
-            constellation_type_t.PSK8: digital.constellation_8psk(),
+            #constellation_type_t.PSK8: digital.constellation_8psk(),
         }
         fft_len = 8
 
@@ -66,7 +66,6 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
             pilot_symbols = (
                 [], [], [cnst.map_to_points_v(x)[0] for x in (1, 0, 3, 0)], []
             )
-            #equalizer = digital.ofdm_equalizer_simpledfe(
             equalizer = ofdm_adaptive_equalizer(
                 fft_len,
                 [k for k in consts],
@@ -99,7 +98,7 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
             const_tag.value = pmt.from_long(c)
             src = blocks.vector_source_c(numpy.multiply(
                 tx_signal, channel), False, fft_len, (chan_tag, const_tag))
-            eq = ofdm_frame_equalizer_vcvc(
+            eq = ofdm_adaptive_frame_equalizer_vcvc(
                 equalizer.base(), 0, "tsb_key", True)
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")
             stream_to_tagged = blocks.stream_to_tagged_stream(
@@ -125,4 +124,4 @@ class qa_ofdm_frame_equalizer_vcvc(gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_ofdm_frame_equalizer_vcvc)
+    gr_unittest.run(qa_ofdm_adaptive_frame_equalizer_vcvc)

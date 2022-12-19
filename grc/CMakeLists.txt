@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 install(FILES
-    dtl_ofdm_frame_equalizer_vcvc.block.yml
+    dtl_ofdm_adaptive_frame_equalizer_vcvc.block.yml
     dtl_ofdm_adaptive_repack_bits_bb.block.yml
     dtl_ofdm_adaptive_chunks_to_symbols_bc.block.yml
     dtl_ofdm_adaptive_constellation_decoder_cb.block.yml DESTINATION share/gnuradio/grc/blocks

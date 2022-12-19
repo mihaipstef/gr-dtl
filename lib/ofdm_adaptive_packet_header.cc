@@ -9,30 +9,18 @@
 
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
-#include <gnuradio/logger.h>
 
 #include <algorithm>
 
+#include "logger.h"
 
-#define LOG_TAGS(title, tags) \
-    _logger.debug(title); \
-    for (auto& t: tags) { \
-        if(pmt::is_integer(t.value)) { \
-            _logger.debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
-        } \
-        else { \
-            _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
-        } \
-    }
 
 namespace gr {
 namespace dtl {
 
 using namespace gr::digital;
 
-
-static gr::logger _logger(__FILE__);
-
+INIT_DTL_LOGGER("ofdm_adaptive_packet_header");
 
 ofdm_adaptive_packet_header::sptr
 ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_carriers,
@@ -83,9 +71,9 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 {
     // Use default
     unsigned int previous_header_number = d_header_number;
-    LOG_TAGS("Before default formatter", tags);
+    DTL_LOG_TAGS("Before default formatter", tags);
     bool ret_val = packet_header_default::header_formatter(packet_len, out, tags);
-    LOG_TAGS("After default formatter", tags);
+    DTL_LOG_TAGS("After default formatter", tags);
     _logger.warn("bits_per_byte: {}, packet_len: {}", d_bits_per_byte, packet_len);
     // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
     auto it = find_constellation_tag(tags);
@@ -133,11 +121,11 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                                 std::vector<tag_t>& tags)
 {
-    LOG_TAGS("Before default parser", tags);
+    DTL_LOG_TAGS("Before default parser", tags);
 
     packet_header_default::header_parser(in, tags);
 
-    LOG_TAGS("After default parser", tags);
+    DTL_LOG_TAGS("After default parser", tags);
 
     // Determine constellation type and add the tag
     int k = 24; // Constellation type starts on bit 24
@@ -184,7 +172,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     // Determine frame length and add the tag
     add_frame_length_tag(no_of_symbols, tags);
 
-    LOG_TAGS("After parser", tags);
+    DTL_LOG_TAGS("After parser", tags);
 
     return true;
 }

@@ -12,7 +12,7 @@
 include(GrPlatform) #define LIB_SUFFIX
 list(APPEND dtl_sources
     ofdm_adaptive_equalizer.cc
-    ofdm_frame_equalizer_vcvc_impl.cc
+    ofdm_adaptive_frame_equalizer_vcvc_impl.cc
     ofdm_adaptive_packet_header.cc
     ofdm_adaptive_utils.cc
     ofdm_adaptive_repack_bits_bb_impl.cc

@@ -1,10 +1,10 @@
-id: dtl_ofdm_frame_equalizer_vcvc
+id: dtl_ofdm_adaptive_frame_equalizer_vcvc
 label: OFDM Frame Equalizer
 category: '[DTL]'
 
 templates:
   imports: from gnuradio import dtl
-  make: dtl.ofdm_frame_equalizer_vcvc(${equalizer}, ${cp_len}, ${len_tag_key},
+  make: dtl.ofdm_adaptive_frame_equalizer_vcvc(${equalizer}, ${cp_len}, ${len_tag_key},
         ${propagate_channel_state}, ${fixed_frame_len})
 
 parameters:

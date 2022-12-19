@@ -14,7 +14,7 @@
 namespace gr {
 namespace dtl {
 
-INIT_DTL_LOGGER(__FILE__);
+INIT_DTL_LOGGER("ofdm_adaptive_chunks_to_symbols");
 
 using namespace gr::digital;
 
@@ -60,7 +60,6 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::calculate_output_stream_length(
     const gr_vector_int& ninput_items)
 {
     int n = tagged_stream_block::calculate_output_stream_length(ninput_items);
-    DTL_LOG_DEBUG("calculate_output_stream_length: {}", n);
     return n;
 }
 
@@ -81,13 +80,14 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
     if (constellation_type_t::UNKNOWN == constellation_type) {
         throw std::invalid_argument("Constellation type not found in tags");
     }
-
+    DTL_LOG_BYTES("in", in, ninput_items[0]);
     constellation_sptr constellation = d_constellations[constellation_type];
     for (int i = 0; i < ninput_items[0]; ++i) {
         constellation->map_to_points(*in, out);
         ++in;
         ++out;
     }
+    DTL_LOG_DEBUG("size:{}, constellation: {}",ninput_items[0], (int)constellation_type);
 
     return ninput_items[0];
 }

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "ofdm_frame_equalizer_vcvc_impl.h"
+#include "ofdm_adaptive_frame_equalizer_vcvc_impl.h"
 
 #include "logger.h"
 #include <gnuradio/expj.h>
@@ -23,25 +23,25 @@ using namespace gr::digital;
 static const pmt::pmt_t CARR_OFFSET_KEY = pmt::mp("ofdm_sync_carr_offset");
 static const pmt::pmt_t CHAN_TAPS_KEY = pmt::mp("ofdm_sync_chan_taps");
 
-ofdm_frame_equalizer_vcvc::sptr
-ofdm_frame_equalizer_vcvc::make(ofdm_adaptive_equalizer_base::sptr equalizer,
+ofdm_adaptive_frame_equalizer_vcvc::sptr
+ofdm_adaptive_frame_equalizer_vcvc::make(ofdm_adaptive_equalizer_base::sptr equalizer,
                                 int cp_len,
                                 const std::string& tsb_key,
                                 bool propagate_channel_state,
                                 int fixed_frame_len)
 {
-    return gnuradio::make_block_sptr<ofdm_frame_equalizer_vcvc_impl>(
+    return gnuradio::make_block_sptr<ofdm_adaptive_frame_equalizer_vcvc_impl>(
         equalizer, cp_len, tsb_key, propagate_channel_state, fixed_frame_len);
 }
 
-ofdm_frame_equalizer_vcvc_impl::ofdm_frame_equalizer_vcvc_impl(
+ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl(
     ofdm_adaptive_equalizer_base::sptr equalizer,
     int cp_len,
     const std::string& tsb_key,
     bool propagate_channel_state,
     int fixed_frame_len)
     : tagged_stream_block(
-          "ofdm_frame_equalizer_vcvc",
+          "ofdm_adaptive_frame_equalizer_vcvc",
           io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
           io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
           tsb_key),
@@ -52,7 +52,6 @@ ofdm_frame_equalizer_vcvc_impl::ofdm_frame_equalizer_vcvc_impl(
       d_fixed_frame_len(fixed_frame_len),
       d_channel_state(equalizer->fft_len(), gr_complex(1, 0))
 {
-    d_logger->warn("ofdm_frame_equalizer_vcvc_impl::ofdm_frame_equalizer_vcvc_impl");
     if (tsb_key.empty() && fixed_frame_len == 0) {
         throw std::invalid_argument("Either specify a TSB tag or a fixed frame length!");
     }
@@ -67,9 +66,9 @@ ofdm_frame_equalizer_vcvc_impl::ofdm_frame_equalizer_vcvc_impl(
     set_tag_propagation_policy(TPP_DONT);
 }
 
-ofdm_frame_equalizer_vcvc_impl::~ofdm_frame_equalizer_vcvc_impl() {}
+ofdm_adaptive_frame_equalizer_vcvc_impl::~ofdm_adaptive_frame_equalizer_vcvc_impl() {}
 
-void ofdm_frame_equalizer_vcvc_impl::parse_length_tags(
+void ofdm_adaptive_frame_equalizer_vcvc_impl::parse_length_tags(
     const std::vector<std::vector<tag_t>>& tags, gr_vector_int& n_input_items_reqd)
 {
     if (d_fixed_frame_len) {
@@ -84,7 +83,7 @@ void ofdm_frame_equalizer_vcvc_impl::parse_length_tags(
 }
 
 
-int ofdm_frame_equalizer_vcvc_impl::work(int noutput_items,
+int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                                          gr_vector_int& ninput_items,
                                          gr_vector_const_void_star& input_items,
                                          gr_vector_void_star& output_items)

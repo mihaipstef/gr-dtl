@@ -39,7 +39,7 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}
           ${CMAKE_BINARY_DIR}/test_modules/gnuradio/dtl/
 )
-GR_ADD_TEST(qa_ofdm_frame_equalizer_vcvc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_frame_equalizer_vcvc.py)
+GR_ADD_TEST(qa_ofdm_adaptive_frame_equalizer_vcvc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_frame_equalizer_vcvc.py)
 GR_ADD_TEST(qa_ofdm_adaptive_packet_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_packet_header.py)
 GR_ADD_TEST(qa_ofdm_adaptive_repack_bits_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_repack_bits_bb.py)
 GR_ADD_TEST(qa_ofdm_adaptive_chunks_to_symbols_bc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_chunks_to_symbols_bc.py)

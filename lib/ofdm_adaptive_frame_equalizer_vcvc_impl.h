@@ -5,15 +5,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_IMPL_H
-#define INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_IMPL_H
+#ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_IMPL_H
+#define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_IMPL_H
 
-#include <gnuradio/dtl/ofdm_frame_equalizer_vcvc.h>
+#include <gnuradio/dtl/ofdm_adaptive_frame_equalizer_vcvc.h>
 
 namespace gr {
 namespace dtl {
 
-class ofdm_frame_equalizer_vcvc_impl : public ofdm_frame_equalizer_vcvc
+class ofdm_adaptive_frame_equalizer_vcvc_impl : public ofdm_adaptive_frame_equalizer_vcvc
 {
 private:
     const int d_fft_len;
@@ -28,12 +28,12 @@ protected:
                            gr_vector_int& n_input_items_reqd) override;
 
 public:
-    ofdm_frame_equalizer_vcvc_impl(gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
+    ofdm_adaptive_frame_equalizer_vcvc_impl(gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
                                    int cp_len,
                                    const std::string& len_tag_key,
                                    bool propagate_channel_state,
                                    int fixed_frame_len);
-    ~ofdm_frame_equalizer_vcvc_impl() override;
+    ~ofdm_adaptive_frame_equalizer_vcvc_impl() override;
 
     int work(int noutput_items,
              gr_vector_int& ninput_items,
@@ -44,4 +44,4 @@ public:
 } // namespace dtl
 } // namespace gr
 
-#endif /* INCLUDED_DTL_OFDM_FRAME_EQUALIZER_VCVC_IMPL_H */
+#endif /* INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_IMPL_H */

@@ -9,6 +9,8 @@
 #include "config.h"
 #endif
 
+#include "logger.h"
+
 #include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 
@@ -18,6 +20,7 @@
 namespace gr {
 namespace dtl {
 
+INIT_DTL_LOGGER("ofdm_adaptive_equalizer")
 
 using namespace gr::digital;
 
@@ -116,29 +119,24 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
         throw std::invalid_argument("Missing constellation tag.");
     }
 
-    if (d_constellations.find(get_constellation_type(*cnst_tag_it)) ==
-        d_constellations.end()) {
+    constellation_type_t cnst_type = get_constellation_type(*cnst_tag_it);
+
+    if (d_constellations.find(cnst_type) == d_constellations.end()) {
         throw std::invalid_argument("Unknown constellation");
     }
 
     constellation_sptr constellation =
         d_constellations[get_constellation_type(*cnst_tag_it)];
 
-    // Reallocate only if the number of pilot symbols/carrier is higher in this frame
-    // compared to previous frame.
-    size_t n_pilots_count = 0;
-    if (d_pilots.capacity() < n_sym * d_pilot_symbols[d_pilot_carr_set].size()) {
-        d_pilots.reserve(n_sym * d_pilot_symbols[d_pilot_carr_set].size());
-    }
 
     for (int i = 0; i < n_sym; i++) {
         for (int k = 0; k < d_fft_len; k++) {
-            if (!d_occupied_carriers[k]) {
-                continue;
-            }
+             if (!d_occupied_carriers[k]) {
+                 continue;
+             }
             if (!d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k]) {
                 // Update SNR estimation with each pilot
-                d_snr_estimator->update(1, &d_pilot_symbols[d_pilot_carr_set][k]);
+                d_snr_estimator->update(1, &frame[i * d_fft_len + k]);
                 // Update channel state
                 d_channel_state[k] = d_alpha * d_channel_state[k] +
                                      (1 - d_alpha) * frame[i * d_fft_len + k] /
@@ -159,6 +157,7 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
             d_pilot_carr_set = (d_pilot_carr_set + 1) % d_pilot_carriers.size();
         }
     }
+    DTL_LOG_DEBUG("n_sym:{}, SNRest:{}, Constellation:{}, d_pilot_carr_set:{}", n_sym, get_snr(), static_cast<int>(cnst_type), d_pilot_carriers.empty());
 }
 
 
