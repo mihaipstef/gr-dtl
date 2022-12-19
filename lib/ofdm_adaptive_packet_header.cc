@@ -71,10 +71,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 {
     // Use default
     unsigned int previous_header_number = d_header_number;
-    DTL_LOG_TAGS("Before default formatter", tags);
     bool ret_val = packet_header_default::header_formatter(packet_len, out, tags);
-    DTL_LOG_TAGS("After default formatter", tags);
-    _logger.warn("bits_per_byte: {}, packet_len: {}", d_bits_per_byte, packet_len);
     // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
     auto it = find_constellation_tag(tags);
 
@@ -99,13 +96,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 
     unsigned char crc = d_crc_impl.compute(buffer, sizeof(buffer));
 
-    _logger.debug("buffer: {0:x} {1:x} {2:x} {3:x} {4:x}",
-                  buffer[0],
-                  buffer[1],
-                  buffer[2],
-                  buffer[3],
-                  buffer[4]);
-    _logger.debug("crc: {0:x}", crc);
+    DTL_LOG_BYTES("header buffer:", buffer, 5);
 
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         out[k] = (unsigned char)((crc >> i) & d_mask);
@@ -121,11 +112,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                                 std::vector<tag_t>& tags)
 {
-    DTL_LOG_TAGS("Before default parser", tags);
-
     packet_header_default::header_parser(in, tags);
-
-    DTL_LOG_TAGS("After default parser", tags);
 
     // Determine constellation type and add the tag
     int k = 24; // Constellation type starts on bit 24
@@ -163,16 +150,11 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     if (pmt::to_long(it->value) * 8 % d_bits_per_payload_sym) {
         no_of_symbols++;
     }
-    _logger.debug("d_bits_per_payload_sym: {}, tag_value: {}, no_of_symbols: {}",
-                  d_bits_per_payload_sym,
-                  pmt::to_long(it->value),
-                  no_of_symbols);
+
     it->value = pmt::from_long(no_of_symbols);
 
     // Determine frame length and add the tag
     add_frame_length_tag(no_of_symbols, tags);
-
-    DTL_LOG_TAGS("After parser", tags);
 
     return true;
 }

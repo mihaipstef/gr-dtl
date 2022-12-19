@@ -167,7 +167,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                      pmt::init_c32vector(d_fft_len, d_channel_state));
     }
 
-    // Propagate estimated SNR
+    // Propagate estimated SNR via tags
     add_item_tag(0,
                  nitems_written(0),
                  get_estimated_snr_tag_key(),
