@@ -20,6 +20,7 @@ try:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
+        get_estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -32,6 +33,7 @@ except ImportError:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
+        get_estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -48,16 +50,16 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
     def test_happy_flow(self):
         consts = {
             constellation_type_t.QPSK: digital.constellation_qpsk(),
-            #constellation_type_t.PSK8: digital.constellation_8psk(),
+            constellation_type_t.PSK8: digital.constellation_8psk(),
         }
         fft_len = 8
 
         for c, cnst in consts.items():
-            #           4   5  6  7   0  1  2   3
-            tx_data = [-1, -1, 1, 2, -1, 3, 0, -1,  # 0
-                    -1, -1, 0, 2, -1, 2, 0, -1,  # 8
-                    -1, -1, 3, 0, -1, 1, 0, -1,  # 16 (Pilot symbols)
-                    -1, -1, 1, 1, -1, 0, 2, -1]  # 24
+            #            4   5  6  7   0  1  2   3
+            tx_data = [ -1, -1, 1, 2, -1, 3, 0, -1,  # 0
+                        -1, -1, 0, 2, -1, 2, 0, -1,  # 8
+                        -1, -1, 3, 0, -1, 1, 0, -1,  # 16 (Pilot symbols)
+                        -1, -1, 1, 1, -1, 0, 2, -1]  # 24
             tx_signal = [
                 cnst.map_to_points_v(x)[0] if x != -
                 1 else 0 for x in tx_data]
@@ -121,6 +123,8 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
             self.assertEqual(tx_data, rx_data)
             self.assertEqual(len(sink.tags()), 3)
+            self.assertIn(get_constellation_tag_key(), [t.key for t in sink.tags()])
+            self.assertIn(get_estimated_snr_tag_key(), [t.key for t in sink.tags()])
 
 
 if __name__ == '__main__':

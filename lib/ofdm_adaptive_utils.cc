@@ -22,6 +22,8 @@ INIT_DTL_LOGGER("ofdm_adaptive_utils")
 using namespace gr::digital;
 
 static const pmt::pmt_t CONSTELLATION_TAG_KEY = pmt::string_to_symbol("constellation_tag_key");
+static const pmt::pmt_t ESTIMATED_SNR_TAG_KEY = pmt::string_to_symbol("estimated_snr_tag_key");
+
 
 template <class T>
 struct constellation_helper {
@@ -96,6 +98,10 @@ std::vector<tag_t>::const_iterator DTL_API find_constellation_tag(const std::vec
 
 pmt::pmt_t DTL_API get_constellation_tag_key() {
     return CONSTELLATION_TAG_KEY;
+}
+
+pmt::pmt_t DTL_API get_estimated_snr_tag_key() {
+    return ESTIMATED_SNR_TAG_KEY;
 }
 
 } /* namespace dtl */

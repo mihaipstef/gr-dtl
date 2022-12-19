@@ -31,3 +31,6 @@ static const char* __doc_gr_dtl_find_constellation_tag = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_get_constellation_tag_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_get_estimated_snr_tag_key = R"doc()doc";

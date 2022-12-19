@@ -131,10 +131,11 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
 
     for (int i = 0; i < n_sym; i++) {
         for (int k = 0; k < d_fft_len; k++) {
-             if (!d_occupied_carriers[k]) {
+            bool is_pilot_carreier = !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];
+             if (!d_occupied_carriers[k] && !is_pilot_carreier) {
                  continue;
              }
-            if (!d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k]) {
+            if (is_pilot_carreier) {
                 // Update SNR estimation with each pilot
                 d_snr_estimator->update(1, &frame[i * d_fft_len + k]);
                 // Update channel state
