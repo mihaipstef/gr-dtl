@@ -27,7 +27,6 @@ include(GrPybind)
 ########################################################################
 # Python Bindings
 ########################################################################
-
 list(APPEND dtl_python_files
     ofdm_adaptive_equalizer_python.cc
     ofdm_adaptive_frame_equalizer_vcvc_python.cc
@@ -36,7 +35,10 @@ list(APPEND dtl_python_files
     ofdm_adaptive_repack_bits_bb_python.cc
     ofdm_adaptive_chunks_to_symbols_bc_python.cc
     ofdm_adaptive_constellation_decoder_cb_python.cc
-    ofdm_adaptive_frame_snr_python.cc python_bindings.cc)
+    ofdm_adaptive_frame_snr_python.cc
+    ofdm_adaptive_feedback_decision_python.cc
+    ofdm_adaptive_feedback_format_python.cc
+    python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..

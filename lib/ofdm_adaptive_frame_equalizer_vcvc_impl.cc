@@ -22,23 +22,35 @@ using namespace gr::digital;
 
 static const pmt::pmt_t CARR_OFFSET_KEY = pmt::mp("ofdm_sync_carr_offset");
 static const pmt::pmt_t CHAN_TAPS_KEY = pmt::mp("ofdm_sync_chan_taps");
+static const pmt::pmt_t FEEDBACK_PORT = pmt::mp("feedback_port");
 
-ofdm_adaptive_frame_equalizer_vcvc::sptr
-ofdm_adaptive_frame_equalizer_vcvc::make(ofdm_adaptive_equalizer_base::sptr equalizer,
-                                int cp_len,
-                                const std::string& tsb_key,
-                                bool propagate_channel_state,
-                                int fixed_frame_len)
+
+ofdm_adaptive_frame_equalizer_vcvc::sptr ofdm_adaptive_frame_equalizer_vcvc::make(
+    ofdm_adaptive_equalizer_base::sptr equalizer,
+    ofdm_adaptive_feedback_decision_base::sptr feedback_decision,
+    int cp_len,
+    const std::string& tsb_key,
+    bool propagate_channel_state,
+    bool propagate_feedback_tags,
+    int fixed_frame_len)
 {
     return gnuradio::make_block_sptr<ofdm_adaptive_frame_equalizer_vcvc_impl>(
-        equalizer, cp_len, tsb_key, propagate_channel_state, fixed_frame_len);
+        equalizer,
+        feedback_decision,
+        cp_len,
+        tsb_key,
+        propagate_channel_state,
+        propagate_feedback_tags,
+        fixed_frame_len);
 }
 
 ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl(
     ofdm_adaptive_equalizer_base::sptr equalizer,
+    ofdm_adaptive_feedback_decision_base::sptr feedback_decision,
     int cp_len,
     const std::string& tsb_key,
     bool propagate_channel_state,
+    bool propagate_feedback_tags,
     int fixed_frame_len)
     : tagged_stream_block(
           "ofdm_adaptive_frame_equalizer_vcvc",
@@ -50,7 +62,10 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
       d_eq(equalizer),
       d_propagate_channel_state(propagate_channel_state),
       d_fixed_frame_len(fixed_frame_len),
-      d_channel_state(equalizer->fft_len(), gr_complex(1, 0))
+      d_channel_state(equalizer->fft_len(), gr_complex(1, 0)),
+      d_decision_feedback_port(FEEDBACK_PORT),
+      d_decision_feedback(d_decision_feedback),
+      d_propagate_feedback_tags(propagate_feedback_tags)
 {
     if (tsb_key.empty() && fixed_frame_len == 0) {
         throw std::invalid_argument("Either specify a TSB tag or a fixed frame length!");
@@ -64,6 +79,8 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     set_relative_rate(1, 1);
     // Really, we have TPP_ONE_TO_ONE, but the channel state is not propagated
     set_tag_propagation_policy(TPP_DONT);
+
+    message_port_register_out(d_decision_feedback_port);
 }
 
 ofdm_adaptive_frame_equalizer_vcvc_impl::~ofdm_adaptive_frame_equalizer_vcvc_impl() {}
@@ -82,11 +99,10 @@ void ofdm_adaptive_frame_equalizer_vcvc_impl::parse_length_tags(
     }
 }
 
-
 int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
-                                         gr_vector_int& ninput_items,
-                                         gr_vector_const_void_star& input_items,
-                                         gr_vector_void_star& output_items)
+                                                  gr_vector_int& ninput_items,
+                                                  gr_vector_const_void_star& input_items,
+                                                  gr_vector_void_star& output_items)
 {
     const gr_complex* in = (const gr_complex*)input_items[0];
     gr_complex* out = (gr_complex*)output_items[0];
@@ -163,16 +179,36 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     if (d_propagate_channel_state) {
         add_item_tag(0,
                      nitems_written(0),
-                     pmt::string_to_symbol("ofdm_sync_chan_taps"),
+                     CHAN_TAPS_KEY,
                      pmt::init_c32vector(d_fft_len, d_channel_state));
     }
 
-    // Propagate estimated SNR via tags
-    add_item_tag(0,
-                 nitems_written(0),
-                 get_estimated_snr_tag_key(),
-                 pmt::from_double(d_eq->get_snr()));
 
+    // Publish decided constellation and FEC scheme to decision feedback port.
+    ofdm_adaptive_feedback_t feedback =
+        d_decision_feedback->get_feedback(d_eq->get_snr());
+    std::vector<unsigned char> feedback_vector{
+        static_cast<unsigned char>(feedback.first),
+        static_cast<unsigned char>(feedback.second)
+    };
+    pmt::pmt_t feedback_msg = pmt::init_u8vector(feedback_vector.size(), feedback_vector);
+    message_port_pub(d_decision_feedback_port, feedback_msg);
+
+    // Propagate feedback via tags
+    if (d_propagate_feedback_tags) {
+        add_item_tag(0,
+                     nitems_written(0),
+                     estimated_snr_tag_key(),
+                     pmt::from_double(d_eq->get_snr()));
+        add_item_tag(0,
+                     nitems_written(0),
+                     feedback_constellation_key(),
+                     pmt::from_long(static_cast<unsigned char>(feedback.first)));
+        add_item_tag(0,
+                     nitems_written(0),
+                     feedback_fec_key(),
+                     pmt::from_double(static_cast<unsigned char>(feedback.second)));
+    }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {
         consume_each(frame_len);

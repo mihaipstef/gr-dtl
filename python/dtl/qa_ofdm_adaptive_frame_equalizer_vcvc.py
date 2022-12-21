@@ -20,7 +20,7 @@ try:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        get_estimated_snr_tag_key,
+        estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -33,7 +33,7 @@ except ImportError:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        get_estimated_snr_tag_key,
+        estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -124,7 +124,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             self.assertEqual(tx_data, rx_data)
             self.assertEqual(len(sink.tags()), 3)
             self.assertIn(get_constellation_tag_key(), [t.key for t in sink.tags()])
-            self.assertIn(get_estimated_snr_tag_key(), [t.key for t in sink.tags()])
+            self.assertIn(estimated_snr_tag_key(), [t.key for t in sink.tags()])
 
 
 if __name__ == '__main__':

@@ -16,5 +16,8 @@ install(FILES
     ofdm_adaptive_utils.h
     ofdm_adaptive_repack_bits_bb.h
     ofdm_adaptive_chunks_to_symbols_bc.h
-    ofdm_adaptive_constellation_decoder_cb.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_constellation_decoder_cb.h
+    ofdm_adaptive_feedback_decision.h
+    ofdm_adaptive_feedback_decision.h
+    DESTINATION include/gnuradio/dtl
 )

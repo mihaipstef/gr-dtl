@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(749bea4af958ee615d2c3e53bb605c84)                     */
+/* BINDTOOL_HEADER_FILE_HASH(f258c23ee076c46f49ac4f9d46b2ebc0)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -77,7 +77,15 @@ void bind_ofdm_adaptive_utils(py::module& m)
           D(get_constellation_tag_key));
 
 
-    m.def("get_estimated_snr_tag_key",
-          &::gr::dtl::get_estimated_snr_tag_key,
-          D(get_estimated_snr_tag_key));
+    m.def("estimated_snr_tag_key",
+          &::gr::dtl::estimated_snr_tag_key,
+          D(estimated_snr_tag_key));
+
+
+    m.def("feedback_constellation_key",
+          &::gr::dtl::feedback_constellation_key,
+          D(feedback_constellation_key));
+
+
+    m.def("feedback_fec_key", &::gr::dtl::feedback_fec_key, D(feedback_fec_key));
 }
