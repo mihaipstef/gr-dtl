@@ -13,6 +13,8 @@
 namespace gr {
 namespace dtl {
 
+using namespace gr::digital;
+
 ofdm_adaptive_feedback_format::sptr
 ofdm_adaptive_feedback_format::make(const std::string& access_code, int threshold)
 {
@@ -52,7 +54,6 @@ ofdm_adaptive_feedback_format::ofdm_adaptive_feedback_format(
 
 ofdm_adaptive_feedback_format::~ofdm_adaptive_feedback_format() {}
 
-
 unsigned long long ofdm_adaptive_feedback_format::access_code() const
 {
     return d_access_code;
@@ -67,7 +68,7 @@ bool ofdm_adaptive_feedback_format::format(int nbytes_in,
 {
     // Creating the output pmt copies data; free our own here when done.
     volk::vector<uint8_t> bytes_out(header_nbytes());
-    gr::digital::header_buffer header(bytes_out.data());
+    header_buffer header(bytes_out.data());
     header.add_field64(d_access_code, d_access_code_len);
     header.add_field8(input[0]);
     header.add_field8(input[1]);

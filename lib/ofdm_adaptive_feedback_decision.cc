@@ -7,18 +7,24 @@
 
 #include <gnuradio/dtl/ofdm_adaptive_feedback_decision.h>
 
+#include "logger.h"
 #include <utility>
 #include <vector>
 
 namespace gr {
 namespace dtl {
 
+INIT_DTL_LOGGER("ofdm_adaptive_feedback_decision");
 
 #define INSERT_DECISION_ENTRY(table, lower_snr_th, higher_snr_th, constellation_type, fec_scheme) \
     table.push_back(std::make_pair( \
         std::make_pair<double, double>(lower_snr_th, higher_snr_th), \
         ofdm_adaptive_feedback_t(constellation_type, fec_scheme) \
     ))
+
+ofdm_adaptive_feedback_decision_base::~ofdm_adaptive_feedback_decision_base()
+{
+}
 
 ofdm_adaptive_feedback_decision::sptr ofdm_adaptive_feedback_decision::make()
 {
@@ -41,6 +47,7 @@ ofdm_adaptive_feedback_decision::~ofdm_adaptive_feedback_decision()
 
 ofdm_adaptive_feedback_t ofdm_adaptive_feedback_decision::get_feedback(double estimated_snr)
 {
+    DTL_LOG_DEBUG("Get feedback for snr={}", estimated_snr);
     for (auto& lut_entry: feedback_lut)
     {
         if (estimated_snr >= lut_entry.first.first && estimated_snr < lut_entry.first.second) {

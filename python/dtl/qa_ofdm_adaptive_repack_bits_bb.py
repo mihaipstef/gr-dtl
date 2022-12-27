@@ -7,7 +7,7 @@
 #
 
 from gnuradio import gr, gr_unittest
-from gnuradio import blocks, digital
+from gnuradio import blocks
 import pmt
 try:
     from gnuradio.dtl import (

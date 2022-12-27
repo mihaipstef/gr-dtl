@@ -26,7 +26,7 @@ public:
 
     virtual ofdm_adaptive_feedback_t get_feedback(double estimated_snr) = 0;
 
-    virtual ~ofdm_adaptive_feedback_decision_base() = 0;
+    virtual ~ofdm_adaptive_feedback_decision_base();
 };
 
 

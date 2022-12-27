@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_feedback_decision.h) */
-/* BINDTOOL_HEADER_FILE_HASH(23d8ced22f3ab21f6eac2aad9fcdb00e)                     */
+/* BINDTOOL_HEADER_FILE_HASH(70d5f1a95eced6fa6162bddbc067c8b9)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -37,21 +37,20 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
 
     py::class_<
         ofdm_adaptive_feedback_decision_base,
-        std::enable_shared_from_this<gr::dtl::ofdm_adaptive_feedback_decision_base>,
         std::shared_ptr<ofdm_adaptive_feedback_decision_base>>(
         m,
         "ofdm_adaptive_feedback_decision_base",
         D(ofdm_adaptive_feedback_decision_base))
 
-        .def(py::init<gr::dtl::ofdm_adaptive_feedback_decision_base const&>(),
-             py::arg("arg0"),
-             D(ofdm_adaptive_feedback_decision_base,
-               ofdm_adaptive_feedback_decision_base,
-               0))
-        .def(py::init<>(),
-             D(ofdm_adaptive_feedback_decision_base,
-               ofdm_adaptive_feedback_decision_base,
-               1))
+        //    .def(py::init<gr::dtl::ofdm_adaptive_feedback_decision_base const&>(),
+        //         py::arg("arg0"),
+        //         D(ofdm_adaptive_feedback_decision_base,
+        //           ofdm_adaptive_feedback_decision_base,
+        //           0))
+        //    .def(py::init<>(),
+        //         D(ofdm_adaptive_feedback_decision_base,
+        //           ofdm_adaptive_feedback_decision_base,
+        //           1))
 
 
         .def("get_feedback",

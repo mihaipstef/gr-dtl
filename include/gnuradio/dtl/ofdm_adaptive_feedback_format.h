@@ -58,6 +58,11 @@ protected:
     bool header_ok() override;
     int header_payload() override;
 
+    // WORKAROUND to fix "Undefined symbol" errors
+    inline void enter_search() override { /* Nothing */ }
+    inline void enter_have_sync() override { /* Nothing */ }
+    inline void enter_have_header(int payload_len) override { /* Nothing */}
+
 private:
     bool parse_feedback(int nbits_in,
                         const unsigned char* input,

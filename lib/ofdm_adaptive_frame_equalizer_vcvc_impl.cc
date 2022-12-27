@@ -64,7 +64,7 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
       d_fixed_frame_len(fixed_frame_len),
       d_channel_state(equalizer->fft_len(), gr_complex(1, 0)),
       d_decision_feedback_port(FEEDBACK_PORT),
-      d_decision_feedback(d_decision_feedback),
+      d_decision_feedback(feedback_decision),
       d_propagate_feedback_tags(propagate_feedback_tags)
 {
     if (tsb_key.empty() && fixed_frame_len == 0) {

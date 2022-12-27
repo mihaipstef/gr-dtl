@@ -29,6 +29,8 @@ namespace py = pybind11;
     void bind_ofdm_adaptive_chunks_to_symbols_bc(py::module& m);
     void bind_ofdm_adaptive_constellation_decoder_cb(py::module& m);
     void bind_ofdm_adaptive_frame_snr(py::module& m);
+    void bind_ofdm_adaptive_feedback_decision(py::module& m);
+    void bind_ofdm_adaptive_feedback_format(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -65,5 +67,7 @@ PYBIND11_MODULE(dtl_python, m)
     bind_ofdm_adaptive_chunks_to_symbols_bc(m);
     bind_ofdm_adaptive_constellation_decoder_cb(m);
     bind_ofdm_adaptive_frame_snr(m);
+    bind_ofdm_adaptive_feedback_decision(m);
+    bind_ofdm_adaptive_feedback_format(m);
     // ) END BINDING_FUNCTION_CALLS
 }
