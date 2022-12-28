@@ -67,6 +67,7 @@ private:
     bool parse_feedback(int nbits_in,
                         const unsigned char* input,
                         std::vector<pmt::pmt_t>& info);
+    bool d_feedback_ok;
 };
 
 } // namespace dtl

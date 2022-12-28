@@ -6,14 +6,19 @@
  */
 
 #include <gnuradio/dtl/ofdm_adaptive_feedback_format.h>
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/math.h>
-#include <volk/volk_alloc.hh>
 #include <cstring>
+#include "logger.h"
+#include <volk/volk_alloc.hh>
+
 
 namespace gr {
 namespace dtl {
 
 using namespace gr::digital;
+
+INIT_DTL_LOGGER("ofdm_adaptive_feedback_format");
 
 ofdm_adaptive_feedback_format::sptr
 ofdm_adaptive_feedback_format::make(const std::string& access_code, int threshold)
@@ -28,10 +33,10 @@ ofdm_adaptive_feedback_format::ofdm_adaptive_feedback_format(
       d_data_reg(0),
       d_mask(0),
       d_threshold(threshold),
-      d_crc8(8, 0x07, 0xFF, 0x00, false, false)
+      d_crc8(8, 0x07, 0xFF, 0x00, false, false),
+      d_feedback_ok(false)
 {
     d_access_code_len = access_code.length(); // # of bits in the access code
-
 
     if (d_threshold > d_access_code_len) {
         throw std::runtime_error("ofdm_adaptive_feedback_format: Cannot set threshold "
@@ -87,9 +92,22 @@ bool ofdm_adaptive_feedback_format::parse_feedback(int nbits_in,
     while (nbits_processed <= nbits_in) {
         d_hdr_reg.insert_bit(input[nbits_processed++]);
         if (d_hdr_reg.length() == (header_nbits() - d_access_code_len)) {
-            bool header_result = header_ok();
+            unsigned char constellation_type = d_hdr_reg.extract_field8(0, 8);
+            unsigned char fec_scheme = d_hdr_reg.extract_field8(8, 8);
+            unsigned char crc = d_hdr_reg.extract_field8(16, 8);
+            unsigned char buffer[] = { constellation_type, fec_scheme };
+            uint8_t crc_clcd = d_crc8.compute(buffer, sizeof(buffer));
+            if (crc_clcd == crc) {
+                d_feedback_ok = true;
+                pmt::pmt_t parsed_feedback = pmt::make_dict();
+                parsed_feedback = pmt::dict_add(parsed_feedback, feedback_constellation_key(), pmt::from_long(constellation_type));
+                parsed_feedback = pmt::dict_add(parsed_feedback, feedback_fec_key(), pmt::from_long(fec_scheme));
+                info.push_back(parsed_feedback);
+            }
+            DTL_LOG_DEBUG("Parsed feedback: {}", d_feedback_ok);
+
             d_hdr_reg.clear();
-            return header_result;
+            return d_feedback_ok;
         }
     }
     return false;
@@ -102,6 +120,7 @@ bool ofdm_adaptive_feedback_format::parse(int nbits_in,
                                           int& nbits_processed)
 {
     nbits_processed = 0;
+    d_feedback_ok = false;
     // Look for the access code in input bits and parse the feedback
     while (nbits_processed < nbits_in) {
         d_data_reg = (d_data_reg << 1) | ((input[nbits_processed++]) & 0x1);
@@ -112,9 +131,11 @@ bool ofdm_adaptive_feedback_format::parse(int nbits_in,
         volk_64u_popcnt(&nwrong, wrong_bits);
         // If access code found...
         if (nwrong <= d_threshold) {
-            //... parse feedback.
-            return parse_feedback(
-                nbits_in - nbits_processed, &input[nbits_processed], info);
+            //... and parsed feedback ok return success. Otherwise, continue.
+            if (parse_feedback(
+                    nbits_in - nbits_processed, &input[nbits_processed], info)) {
+                return true;
+            }
         }
     }
     return false;
@@ -127,17 +148,12 @@ size_t ofdm_adaptive_feedback_format::header_nbits() const
 
 bool ofdm_adaptive_feedback_format::header_ok()
 {
-    unsigned char constellation_type = d_hdr_reg.extract_field16(0, 8);
-    unsigned char fec_scheme = d_hdr_reg.extract_field16(8, 16);
-    unsigned char crc = d_hdr_reg.extract_field16(16, 24);
-    unsigned char buffer[] = { constellation_type, fec_scheme };
-    uint8_t crc_clcd = d_crc8.compute(buffer, sizeof(buffer));
-    return crc_clcd == crc;
+    return d_feedback_ok;
 }
 
 int ofdm_adaptive_feedback_format::header_payload()
 {
-    //There is no payload.
+    // There is no payload.
     return 0;
 }
 
