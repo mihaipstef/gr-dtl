@@ -44,3 +44,5 @@ GR_ADD_TEST(qa_ofdm_adaptive_packet_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_
 GR_ADD_TEST(qa_ofdm_adaptive_repack_bits_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_repack_bits_bb.py)
 GR_ADD_TEST(qa_ofdm_adaptive_chunks_to_symbols_bc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_chunks_to_symbols_bc.py)
 GR_ADD_TEST(qa_ofdm_adaptive_feedback_format ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_feedback_format.py)
+GR_ADD_TEST(qa_ofdm_adaptive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive.py)
+
