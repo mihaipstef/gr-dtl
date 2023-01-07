@@ -1,0 +1,23 @@
+id: dtl_ofdm_adaptive_tx
+label: OFDM Adaptive Transmitter
+flags: [ python ]
+category: '[DTL]'
+
+inputs:
+-   domain: stream
+    dtype: byte
+-   domain: stream
+    dtype: complex
+
+outputs:
+-   domain: stream
+    dtype: complex
+-   domain: message
+    id: feedback_rcvd
+
+templates:
+    imports: from gnuradio import dtl
+    make: |-
+        dtl.ofdm_adaptive_tx(tx_config)
+
+file_format: 1

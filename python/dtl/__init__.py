@@ -12,12 +12,13 @@ description here (python/__init__.py).
 '''
 import os
 from gnuradio import digital
-# import pybind11 generated symbols into the dtl namespace
 try:
-    # this might fail if the module is python-only
     from .dtl_python import *
 except ModuleNotFoundError:
-    pass
-
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    __path__.append(os.path.join(dirname, "bindings"))
+    from .dtl_python import *
 # import any pure python here
-#
+from .ofdm_adaptive_config import *
+from .ofdm_adaptive_rx import *
+from .ofdm_adaptive_tx import *

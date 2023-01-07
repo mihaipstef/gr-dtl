@@ -1,0 +1,340 @@
+options:
+  parameters:
+    author: ''
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: ofdm_adaptive_example
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: OFDM Adaptive Example
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 4.0]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: n_bytes
+  id: variable
+  parameters:
+    comment: ''
+    value: '100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [280, 4.0]
+    rotation: 0
+    state: true
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '32000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 4.0]
+    rotation: 0
+    state: enabled
+- name: blocks_message_debug_0
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    en_uvec: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1672, 352.0]
+    rotation: 0
+    state: true
+- name: blocks_message_debug_1
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    en_uvec: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1168, 344.0]
+    rotation: 0
+    state: true
+- name: blocks_stream_to_tagged_stream_0
+  id: blocks_stream_to_tagged_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    len_tag_key: packet_len
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packet_len: n_bytes
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 236.0]
+    rotation: 0
+    state: enabled
+- name: blocks_vector_source_x_0_0
+  id: blocks_vector_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    repeat: 'True'
+    tags: ()
+    type: byte
+    vector: range(n_bytes)
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 228.0]
+    rotation: 0
+    state: enabled
+- name: channels_channel_model_0
+  id: channels_channel_model
+  parameters:
+    affinity: ''
+    alias: ''
+    block_tags: 'True'
+    comment: ''
+    epsilon: '1.0'
+    freq_offset: '0.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_voltage: '0.0'
+    seed: '0'
+    taps: 1.0 + 1.0j
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1152, 212.0]
+    rotation: 0
+    state: true
+- name: channels_channel_model_0_0
+  id: channels_channel_model
+  parameters:
+    affinity: ''
+    alias: ''
+    block_tags: 'True'
+    comment: ''
+    epsilon: '1.0'
+    freq_offset: '0.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_voltage: '0.0'
+    seed: '0'
+    taps: 1.0 + 1.0j
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 444.0]
+    rotation: 180
+    state: true
+- name: dtl_ofdm_adaptive_rx_0
+  id: dtl_ofdm_adaptive_rx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1352, 216.0]
+    rotation: 0
+    state: true
+- name: dtl_ofdm_adaptive_rx_config_0
+  id: dtl_ofdm_adaptive_rx_config
+  parameters:
+    alias: ''
+    comment: ''
+    cp_len: '16'
+    debug_log: 'False'
+    fft_len: '64'
+    occupied_carriers: ()
+    pilot_carriers: ()
+    pilot_symbols: ()
+    rolloff: '0'
+    scramble_bits: 'False'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1384, 44.0]
+    rotation: 0
+    state: true
+- name: dtl_ofdm_adaptive_tx_0
+  id: dtl_ofdm_adaptive_tx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [816, 248.0]
+    rotation: 0
+    state: true
+- name: dtl_ofdm_adaptive_tx_config_0
+  id: dtl_ofdm_adaptive_tx_config
+  parameters:
+    alias: ''
+    comment: ''
+    cp_len: '16'
+    debug_log: 'False'
+    fft_len: '64'
+    occupied_carriers: ()
+    pilot_carriers: ()
+    pilot_symbols: ()
+    rolloff: '0'
+    scramble_bits: 'False'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [736, 44.0]
+    rotation: 0
+    state: true
+- name: fec_ber_bf_0
+  id: fec_ber_bf
+  parameters:
+    affinity: ''
+    alias: ''
+    berlimit: '-7.0'
+    berminerrors: '100'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    test_mode: 'False'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [544, 584.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_0
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [776, 596.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_1
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: feedback_tx
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1640, 260.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_2
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: data_rx
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1640, 204.0]
+    rotation: 0
+    state: true
+- name: virtual_source_0
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: feedback_tx
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1024, 476.0]
+    rotation: 180
+    state: true
+- name: virtual_source_1
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: data_rx
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [304, 612.0]
+    rotation: 0
+    state: true
+
+connections:
+- [blocks_stream_to_tagged_stream_0, '0', dtl_ofdm_adaptive_tx_0, '0']
+- [blocks_vector_source_x_0_0, '0', blocks_stream_to_tagged_stream_0, '0']
+- [blocks_vector_source_x_0_0, '0', fec_ber_bf_0, '0']
+- [channels_channel_model_0, '0', dtl_ofdm_adaptive_rx_0, '0']
+- [channels_channel_model_0_0, '0', dtl_ofdm_adaptive_tx_0, '1']
+- [dtl_ofdm_adaptive_rx_0, '0', virtual_sink_2, '0']
+- [dtl_ofdm_adaptive_rx_0, '1', virtual_sink_1, '0']
+- [dtl_ofdm_adaptive_rx_0, feedback, blocks_message_debug_0, print]
+- [dtl_ofdm_adaptive_tx_0, '0', channels_channel_model_0, '0']
+- [dtl_ofdm_adaptive_tx_0, feedback_rcvd, blocks_message_debug_1, print]
+- [fec_ber_bf_0, '0', virtual_sink_0, '0']
+- [virtual_source_0, '0', channels_channel_model_0_0, '0']
+- [virtual_source_1, '0', fec_ber_bf_0, '1']
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.4.0

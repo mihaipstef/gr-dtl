@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright 2013 Free Software Foundation, Inc.
 #
@@ -26,15 +26,17 @@ from gnuradio.gr import (
 
 from ofdm_adaptive_rx import ofdm_adaptive_rx
 from ofdm_adaptive_tx import ofdm_adaptive_tx
-from ofdm_adaptive_feedback_rx import ofdm_adaptive_feedback_rx
-from ofdm_adaptive_feedback_tx import ofdm_adaptive_feedback_tx
-from ofdm_adaptive_config import ofdm_adaptive_default_config as cfg
+from ofdm_adaptive_config import (
+    ofdm_adaptive_tx_config as tx_cfg,
+    ofdm_adaptive_rx_config as rx_cfg,
+)
 
 
 class qa_ofdm_adaptive(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
+        self.n_bytes = 100
 
     def tearDown(self):
         self.tb = None
@@ -46,27 +48,29 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         packet_constellation = 10 * [dtl.constellation_type_t.PSK8,
                                      dtl.constellation_type_t.QPSK, dtl.constellation_type_t.QAM16]
         packet_constellation = 10 * [dtl.constellation_type_t.QAM16]
-        n_bytes = 100
         test_data = []
         tags = []
         for i, c in enumerate(packet_constellation):
-            test_data += list([random.randint(0, 255) for x in range(n_bytes)])
+            test_data += list([random.randint(0, 255) for x in range(self.n_bytes)])
             frame_constellation_tag = tag_t()
-            frame_constellation_tag.offset = i * n_bytes
+            frame_constellation_tag.offset = i * self.n_bytes
             frame_constellation_tag.key = dtl.get_constellation_tag_key()
             frame_constellation_tag.value = pmt.from_long(c)
             packet_length_tag = tag_t()
-            packet_length_tag.offset = i * n_bytes
+            packet_length_tag.offset = i * self.n_bytes
             packet_length_tag.key = pmt.string_to_symbol(
-                cfg.packet_length_tag_key)
-            packet_length_tag.value = pmt.from_long(n_bytes)
+                tx_cfg.packet_length_tag_key)
+            packet_length_tag.value = pmt.from_long(self.n_bytes)
             tags += [frame_constellation_tag, packet_length_tag]
 
         # Tx
         src = blocks.vector_source_b(test_data, False, 1, tags)
-        tx = ofdm_adaptive_tx(cfg)
+        feedback_src = blocks.vector_source_c([0 for _ in range(50)])
+        tx = ofdm_adaptive_tx(tx_cfg)
         sink = blocks.vector_sink_c()
-        self.tb.connect(src, tx, sink)
+        self.tb.connect(src, (tx,0), sink)
+        self.tb.connect(feedback_src, (tx,1))
+
         self.tb.run()
         tx_samples = [0 for _ in range(100)] + \
             sink.data() + [0 for x in range(1000)]
@@ -74,21 +78,25 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # Channel
         freq_offset = 2.15
         channel = channels.channel_model(
-            0.001, frequency_offset=freq_offset * 1.0/cfg.fft_len,)
+            0.001, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
 
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
-        rx = ofdm_adaptive_rx(cfg)
+        rx = ofdm_adaptive_rx(rx_cfg)
         rx_sink = blocks.vector_sink_b()
-        self.tb.connect(rx_src, channel, rx, rx_sink)
+        null_sink = blocks.null_sink(gr.sizeof_gr_complex)
+
+        self.tb.connect(rx_src, channel, rx)
+        self.tb.connect((rx, 0), rx_sink)
+        self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
         self.tb.run()
         rx_data = rx_sink.data()
 
         success = True
-        n_packets = len(test_data)//n_bytes
+        n_packets = len(test_data)//self.n_bytes
         for i in range(n_packets):
-            test_packet = test_data[i*n_bytes:(i+1)*n_bytes]
-            rx_packet = rx_data[i*n_bytes:(i+1)*n_bytes]
+            test_packet = test_data[i*self.n_bytes:(i+1)*self.n_bytes]
+            rx_packet = rx_data[i*self.n_bytes:(i+1)*self.n_bytes]
             packet_success = test_packet == rx_packet
             status = "success" if packet_success else "failed"
             print(f"Packet {i}/{n_packets} {status}")
@@ -104,30 +112,40 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         msgs = [pmt.cons(pmt.PMT_NIL, pmt.init_u8vector(2, d))
                 for d in test_data]
 
-        feedback_tx = ofdm_adaptive_feedback_tx()
-        feedback_rx = ofdm_adaptive_feedback_rx(1)
+        rx = ofdm_adaptive_rx(rx_cfg)
+        tx = ofdm_adaptive_tx(tx_cfg)
+        rx_src = blocks.vector_source_c([0 for _ in range(self.n_bytes)])
+        feedback_sink = blocks.vector_sink_c()
 
-        tx_sink = blocks.vector_sink_c()
-        self.tb.connect(feedback_tx, tx_sink)
+        self.tb.connect(rx_src, rx)
+        self.tb.connect((rx, 0), blocks.null_sink(gr.sizeof_char))
+        self.tb.connect((rx,1), feedback_sink)
 
         for msg in msgs:
-            feedback_tx._post(pmt.intern("feedback_in"), msg)
-
+            rx.feedback_formatter._post(pmt.intern("in"), msg)
             self.tb.start()
-            # Sleep to allow the message through
-            # HACK: Not very reliable
+            # HACK: Sleep to allow the message through
+            # Not very robust
             time.sleep(1)
             self.tb.stop()
             self.tb.wait()
 
-        rx_src = blocks.vector_source_c(
-            [0 for x in range(0)] + list(tx_sink.data()) + [0 for x in range(200)])
-        self.tb.connect(rx_src, feedback_rx)
+        # Channel
+        freq_offset = 0.001
+        channel = channels.channel_model(
+            0.01, frequency_offset=freq_offset,)
+
+        feedback_src = blocks.vector_source_c(
+            [0 for _ in range(1000)] + list(feedback_sink.data()) + [0 for _ in range(1000)])
+        tx_src = blocks.vector_source_b([0 for _ in range(self.n_bytes)])
+        self.tb.connect(tx_src, (tx,0))
+        self.tb.connect(feedback_src, channel, (tx,1))
+        self.tb.connect(tx, blocks.null_sink(gr.sizeof_gr_complex))
         msg_debug = blocks.message_debug()
-        self.tb.msg_connect(feedback_rx, "feedback_out", msg_debug, "store")
+        self.tb.msg_connect(tx, "feedback_rcvd", msg_debug, "store")
         self.tb.start()
-        # Sleep to allow the message through
-        # HACK: Not very reliable
+        # HACK: Sleep to allow the message through
+        # Not very robust
         time.sleep(1)
         self.tb.stop()
         self.tb.wait()

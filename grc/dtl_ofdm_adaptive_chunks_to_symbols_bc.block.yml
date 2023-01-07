@@ -1,5 +1,5 @@
 id: dtl_ofdm_adaptive_chunks_to_symbols_bc
-label: Adaptive Chunks to Symbols
+label: OFDM Adaptive Chunks to Symbols
 category: '[DTL]'
 
 templates:
