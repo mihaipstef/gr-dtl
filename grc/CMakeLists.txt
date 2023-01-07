@@ -10,5 +10,9 @@ install(FILES
     dtl_ofdm_adaptive_repack_bits_bb.block.yml
     dtl_ofdm_adaptive_chunks_to_symbols_bc.block.yml
     dtl_ofdm_adaptive_constellation_decoder_cb.block.yml
+    dtl_ofdm_adaptive_tx.block.yml
+    dtl_ofdm_adaptive_tx_config.block.yml
+    dtl_ofdm_adaptive_rx.block.yml
+    dtl_ofdm_adaptive_rx_config.block.yml
     DESTINATION share/gnuradio/grc/blocks
 )

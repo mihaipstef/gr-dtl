@@ -191,7 +191,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         static_cast<unsigned char>(feedback.first),
         static_cast<unsigned char>(feedback.second)
     };
-    pmt::pmt_t feedback_msg = pmt::init_u8vector(feedback_vector.size(), feedback_vector);
+    pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
+        pmt::init_u8vector(feedback_vector.size(), feedback_vector));
     message_port_pub(d_decision_feedback_port, feedback_msg);
 
     // Propagate feedback via tags

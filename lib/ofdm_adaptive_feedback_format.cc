@@ -79,6 +79,7 @@ bool ofdm_adaptive_feedback_format::format(int nbytes_in,
     header.add_field8(input[1]);
     header.add_field8(d_crc8.compute(input, 2));
     output = pmt::init_u8vector(header_nbytes(), bytes_out.data());
+    DTL_LOG_DEBUG("Format feedback ok", 0);
     return true;
 }
 

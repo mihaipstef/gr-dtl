@@ -4,18 +4,26 @@ from gnuradio import (
     digital,
     dtl,
     fft,
+    filter,
     gr,
+    pdu,
 )
-
+import pmt
 
 class ofdm_adaptive_rx(gr.hier_block2):
     """Adaptive OFDM Rx.
     """
 
+    @classmethod
+    def from_parameters(cls, **kwargs):
+        return cls(dtl.ofdm_adaptive_config.ofdm_adaptive_rx_config(**kwargs))
+
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature(1, 1, gr.sizeof_char))
+                                gr.io_signature.makev(2, 2, [gr.sizeof_char, gr.sizeof_gr_complex]))
+        self.message_port_register_hier_out("feedback")
+
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
         self.frame_length_tag_key = config.frame_length_tag_key
@@ -27,11 +35,16 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.scramble_bits = config.scramble_bits
         self.rolloff = config.rolloff
         self.debug_log = config.debug
-
+        self.debug_folder = config.debug_folder
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
                 "Length of sync sequence(s) must be FFT length.")
         self.sync_words = [config.sync_word1, config.sync_word2]
+
+        self._setup_ofdm_rx()
+        self._setup_feedback_tx()
+
+    def _setup_ofdm_rx(self):
 
         if self.scramble_bits:
             self.scramble_seed = 0x7f
@@ -121,7 +134,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             symbols_skipped=1,  # (that was already in the header)
             alpha=0.1,
         )
-        payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
+        self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
             dtl.ofdm_adaptive_feedback_decision(),
             self.cp_len,
@@ -158,47 +171,94 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect(
             (hpd, 1),
             payload_fft,
-            payload_eq,
+            self.payload_eq,
             payload_serializer,
             payload_demod,
             payload_pack,
             self.payload_descrambler,
             self.crc,
-            self
+            (self, 0)
         )
 
         if self.debug_log:
             self.connect((sync_detect, 0), blocks.file_sink(
-                gr.sizeof_float, f"{config.debug_folder}/freq-offset.dat"))
+                gr.sizeof_float, f"{self.debug_folder}/freq-offset.dat"))
             self.connect((sync_detect, 1), blocks.file_sink(
-                gr.sizeof_char, f"{config.debug_folder}/sync-detect.dat"))
+                gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
             self.connect((hpd, 0), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/rx-header.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-header.dat"))
             self.connect((hpd, 1), blocks.file_sinself.k(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/rx-payload.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-payload.dat"))
             self.connect((chanest, 1), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/channel-estimate.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/channel-estimate.dat"))
             self.connect((chanest, 0), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-hdr-chanest.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-chanest.dat"))
             self.connect((chanest, 0), blocks.tag_debug(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-hdr-chanest.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-chanest.dat"))
             self.connect(header_eq, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-hdr-eq.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-eq.dat"))
             self.connect(header_serializer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{config.debug_folder}/post-hdr-serializer.dat"))
+                gr.sizeof_gr_complex, f"{self.debug_folder}/post-hdr-serializer.dat"))
             self.connect(self, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{config.debug_folder}/pre-hpd-mixer.dat"))
+                gr.sizeof_gr_complex, f"{self.debug_folder}/pre-hpd-mixer.dat"))
             self.connect((hpd, 1), blocks.tag_debug(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-hpd.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hpd.dat"))
             self.connect(payload_fft, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-payload-fft.dat"))
-            self.connect(payload_eq, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{config.debug_folder}/post-payload-eq.dat"))
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-payload-fft.dat"))
+            self.connect(self.payload_eq, blocks.file_sink(
+                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-payload-eq.dat"))
             self.connect(payload_serializer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{config.debug_folder}/post-payload-serializer.dat"))
+                gr.sizeof_gr_complex, f"{self.debug_folder}/post-payload-serializer.dat"))
             self.connect(payload_demod, blocks.file_sink(
-                1, f"{config.debug_folder}/post-payload-demod.dat"))
+                1, f"{self.debug_folder}/post-payload-demod.dat"))
             self.connect(payload_pack, blocks.file_sink(
-                1, f"{config.debug_folder}/post-payload-pack.dat"))
+                1, f"{self.debug_folder}/post-payload-pack.dat"))
             self.connect(self.crc, blocks.file_sink(
-                1, f"{config.debug_folder}/post-payload-crc.dat"))
+                1, f"{self.debug_folder}/post-payload-crc.dat"))
+
+    def _setup_feedback_tx(self):
+        self.feedback_sps = 2
+        self.feedback_nfilts = 32
+        self.feedback_eb = 0.35
+        self.feedback_psf_taps = filter.firdes.root_raised_cosine(self.feedback_nfilts, self.feedback_nfilts,
+                                                        1.0, self.feedback_eb, 11*self.feedback_sps*self.feedback_nfilts)
+        self.feedback_taps_per_filt = len(self.feedback_psf_taps) / self.feedback_nfilts
+        self.feedback_filt_delay = int(1 + (self.feedback_taps_per_filt-1) // 2)
+        self.feedback_format = dtl.ofdm_adaptive_feedback_format(
+            digital.packet_utils.default_access_code, 0)
+        self.feedback_constellation = digital.constellation_calcdist(digital.psk_2()[0], digital.psk_2()[1],
+                                                            2, 1, digital.constellation.AMPLITUDE_NORMALIZATION).base()
+        self.feedback_constellation.gen_soft_dec_lut(8)
+        self.feedback_bps = self.feedback_constellation.bits_per_symbol()
+
+        self.feedback_to_tagged_stream = pdu.pdu_to_tagged_stream(
+            gr.types.byte_t, "packet_len")
+        self.feedback_formatter = digital.protocol_formatter_async(
+            self.feedback_format.base())
+        self.feedback_mapper = digital.map_bb(self.feedback_constellation.pre_diff_code())
+        self.feedback_chunks_to_symbols = digital.chunks_to_symbols_bc(
+            self.feedback_constellation.points(), 1)
+        self.feedback_burst_shaper = digital.burst_shaper_cc(
+            filter.firdes.window(fft.window.WIN_HANN, 20, 0), 0, self.feedback_filt_delay, True, "packet_len")
+        self.feedback_repack_bits = blocks.repack_bits_bb(
+            8, self.feedback_constellation.bits_per_symbol(), "packet_len", False, gr.GR_MSB_FIRST)
+        self.feedback_resampler = filter.pfb.arb_resampler_ccf(
+            self.feedback_sps,
+            taps=self.feedback_psf_taps,
+            flt_size=self.feedback_nfilts)
+        self.feedback_resampler.declare_sample_delay(self.feedback_filt_delay)
+        self.feedback_multiply_length_tag = blocks.tagged_stream_multiply_length(
+            gr.sizeof_gr_complex*1, "packet_len", self.feedback_sps)
+
+        self.msg_connect(self.payload_eq, "feedback_port", self.feedback_formatter, "in")
+        self.msg_connect(self.payload_eq, "feedback_port", self, "feedback")
+
+        self.msg_connect(self.feedback_formatter, "header",
+                        self.feedback_to_tagged_stream, "pdus")
+        self.connect(self.feedback_to_tagged_stream, self.feedback_repack_bits,
+                    self.feedback_mapper, self.feedback_chunks_to_symbols, self.feedback_burst_shaper)
+        self.connect(self.feedback_burst_shaper, self.feedback_resampler,
+                    self.feedback_multiply_length_tag)
+        self.connect((self.feedback_multiply_length_tag, 0), (self, 1))
+
+        self.msg_connect(self.feedback_formatter, "header", blocks.message_debug(), "print")

@@ -1,5 +1,5 @@
 id: dtl_ofdm_adaptive_constellation_decoder_cb
-label: Adaptive Constellation Decoder
+label: OFDM Adaptive Constellation Decoder
 category: '[DTL]'
 
 templates:
