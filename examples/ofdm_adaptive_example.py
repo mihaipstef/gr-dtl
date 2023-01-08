@@ -74,7 +74,7 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 32000
+        self.samp_rate = samp_rate = 16000
         self.n_bytes = n_bytes = 100
 
         ##################################################
@@ -84,9 +84,6 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
         self.dtl_ofdm_adaptive_tx_config_0 = tx_config = dtl.ofdm_adaptive_tx_config(
             fft_len=64,
             cp_len=16,
-            occupied_carriers=(),
-            pilot_carriers=(),
-            pilot_symbols=(),
             rolloff=0,
             debug=False,
             scramble_bits=False)
@@ -115,7 +112,8 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
             taps=[1.0 + 1.0j],
             noise_seed=0,
             block_tags=True)
-        self.blocks_vector_source_x_0_0 = blocks.vector_source_b(range(n_bytes), True, 1, ())
+        self.blocks_vector_source_x_0_0 = blocks.vector_source_b(range(10*n_bytes), True, 1, ())
+        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_char*1, samp_rate,True)
         self.blocks_stream_to_tagged_stream_0 = blocks.stream_to_tagged_stream(gr.sizeof_char, 1, n_bytes, 'packet_len')
         self.blocks_message_debug_1 = blocks.message_debug(True)
         self.blocks_message_debug_0 = blocks.message_debug(True)
@@ -127,8 +125,9 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
         self.msg_connect((self.dtl_ofdm_adaptive_rx_0, 'feedback'), (self.blocks_message_debug_0, 'print'))
         self.msg_connect((self.dtl_ofdm_adaptive_tx_0, 'feedback_rcvd'), (self.blocks_message_debug_1, 'print'))
         self.connect((self.blocks_stream_to_tagged_stream_0, 0), (self.dtl_ofdm_adaptive_tx_0, 0))
-        self.connect((self.blocks_vector_source_x_0_0, 0), (self.blocks_stream_to_tagged_stream_0, 0))
-        self.connect((self.blocks_vector_source_x_0_0, 0), (self.fec_ber_bf_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.blocks_stream_to_tagged_stream_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.fec_ber_bf_0, 0))
+        self.connect((self.blocks_vector_source_x_0_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.channels_channel_model_0, 0), (self.dtl_ofdm_adaptive_rx_0, 0))
         self.connect((self.channels_channel_model_0_0, 0), (self.dtl_ofdm_adaptive_tx_0, 1))
         self.connect((self.dtl_ofdm_adaptive_rx_0, 1), (self.channels_channel_model_0_0, 0))
@@ -149,6 +148,7 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
 
     def get_n_bytes(self):
         return self.n_bytes
@@ -157,7 +157,7 @@ class ofdm_adaptive_example(gr.top_block, Qt.QWidget):
         self.n_bytes = n_bytes
         self.blocks_stream_to_tagged_stream_0.set_packet_len(self.n_bytes)
         self.blocks_stream_to_tagged_stream_0.set_packet_len_pmt(self.n_bytes)
-        self.blocks_vector_source_x_0_0.set_data(range(self.n_bytes), ())
+        self.blocks_vector_source_x_0_0.set_data(range(10*self.n_bytes), ())
 
 
 
