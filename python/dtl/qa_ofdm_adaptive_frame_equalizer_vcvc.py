@@ -137,7 +137,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
                           t.key for t in sink.tags()])
             self.assertEqual(feedback_decision_sink.num_messages(), 1)
             feedback_msg = feedback_decision_sink.get_message(0)
-            self.assertEqual(pmt.u8vector_elements(feedback_msg), [int(constellation_type_t.QAM16), 0])
+            self.assertEqual(pmt.u8vector_elements(pmt.cdr(feedback_msg)), [int(constellation_type_t.QAM16), 0])
 
 
 if __name__ == '__main__':
