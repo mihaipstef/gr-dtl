@@ -33,6 +33,7 @@ class ofdm_adaptive_tx_config:
     debug : bool = False
     debug_folder : str = "debug"
     scramble_bits : bool = False
+    packet_length : int = 100
 
 @dc.dataclass
 class ofdm_adaptive_rx_config(ofdm_adaptive_tx_config):

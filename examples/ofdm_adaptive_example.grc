@@ -49,7 +49,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '32000'
+    value: '16000'
   states:
     bus_sink: false
     bus_source: false
@@ -101,9 +101,28 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 236.0]
+    coordinate: [376, 236.0]
     rotation: 0
     state: enabled
+- name: blocks_throttle_0
+  id: blocks_throttle
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [192, 244.0]
+    rotation: 0
+    state: true
 - name: blocks_vector_source_x_0_0
   id: blocks_vector_source_x
   parameters:
@@ -115,13 +134,13 @@ blocks:
     repeat: 'True'
     tags: ()
     type: byte
-    vector: range(n_bytes)
+    vector: range(10*n_bytes)
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [336, 228.0]
+    coordinate: [0, 228.0]
     rotation: 0
     state: enabled
 - name: channels_channel_model_0
@@ -187,18 +206,18 @@ blocks:
     alias: ''
     comment: ''
     cp_len: '16'
-    debug_log: 'False'
+    debug: 'False'
     fft_len: '64'
-    occupied_carriers: ()
-    pilot_carriers: ()
-    pilot_symbols: ()
+    occupied_carriers: ''
+    pilot_carriers: ''
+    pilot_symbols: ''
     rolloff: '0'
     scramble_bits: 'False'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1384, 44.0]
+    coordinate: [1304, 68.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_tx_0
@@ -222,18 +241,18 @@ blocks:
     alias: ''
     comment: ''
     cp_len: '16'
-    debug_log: 'False'
+    debug: 'False'
     fft_len: '64'
-    occupied_carriers: ()
-    pilot_carriers: ()
-    pilot_symbols: ()
+    occupied_carriers: ''
+    pilot_carriers: ''
+    pilot_symbols: ''
     rolloff: '0'
     scramble_bits: 'False'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [736, 44.0]
+    coordinate: [784, 76.0]
     rotation: 0
     state: true
 - name: fec_ber_bf_0
@@ -251,7 +270,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [544, 584.0]
+    coordinate: [360, 584.0]
     rotation: 0
     state: true
 - name: virtual_sink_0
@@ -264,7 +283,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [776, 596.0]
+    coordinate: [592, 596.0]
     rotation: 0
     state: true
 - name: virtual_sink_1
@@ -316,14 +335,15 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 612.0]
+    coordinate: [120, 612.0]
     rotation: 0
     state: true
 
 connections:
 - [blocks_stream_to_tagged_stream_0, '0', dtl_ofdm_adaptive_tx_0, '0']
-- [blocks_vector_source_x_0_0, '0', blocks_stream_to_tagged_stream_0, '0']
-- [blocks_vector_source_x_0_0, '0', fec_ber_bf_0, '0']
+- [blocks_throttle_0, '0', blocks_stream_to_tagged_stream_0, '0']
+- [blocks_throttle_0, '0', fec_ber_bf_0, '0']
+- [blocks_vector_source_x_0_0, '0', blocks_throttle_0, '0']
 - [channels_channel_model_0, '0', dtl_ofdm_adaptive_rx_0, '0']
 - [channels_channel_model_0_0, '0', dtl_ofdm_adaptive_tx_0, '1']
 - [dtl_ofdm_adaptive_rx_0, '0', virtual_sink_2, '0']

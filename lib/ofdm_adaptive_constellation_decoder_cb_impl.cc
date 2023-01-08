@@ -14,7 +14,7 @@
 namespace gr {
 namespace dtl {
 
-INIT_DTL_LOGGER(__FILE__);
+INIT_DTL_LOGGER("ofdm_adaptive_constellation_decoder_cb");
 
 using namespace gr::digital;
 

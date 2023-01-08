@@ -7,7 +7,6 @@ from gnuradio import (
     filter,
 )
 
-
 class ofdm_adaptive_tx(gr.hier_block2):
     """Adaptive OFDM Tx
     """
@@ -35,6 +34,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
+        self.packet_length = config.packet_length
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -50,7 +50,13 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
     def _setup_direct_tx(self):
 
-        ### Header modulation ################################################
+        # Transmission control from feedback blocks
+        self.tx_control = dtl.ofdm_adaptive_tx_control_bb(self.packet_length_tag_key, self.packet_length)
+        self.connect(
+            (self, 0),
+            self.tx_control
+        )
+        # Header path blocks
         crc = digital.crc32_bb(False, self.packet_length_tag_key)
         header_constellation = digital.constellation_bpsk()
         header_mod = digital.chunks_to_symbols_bc(
@@ -71,13 +77,13 @@ class ofdm_adaptive_tx(gr.hier_block2):
             tag_preserve_head_pos=1  # Head tags on the payload stream stay on the head
         )
         self.connect(
-            (self, 0),
+            self.tx_control,
             crc,
             header_gen,
             header_mod,
             (header_payload_mux, 0)
         )
-        ### Payload modulation ###############################################
+        # Payload path blocks
         payload_mod = dtl.ofdm_adaptive_chunks_to_symbols_bc(
             [
                 dtl.constellation_type_t.BPSK,
@@ -105,7 +111,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             payload_mod,
             (header_payload_mux, 1)
         )
-        ### Create OFDM frame ################################################
+
+        # OFDM blocks
         allocator = digital.ofdm_carrier_allocator_cvc(
             self.fft_len,
             occupied_carriers=self.occupied_carriers,
@@ -190,3 +197,4 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.connect((self.feedback_constellation_decoder, 0),
                      (self.feedback_parser, 0))
         self.msg_connect(self.feedback_parser, "info", self, "feedback_rcvd")
+        self.msg_connect(self.feedback_parser, "info", self.tx_control, "feedback")
