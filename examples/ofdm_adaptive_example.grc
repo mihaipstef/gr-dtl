@@ -63,12 +63,12 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    en_uvec: 'True'
+    en_uvec: 'False'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1672, 352.0]
+    coordinate: [1496, 344.0]
     rotation: 0
     state: true
 - name: blocks_message_debug_1
@@ -77,51 +77,13 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    en_uvec: 'True'
+    en_uvec: 'False'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1168, 344.0]
-    rotation: 0
-    state: true
-- name: blocks_stream_to_tagged_stream_0
-  id: blocks_stream_to_tagged_stream
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    len_tag_key: packet_len
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    packet_len: n_bytes
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [376, 236.0]
-    rotation: 0
-    state: enabled
-- name: blocks_throttle_0
-  id: blocks_throttle
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    ignoretag: 'True'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    samples_per_second: samp_rate
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [192, 244.0]
-    rotation: 0
+    coordinate: [736, 352.0]
+    rotation: 180
     state: true
 - name: blocks_vector_source_x_0_0
   id: blocks_vector_source_x
@@ -134,13 +96,13 @@ blocks:
     repeat: 'True'
     tags: ()
     type: byte
-    vector: range(10*n_bytes)
+    vector: '[0] * 10 * n_bytes'
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [0, 228.0]
+    coordinate: [24, 228.0]
     rotation: 0
     state: enabled
 - name: channels_channel_model_0
@@ -154,14 +116,14 @@ blocks:
     freq_offset: '0.0'
     maxoutbuf: '0'
     minoutbuf: '0'
-    noise_voltage: '0.0'
+    noise_voltage: '0.01'
     seed: '0'
     taps: 1.0 + 1.0j
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1152, 212.0]
+    coordinate: [976, 204.0]
     rotation: 0
     state: true
 - name: channels_channel_model_0_0
@@ -182,7 +144,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [792, 444.0]
+    coordinate: [640, 484.0]
     rotation: 180
     state: true
 - name: dtl_ofdm_adaptive_rx_0
@@ -197,7 +159,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1352, 216.0]
+    coordinate: [1176, 208.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_rx_config_0
@@ -217,7 +179,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1304, 68.0]
+    coordinate: [1128, 60.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_tx_0
@@ -232,7 +194,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [816, 248.0]
+    coordinate: [640, 240.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_tx_config_0
@@ -252,7 +214,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [784, 76.0]
+    coordinate: [608, 68.0]
     rotation: 0
     state: true
 - name: fec_ber_bf_0
@@ -270,20 +232,70 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [360, 584.0]
+    coordinate: [248, 320.0]
     rotation: 0
     state: true
-- name: virtual_sink_0
-  id: virtual_sink
+- name: qtgui_number_sink_0
+  id: qtgui_number_sink
   parameters:
+    affinity: ''
     alias: ''
+    autoscale: 'False'
+    avg: '0'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
     comment: ''
-    stream_id: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_HORIZ
+    gui_hint: ''
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '1'
+    min: '-1'
+    name: '""'
+    nconnections: '1'
+    type: float
+    unit1: ''
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [592, 596.0]
+    coordinate: [416, 308.0]
     rotation: 0
     state: true
 - name: virtual_sink_1
@@ -296,7 +308,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1640, 260.0]
+    coordinate: [1464, 252.0]
     rotation: 0
     state: true
 - name: virtual_sink_2
@@ -309,7 +321,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1640, 204.0]
+    coordinate: [1464, 196.0]
     rotation: 0
     state: true
 - name: virtual_source_0
@@ -322,7 +334,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1024, 476.0]
+    coordinate: [864, 516.0]
     rotation: 180
     state: true
 - name: virtual_source_1
@@ -335,15 +347,13 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 612.0]
+    coordinate: [40, 348.0]
     rotation: 0
     state: true
 
 connections:
-- [blocks_stream_to_tagged_stream_0, '0', dtl_ofdm_adaptive_tx_0, '0']
-- [blocks_throttle_0, '0', blocks_stream_to_tagged_stream_0, '0']
-- [blocks_throttle_0, '0', fec_ber_bf_0, '0']
-- [blocks_vector_source_x_0_0, '0', blocks_throttle_0, '0']
+- [blocks_vector_source_x_0_0, '0', dtl_ofdm_adaptive_tx_0, '0']
+- [blocks_vector_source_x_0_0, '0', fec_ber_bf_0, '0']
 - [channels_channel_model_0, '0', dtl_ofdm_adaptive_rx_0, '0']
 - [channels_channel_model_0_0, '0', dtl_ofdm_adaptive_tx_0, '1']
 - [dtl_ofdm_adaptive_rx_0, '0', virtual_sink_2, '0']
@@ -351,7 +361,7 @@ connections:
 - [dtl_ofdm_adaptive_rx_0, feedback, blocks_message_debug_0, print]
 - [dtl_ofdm_adaptive_tx_0, '0', channels_channel_model_0, '0']
 - [dtl_ofdm_adaptive_tx_0, feedback_rcvd, blocks_message_debug_1, print]
-- [fec_ber_bf_0, '0', virtual_sink_0, '0']
+- [fec_ber_bf_0, '0', qtgui_number_sink_0, '0']
 - [virtual_source_0, '0', channels_channel_model_0_0, '0']
 - [virtual_source_1, '0', fec_ber_bf_0, '1']
 

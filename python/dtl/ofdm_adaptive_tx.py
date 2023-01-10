@@ -7,6 +7,7 @@ from gnuradio import (
     filter,
 )
 
+
 class ofdm_adaptive_tx(gr.hier_block2):
     """Adaptive OFDM Tx
     """
@@ -17,7 +18,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_tx",
-                                gr.io_signature.makev(2, 2, [gr.sizeof_char, gr.sizeof_gr_complex]),
+                                gr.io_signature.makev(
+                                    2, 2, [gr.sizeof_char, gr.sizeof_gr_complex]),
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex))
 
         self.message_port_register_hier_out("feedback_rcvd")
@@ -34,7 +36,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
-        self.packet_length = config.packet_length
+        self.frame_length = config.frame_length
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -51,7 +53,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
     def _setup_direct_tx(self):
 
         # Transmission control from feedback blocks
-        self.tx_control = dtl.ofdm_adaptive_tx_control_bb(self.packet_length_tag_key, self.packet_length)
+        self.tx_control = dtl.ofdm_adaptive_tx_control_bb(
+            self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
         self.connect(
             (self, 0),
             self.tx_control
@@ -149,14 +152,16 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/tx-post-allocator.dat"))
             self.connect(cyclic_prefixer, blocks.file_sink(
                 gr.sizeof_gr_complex, f"{self.debug_folder}/tx-signal.dat"))
+            self.connect((self, 1), blocks.file_sink(
+                gr.sizeof_gr_complex, f"{self.debug_folder}/rx-feedback-signal.dat"))
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
         self.feedback_eb = 0.35  # excess bw
         self.feedback_nfilts = 32
-        self.feedback_threshold = 1
+        self.feedback_threshold = 0
         self.feedback_taps = filter.firdes.root_raised_cosine(self.feedback_nfilts, self.feedback_nfilts,
-                                                     1.0, self.feedback_eb, 11*self.feedback_sps*self.feedback_nfilts)
+                                                              1.0, self.feedback_eb, 11*self.feedback_sps*self.feedback_nfilts)
         self.feedback_format = dtl.ofdm_adaptive_feedback_format(
             digital.packet_utils.default_access_code, self.feedback_threshold)
         self.feedback_constellation = digital.constellation_calcdist(digital.psk_2()[0], digital.psk_2()[1],
@@ -179,13 +184,14 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.feedback_costas_loop = digital.costas_loop_cc(
             (6.28/200.0), self.feedback_constellation.arity(), False)
         self.feedback_sync_word_correlator = digital.corr_est_cc(
-            self.feedback_modulated_sync_word, self.feedback_sps, self.feedback_mark_delay, 0.99, digital.THRESHOLD_ABSOLUTE)
+            self.feedback_modulated_sync_word, self.feedback_sps, self.feedback_mark_delay, 0.9, digital.THRESHOLD_ABSOLUTE)
         self.feedback_constellation_decoder = digital.constellation_decoder_cb(
             self.feedback_constellation)
         self.feedback_amp_est_multiplier = blocks.multiply_by_tag_value_cc(
             "amp_est", 1)
 
         self.connect((self, 1), (self.feedback_sync_word_correlator, 0))
+        # self.msg_connect(self.feedback_sync_word_correlator, "header", blocks.message_debug(), "print")
         self.connect((self.feedback_sync_word_correlator, 0),
                      (self.feedback_amp_est_multiplier, 0))
         self.connect((self.feedback_amp_est_multiplier, 0),
@@ -197,4 +203,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.connect((self.feedback_constellation_decoder, 0),
                      (self.feedback_parser, 0))
         self.msg_connect(self.feedback_parser, "info", self, "feedback_rcvd")
-        self.msg_connect(self.feedback_parser, "info", self.tx_control, "feedback")
+        self.msg_connect(self.feedback_parser, "info",
+                         self.tx_control, "feedback")
+        self.connect((self.feedback_sync_word_correlator, 0),
+                     blocks.tag_debug(8, "time_est"))
