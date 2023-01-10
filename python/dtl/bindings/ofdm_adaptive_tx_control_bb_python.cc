@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_tx_control_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(509a29d60fa1ae88282029bfddfa3d39)                     */
+/* BINDTOOL_HEADER_FILE_HASH(6ba0d76c31a98a0c1b14a2cafa64326c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,8 +42,7 @@ void bind_ofdm_adaptive_tx_control_bb(py::module& m)
 
         .def(py::init(&ofdm_adaptive_tx_control_bb::make),
              py::arg("len_tag_key"),
-             py::arg("frame_len"),
-             py::arg("n_payload_carriers"),
+             py::arg("packet_len"),
              D(ofdm_adaptive_tx_control_bb, make))
 
 

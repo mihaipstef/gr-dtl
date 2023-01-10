@@ -36,7 +36,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
-        self.frame_length = config.frame_length
+        self.packet_length = config.packet_length
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -54,7 +54,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         # Transmission control from feedback blocks
         self.tx_control = dtl.ofdm_adaptive_tx_control_bb(
-            self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
+            self.packet_length_tag_key, self.packet_length)
         self.connect(
             (self, 0),
             self.tx_control
