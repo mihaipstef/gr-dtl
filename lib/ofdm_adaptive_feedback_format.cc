@@ -86,11 +86,13 @@ bool ofdm_adaptive_feedback_format::format(int nbytes_in,
 
 bool ofdm_adaptive_feedback_format::parse_feedback(int nbits_in,
                                                    const unsigned char* input,
-                                                   std::vector<pmt::pmt_t>& info)
+                                                   std::vector<pmt::pmt_t>& info,
+                                                   int& nbits_processed)
 {
-    int nbits_processed = 0;
+    d_hdr_reg.clear();
+
     // Insert the bits in the header buffer
-    while (nbits_processed <= nbits_in) {
+    while (nbits_processed < nbits_in) {
         d_hdr_reg.insert_bit(input[nbits_processed++]);
         if (d_hdr_reg.length() == (header_nbits() - d_access_code_len)) {
             unsigned char constellation_type = d_hdr_reg.extract_field8(0, 8);
@@ -105,12 +107,11 @@ bool ofdm_adaptive_feedback_format::parse_feedback(int nbits_in,
                 parsed_feedback = pmt::dict_add(parsed_feedback, feedback_fec_key(), pmt::from_long(fec_scheme));
                 info.push_back(parsed_feedback);
             }
-            DTL_LOG_DEBUG("Parsed feedback: {}", d_feedback_ok);
-
-            d_hdr_reg.clear();
+            DTL_LOG_DEBUG("Parsed feedback: {} ({})", d_feedback_ok, nbits_in);
             return d_feedback_ok;
         }
     }
+    DTL_LOG_DEBUG("Parsed feedback: not enough ({})", nbits_in);
     return false;
 }
 
@@ -133,8 +134,9 @@ bool ofdm_adaptive_feedback_format::parse(int nbits_in,
         // If access code found...
         if (nwrong <= d_threshold) {
             //... and parsed feedback ok return success. Otherwise, continue.
+            DTL_LOG_DEBUG("Detect feedback: {}/{}", nbits_in - nbits_processed, nbits_in);
             if (parse_feedback(
-                    nbits_in - nbits_processed, &input[nbits_processed], info)) {
+                    nbits_in, input, info, nbits_processed)) {
                 return true;
             }
         }

@@ -36,10 +36,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
+
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
                 "Length of sync sequence(s) must be FFT length.")
         self.sync_words = [config.sync_word1, config.sync_word2]
+
 
         self._setup_ofdm_rx()
         self._setup_feedback_tx()
@@ -50,12 +52,13 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.scramble_seed = 0x7f
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
-        ### Sync ############################################################
-        sync_detect = digital.ofdm_sync_sc_cfb(
+
+        # Synchronization
+        self.sync_detect = digital.ofdm_sync_sc_cfb(
             self.fft_len, self.cp_len, threshold=0.95)
-        delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
-        oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
-        mixer = blocks.multiply_cc()
+        self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
+        self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
+        self.mixer = blocks.multiply_cc()
         hpd = digital.header_payload_demux(
             len(self.sync_words) + 1,
             self.fft_len, self.cp_len,
@@ -64,12 +67,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
             True,
             header_padding=self.fft_len * 0
         )
-        self.connect(self, sync_detect)
-        self.connect(self, delay, (mixer, 0), (hpd, 0))
-        self.connect((sync_detect, 0), oscillator, (mixer, 1))
-        self.connect((sync_detect, 1), (hpd, 1))
+        self.connect((self, 0), self.sync_detect)
+        self.connect((self, 0), self.delay, (self.mixer, 0), (hpd, 0))
+        self.connect((self.sync_detect, 0), self.oscillator, (self.mixer, 1))
+        self.connect((self.sync_detect, 1), (hpd, 1))
 
-        ### Header demodulation ##############################################
+        # Header path
         header_fft = fft.fft_vcc(self.fft_len, True, (), True)
         chanest = digital.ofdm_chanest_vcvc(
             self.sync_words[0], self.sync_words[1], 1)
@@ -117,7 +120,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
 
-        ### Payload demod ####################################################
+        # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
@@ -131,7 +134,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.occupied_carriers,
             self.pilot_carriers,
             self.pilot_symbols,
-            symbols_skipped=1,  # (that was already in the header)
+            symbols_skipped=1, # already in the header
             alpha=0.1,
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
@@ -181,10 +184,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
 
         if self.debug_log:
-            self.connect((sync_detect, 0), blocks.file_sink(
-                gr.sizeof_float, f"{self.debug_folder}/freq-offset.dat"))
-            self.connect((sync_detect, 1), blocks.file_sink(
-                gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
             self.connect((hpd, 0), blocks.file_sink(
                 gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-header.dat"))
             self.connect((hpd, 1), blocks.file_sinself.k(
@@ -239,7 +238,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.feedback_chunks_to_symbols = digital.chunks_to_symbols_bc(
             self.feedback_constellation.points(), 1)
         self.feedback_burst_shaper = digital.burst_shaper_cc(
-            filter.firdes.window(fft.window.WIN_HANN, 20, 0), 0, self.feedback_filt_delay, True, "packet_len")
+            filter.firdes.window(fft.window.WIN_HANN, 50, 0), 0, self.feedback_filt_delay, True, "packet_len")
         self.feedback_repack_bits = blocks.repack_bits_bb(
             8, self.feedback_constellation.bits_per_symbol(), "packet_len", False, gr.GR_MSB_FIRST)
         self.feedback_resampler = filter.pfb.arb_resampler_ccf(

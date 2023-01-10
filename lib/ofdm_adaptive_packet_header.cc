@@ -96,8 +96,6 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 
     unsigned char crc = d_crc_impl.compute(buffer, sizeof(buffer));
 
-    DTL_LOG_BYTES("header buffer:", buffer, 5);
-
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         out[k] = (unsigned char)((crc >> i) & d_mask);
     }
