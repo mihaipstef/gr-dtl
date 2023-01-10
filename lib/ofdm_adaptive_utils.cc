@@ -25,6 +25,8 @@ static const pmt::pmt_t CONSTELLATION_TAG_KEY = pmt::string_to_symbol("constella
 static const pmt::pmt_t ESTIMATED_SNR_TAG_KEY = pmt::string_to_symbol("estimated_snr_tag_key");
 static const pmt::pmt_t FEEDBACK_CONSTELLATION_KEY = pmt::string_to_symbol("feedback_constellation_key");
 static const pmt::pmt_t FEEDBACK_FEC_KEY = pmt::string_to_symbol("feedback_fec_key");
+static const pmt::pmt_t PAYLOAD_LENGTH_KEY = pmt::string_to_symbol("payload_length_key");
+
 
 
 template <class T>
@@ -98,6 +100,15 @@ std::vector<tag_t>::const_iterator DTL_API find_constellation_tag(const std::vec
     return it;
 }
 
+std::vector<tag_t>::const_iterator DTL_API find_tag(const std::vector<tag_t>& tags, const pmt::pmt_t& key)
+{
+    auto it = std::find_if(tags.begin(), tags.end(), [&](auto& t) {
+        return t.key == key;
+    });
+    return it;
+}
+
+
 pmt::pmt_t DTL_API get_constellation_tag_key() {
     return CONSTELLATION_TAG_KEY;
 }
@@ -112,6 +123,10 @@ pmt::pmt_t DTL_API feedback_constellation_key() {
 
 pmt::pmt_t DTL_API feedback_fec_key() {
     return FEEDBACK_FEC_KEY;
+}
+
+pmt::pmt_t DTL_API payload_length_key() {
+    return PAYLOAD_LENGTH_KEY;
 }
 
 } /* namespace dtl */

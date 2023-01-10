@@ -55,7 +55,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         # Synchronization
         self.sync_detect = digital.ofdm_sync_sc_cfb(
-            self.fft_len, self.cp_len, threshold=0.95)
+            self.fft_len, self.cp_len, threshold=0.99)
         self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
@@ -178,7 +178,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             payload_serializer,
             payload_demod,
             payload_pack,
-            self.payload_descrambler,
+            # self.payload_descrambler,
             # self.crc,
             (self, 0)
         )

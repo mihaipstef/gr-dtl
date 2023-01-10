@@ -66,11 +66,10 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
 
     std::vector<tag_t> tags;
     this->get_tags_in_range(
-        tags, 0, this->nitems_read(0), this->nitems_read(0) + ninput_items[0]);
+        tags, 0, this->nitems_read(0), this->nitems_read(0) + 1);
     constellation_type_t constellation_type = find_constellation_type(tags);
-
     if (constellation_type_t::UNKNOWN == constellation_type) {
-        throw std::invalid_argument("Constellation type not found in tags");
+        throw std::invalid_argument("Constellation not found");
     }
     constellation_sptr constellation = d_constellations[constellation_type];
     for (int i = 0; i < ninput_items[0]; ++i) {
@@ -78,8 +77,7 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
         ++in;
         ++out;
     }
-    DTL_LOG_DEBUG("size:{}, constellation: {}",ninput_items[0], (int)constellation_type);
-
+    DTL_LOG_DEBUG("size:{}, constellation: {}, noutput_items: {}", ninput_items[0], (int)constellation_type, noutput_items);
     return ninput_items[0];
 }
 

@@ -25,6 +25,7 @@ try:
     from gnuradio.dtl import (
         ofdm_adaptive_packet_header,
         get_constellation_tag_key,
+        payload_length_key,
     )
 except ImportError:
     import os
@@ -34,6 +35,7 @@ except ImportError:
     from gnuradio.dtl import (
         ofdm_adaptive_packet_header,
         get_constellation_tag_key,
+        payload_length_key,
     )
 
 
@@ -73,6 +75,11 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tag.offset = offset
             tag.key = get_constellation_tag_key()
             tag.value = pmt.from_long(c[0])
+            tags.append(tag)
+            tag = tag_t()
+            tag.offset = offset
+            tag.key = payload_length_key()
+            tag.value = pmt.from_long(len(p))
             tags.append(tag)
             offset = offset + len(p)
             packet_lenghts_in_symbols.append(len(p) * 8 // c[1] + int(len(p) * 8 % c[1] > 0))

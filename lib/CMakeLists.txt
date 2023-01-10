@@ -20,7 +20,8 @@ list(APPEND dtl_sources
     ofdm_adaptive_constellation_decoder_cb_impl.cc
     ofdm_adaptive_feedback_decision.cc
     ofdm_adaptive_feedback_format.cc
-    ofdm_adaptive_tx_control_bb_impl.cc
+    ofdm_adaptive_frame_bb_impl.cc
+    repack.cc
     )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)

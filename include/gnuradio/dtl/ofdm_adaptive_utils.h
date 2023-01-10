@@ -39,6 +39,8 @@ constellation_type_t get_constellation_type(const tag_t& tag);
 
 std::vector<tag_t>::const_iterator find_constellation_tag(const std::vector<tag_t>& tags);
 
+std::vector<tag_t>::const_iterator find_tag(const std::vector<tag_t>& tags, const pmt::pmt_t& key);
+
 pmt::pmt_t get_constellation_tag_key();
 
 pmt::pmt_t estimated_snr_tag_key();
@@ -46,6 +48,8 @@ pmt::pmt_t estimated_snr_tag_key();
 pmt::pmt_t feedback_constellation_key();
 
 pmt::pmt_t feedback_fec_key();
+
+pmt::pmt_t payload_length_key();
 
 } // namespace dtl
 } // namespace gr

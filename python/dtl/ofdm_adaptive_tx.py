@@ -36,7 +36,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
-        self.packet_length = config.packet_length
+        self.frame_length = config.frame_length
+        self.payload_length_tag_key = "payload_length"
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -52,13 +53,13 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
     def _setup_direct_tx(self):
 
-        # Transmission control from feedback blocks
-        self.tx_control = dtl.ofdm_adaptive_tx_control_bb(
-            self.packet_length_tag_key, self.packet_length)
-        self.connect(
-            (self, 0),
-            self.tx_control
-        )
+        # # Transmission control from feedback blocks
+        # self.tx_control = dtl.ofdm_adaptive_frame_bb(
+        #     self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
+        # self.connect(
+        #     (self, 0),
+        #     self.tx_control
+        # )
         # Header path blocks
         crc = digital.crc32_bb(False, self.packet_length_tag_key)
         header_constellation = digital.constellation_bpsk()
@@ -79,9 +80,10 @@ class ofdm_adaptive_tx(gr.hier_block2):
             lengthtagname=self.packet_length_tag_key,
             tag_preserve_head_pos=1  # Head tags on the payload stream stay on the head
         )
+        self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
+             self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
         self.connect(
-            self.tx_control,
-            #crc,
+            self.frame_unpack,
             header_gen,
             header_mod,
             (header_payload_mux, 0)
@@ -96,22 +98,22 @@ class ofdm_adaptive_tx(gr.hier_block2):
             ],
             self.packet_length_tag_key
         )
-        payload_scrambler = digital.additive_scrambler_bb(
-            0x8a,
-            self.scramble_seed,
-            7,
-            0,  # Don't reset after fixed length (let the reset tag do that)
-            bits_per_byte=8,  # This is before unpacking
-            reset_tag_key=self.packet_length_tag_key
-        )
-        payload_unpack = dtl.ofdm_adaptive_repack_bits_bb(
-            self.packet_length_tag_key
-        )
+        # payload_scrambler = digital.additive_scrambler_bb(
+        #     0x8a,
+        #     self.scramble_seed,
+        #     7,
+        #     0,  # Don't reset after fixed length (let the reset tag do that)
+        #     bits_per_byte=8,  # This is before unpacking
+        #     reset_tag_key=self.packet_length_tag_key
+        # )
+        # frame_unpack = dtl.ofdm_adaptive_repack_bits_bb(
+        #     self.packet_length_tag_key
+        # )
+
         self.connect(
-            # crc,
-            self.tx_control,
-            payload_scrambler,
-            payload_unpack,
+            (self, 0),
+            #payload_scrambler,
+            self.frame_unpack,
             payload_mod,
             (header_payload_mux, 1)
         )
@@ -140,21 +142,21 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
 
-        if self.debug_log:
-            self.connect(header_gen, blocks.file_sink(
-                1, f"{self.debug_folder}/tx-hdr.dat"))
-            self.connect(header_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-pre-mux.dat"))
-            self.connect(payload_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-payload-pre-mux.dat"))
-            self.connect(header_payload_mux, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-payload-mux.dat"))
-            self.connect(allocator, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/tx-post-allocator.dat"))
-            self.connect(cyclic_prefixer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-signal.dat"))
-            self.connect((self, 1), blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/rx-feedback-signal.dat"))
+        #if self.debug_log:
+        self.connect(header_gen, blocks.file_sink(
+            1, f"{self.debug_folder}/tx-hdr.dat"))
+        self.connect(header_mod, blocks.file_sink(
+            gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-pre-mux.dat"))
+        self.connect(payload_mod, blocks.file_sink(
+            gr.sizeof_gr_complex, f"{self.debug_folder}/tx-payload-pre-mux.dat"))
+        self.connect(header_payload_mux, blocks.file_sink(
+            gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-payload-mux.dat"))
+        self.connect(allocator, blocks.file_sink(
+            gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/tx-post-allocator.dat"))
+        self.connect(cyclic_prefixer, blocks.file_sink(
+            gr.sizeof_gr_complex, f"{self.debug_folder}/tx-signal.dat"))
+        self.connect((self, 1), blocks.file_sink(
+            gr.sizeof_gr_complex, f"{self.debug_folder}/rx-feedback-signal.dat"))
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
@@ -205,6 +207,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
                      (self.feedback_parser, 0))
         self.msg_connect(self.feedback_parser, "info", self, "feedback_rcvd")
         self.msg_connect(self.feedback_parser, "info",
-                         self.tx_control, "feedback")
-        self.connect((self.feedback_sync_word_correlator, 0),
-                     blocks.tag_debug(8, "time_est"))
+                         self.frame_unpack, "feedback")
+        # self.connect((self.feedback_sync_word_correlator, 0),
+        #              blocks.tag_debug(8, "time_est"))
+
+    def set_constellation(self, constellation):
+        self.frame_unpack.set_constellation(constellation)
