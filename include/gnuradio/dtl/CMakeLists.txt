@@ -19,6 +19,6 @@ install(FILES
     ofdm_adaptive_constellation_decoder_cb.h
     ofdm_adaptive_feedback_decision.h
     ofdm_adaptive_feedback_decision.h
-    ofdm_adaptive_tx_control_bb.h
+    ofdm_adaptive_frame_bb.h
     DESTINATION include/gnuradio/dtl
 )

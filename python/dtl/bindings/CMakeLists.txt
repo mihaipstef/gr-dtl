@@ -38,7 +38,7 @@ list(APPEND dtl_python_files
     ofdm_adaptive_frame_snr_python.cc
     ofdm_adaptive_feedback_decision_python.cc
     ofdm_adaptive_feedback_format_python.cc
-    ofdm_adaptive_tx_control_bb_python.cc
+    ofdm_adaptive_frame_bb_python.cc
     python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl

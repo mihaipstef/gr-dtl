@@ -15,11 +15,18 @@
  */
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_tx_control_bb = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_frame_bb = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_tx_control_bb_ofdm_adaptive_tx_control_bb =
+static const char* __doc_gr_dtl_ofdm_adaptive_frame_bb_ofdm_adaptive_frame_bb_0 =
     R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_tx_control_bb_make = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_frame_bb_ofdm_adaptive_frame_bb_1 =
+    R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_frame_bb_make = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_frame_bb_set_constellation = R"doc()doc";

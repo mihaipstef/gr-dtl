@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(ofdm_adaptive_tx_control_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(6ba0d76c31a98a0c1b14a2cafa64326c)                     */
+/* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_bb.h) */
+/* BINDTOOL_HEADER_FILE_HASH(1cc6ac645aa0909fec84c4df4b416162)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,28 +23,33 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/ofdm_adaptive_tx_control_bb.h>
+#include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
 // pydoc.h is automatically generated in the build directory
-#include <ofdm_adaptive_tx_control_bb_pydoc.h>
+#include <ofdm_adaptive_frame_bb_pydoc.h>
 
-void bind_ofdm_adaptive_tx_control_bb(py::module& m)
+void bind_ofdm_adaptive_frame_bb(py::module& m)
 {
 
-    using ofdm_adaptive_tx_control_bb = ::gr::dtl::ofdm_adaptive_tx_control_bb;
+    using ofdm_adaptive_frame_bb = ::gr::dtl::ofdm_adaptive_frame_bb;
 
 
-    py::class_<ofdm_adaptive_tx_control_bb,
-               gr::sync_block,
+    py::class_<ofdm_adaptive_frame_bb,
                gr::block,
                gr::basic_block,
-               std::shared_ptr<ofdm_adaptive_tx_control_bb>>(
-        m, "ofdm_adaptive_tx_control_bb", D(ofdm_adaptive_tx_control_bb))
+               std::shared_ptr<ofdm_adaptive_frame_bb>>(
+        m, "ofdm_adaptive_frame_bb", D(ofdm_adaptive_frame_bb))
 
-        .def(py::init(&ofdm_adaptive_tx_control_bb::make),
+        .def(py::init(&ofdm_adaptive_frame_bb::make),
              py::arg("len_tag_key"),
-             py::arg("packet_len"),
-             D(ofdm_adaptive_tx_control_bb, make))
+             py::arg("frame_len"),
+             py::arg("n_payload_carriers"),
+             D(ofdm_adaptive_frame_bb, make))
 
+
+        .def("set_constellation",
+             &ofdm_adaptive_frame_bb::set_constellation,
+             py::arg("constellation"),
+             D(ofdm_adaptive_frame_bb, set_constellation))
 
         ;
 }

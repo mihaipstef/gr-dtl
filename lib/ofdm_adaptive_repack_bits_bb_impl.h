@@ -10,6 +10,7 @@
 
 #include <gnuradio/blocks/repack_bits_bb.h>
 #include <gnuradio/dtl/ofdm_adaptive_repack_bits_bb.h>
+#include "repack.h"
 
 namespace gr {
 namespace dtl {
@@ -17,15 +18,13 @@ namespace dtl {
 class ofdm_adaptive_repack_bits_bb_impl : public ofdm_adaptive_repack_bits_bb
 {
 private:
-    unsigned char d_bits_per_in_byte;
-    unsigned char d_bits_per_out_byte;
+    unsigned char d_bits_per_symbol;
     endianness_t d_endianness;
     bool d_unpack;
     std::string d_len_tag_key;
+    repack repacker;
 
 protected:
-    int calculate_output_stream_length(const gr_vector_int& ninput_items);
-
     void parse_length_tags(const std::vector<std::vector<tag_t>>& tags,
                                             gr_vector_int& n_input_items_reqd) override;
 
