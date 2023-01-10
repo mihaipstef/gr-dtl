@@ -131,9 +131,9 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             self.tb.wait()
 
         # Channel
-        freq_offset = 0.001
+        freq_offset = 0
         channel = channels.channel_model(
-            0.01, frequency_offset=freq_offset,)
+            0, frequency_offset=freq_offset,)
 
         feedback_src = blocks.vector_source_c(
             [0 for _ in range(1000)] + list(feedback_sink.data()) + [0 for _ in range(1000)])
