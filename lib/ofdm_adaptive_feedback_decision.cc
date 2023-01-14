@@ -34,7 +34,7 @@ ofdm_adaptive_feedback_decision::sptr ofdm_adaptive_feedback_decision::make()
 ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision()
 {
     // Construct the lookup table for decision
-    INSERT_DECISION_ENTRY(feedback_lut, 5, 10, constellation_type_t::BPSK, 0);
+    INSERT_DECISION_ENTRY(feedback_lut, -100, 10, constellation_type_t::BPSK, 0);
     INSERT_DECISION_ENTRY(feedback_lut, 10, 15, constellation_type_t::QPSK, 0);
     INSERT_DECISION_ENTRY(feedback_lut, 15, 20, constellation_type_t::PSK8, 0);
     INSERT_DECISION_ENTRY(feedback_lut, 20, 100, constellation_type_t::QAM16, 0);

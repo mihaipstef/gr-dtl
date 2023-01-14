@@ -13,7 +13,7 @@
 #include <algorithm>
 
 #include "logger.h"
-
+#include <cassert>
 
 namespace gr {
 namespace dtl {
@@ -58,7 +58,8 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
                          bits_per_header_sym,
                          0,
                          scramble_header),
-      d_constellation_tag_key(get_constellation_tag_key())
+      d_constellation_tag_key(get_constellation_tag_key()),
+      d_constellation(constellation_type_t::QAM16)
 {
 }
 
@@ -110,46 +111,64 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                                 std::vector<tag_t>& tags)
 {
-    packet_header_default::header_parser(in, tags);
 
-    // Determine constellation type and add the tag
-    int k = 24; // Constellation type starts on bit 24
+    size_t packet_len = 0;
+    size_t packet_number = 0;
     unsigned char constellation_type = 0;
+
+    int k = 0;
+    for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
+        packet_len |= (((int)in[k]) & d_mask) << i;
+    }
+    for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
+        packet_number |= (((int)in[k]) & d_mask) << i;
+    }
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         constellation_type |= (((int)in[k]) & d_mask) << i;
     }
-    d_bits_per_payload_sym = compute_no_of_bits_per_symbol(
-        static_cast<constellation_type_t>(constellation_type)
-    );
-    tag_t tag;
-    tag.key = get_constellation_tag_key();
-    tag.value = pmt::from_long(constellation_type);
-    tags.push_back(tag);
 
-    // Compute CRC from tags and verify
-    // The packet length in tags is in bytes at this point
-    unsigned char crc_calcd = compute_crc(tags);
+    unsigned char buffer[] = { (unsigned char)(packet_len & 0xFF),
+                               (unsigned char)(packet_len>> 8),
+                               (unsigned char)(packet_number & 0xFF),
+                               (unsigned char)(packet_number >> 8),
+                                constellation_type };
+    unsigned char crc_calcd = d_crc_impl.compute(buffer, sizeof(buffer));
+    bool crc_ok = true;
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         if ((((int)in[k]) & d_mask) != (((int)crc_calcd >> i) & d_mask)) {
-            return false;
+            crc_ok = false;
+            break;
         }
     }
 
-    // Update length tag to number of symbols in packet
-    int no_of_symbols = 0; // # of complex symbols in this frame
-    auto it = std::find_if(tags.begin(), tags.end(), [this](auto& t) {
-        return pmt::equal(t.key, this->d_len_tag_key);
-    });
-
-    if (it == tags.end()) {
-        throw std::invalid_argument("Missing packet length tag.");
+    // Update constellation only if CRC ok 
+    if (crc_ok && constellation_type && constellation_type <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
+        d_constellation = static_cast<constellation_type_t>(constellation_type);
     }
-    no_of_symbols = pmt::to_long(it->value) * 8 / d_bits_per_payload_sym;
-    if (pmt::to_long(it->value) * 8 % d_bits_per_payload_sym) {
+
+    d_bits_per_payload_sym = compute_no_of_bits_per_symbol(
+        static_cast<constellation_type_t>(d_constellation)
+    );
+
+    DTL_LOG_DEBUG("header_parser: {}", (int)d_constellation);
+    if (d_bits_per_payload_sym == 0) return false;
+
+    size_t no_of_symbols = packet_len * 8 / d_bits_per_payload_sym;
+    if (packet_len * 8 % d_bits_per_payload_sym) {
         no_of_symbols++;
     }
 
-    it->value = pmt::from_long(no_of_symbols);
+    // Add tags
+    tag_t tag;
+    tag.key = d_len_tag_key;
+    tag.value = pmt::from_long(no_of_symbols);
+    tags.push_back(tag);
+    tag.key = d_num_tag_key;
+    tag.value = pmt::from_long(packet_number);
+    tags.push_back(tag);
+    tag.key = get_constellation_tag_key();
+    tag.value = pmt::from_long(static_cast<int>(d_constellation));
+    tags.push_back(tag);
 
     // Determine frame length and add the tag
     add_frame_length_tag(no_of_symbols, tags);
@@ -177,38 +196,6 @@ void ofdm_adaptive_packet_header::add_frame_length_tag(int packet_len,
     tag.key = d_frame_len_tag_key;
     tag.value = pmt::from_long(frame_len);
     tags.push_back(tag);
-}
-
-
-unsigned char ofdm_adaptive_packet_header::compute_crc(std::vector<tag_t>& tags)
-{
-    int header_len = 0, header_num = 0, constellation_type = -1;
-    for (auto& tag : tags) {
-        if (pmt::equal(tag.key, d_len_tag_key)) {
-            header_len = pmt::to_long(tag.value);
-        } else if (pmt::equal(tag.key, d_num_tag_key)) {
-            header_num = pmt::to_long(tag.value);
-        } else if (pmt::equal(tag.key, d_constellation_tag_key)) {
-            constellation_type = pmt::to_long(tag.value);
-        }
-    }
-
-    unsigned char buffer[] = { (unsigned char)(header_len & 0xFF),
-                               (unsigned char)(header_len >> 8),
-                               (unsigned char)(header_num & 0xFF),
-                               (unsigned char)(header_num >> 8),
-                               (unsigned char)constellation_type };
-    unsigned char crc_calcd = d_crc_impl.compute(buffer, sizeof(buffer));
-
-    _logger.debug("buffer: {0:x} {1:x} {2:x} {3:x} {4:x}",
-                  buffer[0],
-                  buffer[1],
-                  buffer[2],
-                  buffer[3],
-                  buffer[4]);
-    _logger.debug("crc_calcd: {0:x}", crc_calcd);
-
-    return crc_calcd;
 }
 
 } /* namespace dtl */
