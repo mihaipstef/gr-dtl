@@ -11,6 +11,8 @@
 #include <gnuradio/digital/packet_header_ofdm.h>
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_packet_header.h>
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
+
 
 namespace gr {
 namespace dtl {
@@ -48,11 +50,11 @@ public:
 
     bool header_parser(const unsigned char* in, std::vector<tag_t>& tags) override;
 
-protected:
+private:
     void add_frame_length_tag(int packet_len, std::vector<tag_t>& tags);
-    unsigned char compute_crc(std::vector<tag_t>& tags);
 
     pmt::pmt_t d_constellation_tag_key;
+    constellation_type_t d_constellation;
 };
 
 } // namespace dtl
