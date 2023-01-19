@@ -59,14 +59,15 @@ outputs:
     dtype: byte
 -   domain: stream
     dtype: complex
+-   domain: stream
+    dtype: byte
 -   domain: message
     id: feedback
 
 templates:
     imports: from gnuradio import dtl
     make: |-
-        dtl.ofdm_adaptive_rx(
-            dtl.ofdm_adaptive_rx_config.from_parameters(
+        dtl.ofdm_adaptive_rx.from_parameters(
             fft_len=${fft_len},
             cp_len=${cp_len},
             % if occupied_carriers:
@@ -80,7 +81,7 @@ templates:
             % endif
             rolloff=${rolloff}, 
             debug=${debug},
-            scramble_bits=${scramble_bits})
+            scramble_bits=${scramble_bits}
         )
 
 file_format: 1

@@ -65,8 +65,7 @@ outputs:
 templates:
     imports: from gnuradio import dtl
     make: |-
-        dtl.ofdm_adaptive_tx(
-            dtl.ofdm_adaptive_tx_config.from_parameters(
+        dtl.ofdm_adaptive_tx.from_parameters(
             fft_len=${fft_len},
             cp_len=${cp_len},
             % if occupied_carriers:
@@ -80,6 +79,6 @@ templates:
             % endif
             rolloff=${rolloff}, 
             debug=${debug},
-            scramble_bits=${scramble_bits})
+            scramble_bits=${scramble_bits}
         )
 file_format: 1

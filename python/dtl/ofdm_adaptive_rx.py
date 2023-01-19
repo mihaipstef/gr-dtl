@@ -179,7 +179,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             payload_demod,
             payload_pack,
             self.payload_descrambler,
-            self.crc,
+            # self.crc,
             (self, 0)
         )
 

@@ -81,7 +81,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         )
         self.connect(
             self.tx_control,
-            crc,
+            #crc,
             header_gen,
             header_mod,
             (header_payload_mux, 0)
@@ -108,7 +108,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.packet_length_tag_key
         )
         self.connect(
-            crc,
+            # crc,
+            self.tx_control,
             payload_scrambler,
             payload_unpack,
             payload_mod,
