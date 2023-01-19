@@ -18,10 +18,6 @@ class ofdm_adaptive_chunks_to_symbols_bc_impl : public ofdm_adaptive_chunks_to_s
 private:
     constellation_dictionary_t d_constellations;
 
-protected:
-    int calculate_output_stream_length(const gr_vector_int& ninput_items);
-
-
 public:
     ofdm_adaptive_chunks_to_symbols_bc_impl(
         const std::vector<constellation_type_t>& constellations,

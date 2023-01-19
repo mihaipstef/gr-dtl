@@ -15,7 +15,7 @@ namespace gr {
 namespace dtl {
 
 
-INIT_DTL_LOGGER(__FILE__);
+INIT_DTL_LOGGER("ofdm_adaptive_repack_bits_bb");
 
 
 ofdm_adaptive_repack_bits_bb::sptr
@@ -98,8 +98,6 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
     if (((bytes_to_read * d_bits_per_in_byte) % d_bits_per_out_byte) != 0) {
         bytes_to_write += static_cast<int>(d_unpack);
     }
-
-    DTL_LOG_BYTES("in:", in, bytes_to_read)
 
     int n_read = 0;
     int n_written = 0;
@@ -186,8 +184,6 @@ int ofdm_adaptive_repack_bits_bb_impl::work(int noutput_items,
                     nitems_written(0),
                     pmt::string_to_symbol(d_len_tag_key),
                     pmt::from_long(n_written));
-
-    DTL_LOG_BYTES("out:", out, n_written)
 
     return n_written;
 }

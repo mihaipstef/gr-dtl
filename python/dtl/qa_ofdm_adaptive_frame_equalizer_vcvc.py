@@ -8,6 +8,7 @@
 
 from gnuradio import (
     blocks,
+    channels,
     digital,
     gr,
     gr_unittest,
@@ -20,10 +21,11 @@ try:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        get_estimated_snr_tag_key,
+        estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
+        ofdm_adaptive_feedback_decision,
     )
 except ImportError:
     import os
@@ -33,11 +35,13 @@ except ImportError:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        get_estimated_snr_tag_key,
+        estimated_snr_tag_key,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
+        ofdm_adaptive_feedback_decision,
     )
+
 
 class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
@@ -54,12 +58,12 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
         }
         fft_len = 8
 
-        for c, cnst in consts.items():
+        for i, (c, cnst) in enumerate(consts.items()):
             #            4   5  6  7   0  1  2   3
-            tx_data = [ -1, -1, 1, 2, -1, 3, 0, -1,  # 0
-                        -1, -1, 0, 2, -1, 2, 0, -1,  # 8
-                        -1, -1, 3, 0, -1, 1, 0, -1,  # 16 (Pilot symbols)
-                        -1, -1, 1, 1, -1, 0, 2, -1]  # 24
+            tx_data = [-1, -1, 1, 2, -1, 3, 0, -1,  # 0
+                       -1, -1, 0, 2, -1, 2, 0, -1,  # 8
+                       -1, -1, 3, 0, -1, 1, 0, -1,  # 16 (Pilot symbols)
+                       -1, -1, 1, 1, -1, 0, 2, -1]  # 24
             tx_signal = [
                 cnst.map_to_points_v(x)[0] if x != -
                 1 else 0 for x in tx_data]
@@ -77,13 +81,11 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
                 pilot_symbols,
                 0,
                 0.01)
-
             channel = [
                 0, 0, 1, 1, 0, 1, 1, 0,
-                # These coefficients will be rotated slightly...
                 0, 0, 1, 1, 0, 1, 1, 0,
-                0, 0, 1j, 1j, 0, 1j, 1j, 0,  # Go crazy here!
-                0, 0, 1j, 1j, 0, 1j, 1j, 0  # ...and again here.
+                0, 0, 1j, 1j, 0, 1j, 1j, 0,
+                0, 0, 1j, 1j, 0, 1j, 1j, 0
             ]
             for idx in range(fft_len, 2 * fft_len):
                 channel[idx] = channel[idx - fft_len] * \
@@ -98,10 +100,15 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             const_tag = gr.tag_t()
             const_tag.key = get_constellation_tag_key()
             const_tag.value = pmt.from_long(c)
-            src = blocks.vector_source_c(numpy.multiply(
-                tx_signal, channel), False, fft_len, (chan_tag, const_tag))
+            rx_signal = numpy.multiply(tx_signal, channel) + [x if y != 0 else 0 for (
+                x, y) in zip(numpy.random.normal(0, 0.01, len(tx_signal)), tx_signal)]
+            src = blocks.vector_source_c(
+                rx_signal, False, fft_len, (chan_tag, const_tag))
+            feedback_decision_sink = blocks.message_debug()
             eq = ofdm_adaptive_frame_equalizer_vcvc(
-                equalizer.base(), 0, "tsb_key", True)
+                equalizer.base(), ofdm_adaptive_feedback_decision(), 0, "tsb_key", True, True)
+            self.tb.msg_connect(eq, 'feedback_port',
+                                feedback_decision_sink, 'store')
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")
             stream_to_tagged = blocks.stream_to_tagged_stream(
                 gr.sizeof_gr_complex, fft_len, len(tx_data) // fft_len, "tsb_key")
@@ -116,15 +123,21 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
             out_syms = numpy.array(sink.data()[0])
 
-            def demod(syms): return [
-                cnst.decision_maker_v(
-                    (x,)) if x != 0 else -1 for x in syms]
+            def demod(syms):
+                return [
+                    cnst.decision_maker_v(
+                        (x,)) if x != 0 else -1 for x in syms]
             rx_data = demod(out_syms)
 
             self.assertEqual(tx_data, rx_data)
-            self.assertEqual(len(sink.tags()), 3)
-            self.assertIn(get_constellation_tag_key(), [t.key for t in sink.tags()])
-            self.assertIn(get_estimated_snr_tag_key(), [t.key for t in sink.tags()])
+            self.assertEqual(len(sink.tags()), 5)
+            self.assertIn(get_constellation_tag_key(),
+                          [t.key for t in sink.tags()])
+            self.assertIn(estimated_snr_tag_key(), [
+                          t.key for t in sink.tags()])
+            self.assertEqual(feedback_decision_sink.num_messages(), 1)
+            feedback_msg = feedback_decision_sink.get_message(0)
+            self.assertEqual(pmt.u8vector_elements(pmt.cdr(feedback_msg)), [int(constellation_type_t.QAM16), 0])
 
 
 if __name__ == '__main__':

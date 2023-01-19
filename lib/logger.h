@@ -8,39 +8,50 @@
 #ifndef INCLUDED_DTL_LOGGER_H
 #define INCLUDED_DTL_LOGGER_H
 
-#include <gnuradio/logger.h>
 
-#include <iomanip>
 
-namespace gr {
-namespace dtl {
+
 
 #if true
 
-    #define INIT_DTL_LOGGER(name) static gr::logger _logger(name);
+    #include <gnuradio/logger.h>
+    #include <iomanip>
+    #include <tuple>
 
-    #define DTL_LOG_INFO(msg, ...) _logger.info(msg, __VA_ARGS__);
-    #define DTL_LOG_DEBUG(msg, ...) _logger.debug(msg, __VA_ARGS__);
+    namespace gr {
+    namespace dtl {
+        #define INIT_DTL_LOGGER(name) static gr::logger _logger(name);
 
-    #define DTL_LOG_TAGS(title, tags) \
-        _logger.debug(title); \
-        for (auto& t: tags) { \
-            if(pmt::is_integer(t.value)) { \
-                _logger.debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
-            } \
-            else { \
-                _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
-            } \
-        }
+        #define DTL_LOG_INFO(msg, ...) _logger.info(msg, __VA_ARGS__);
+        #define DTL_LOG_DEBUG(msg, ...)  _logger.debug(msg, __VA_ARGS__);
+            // if (std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value) {
+            //     _logger.debug(msg, __VA_ARGS__);
+            // } else {
+            //     _logger.debug(msg);
+            // }
 
-    #define DTL_LOG_BYTES(msg, buffer, length) \
-        { \
-            std::stringstream ss; \
-            for(int i=0; i<length; ++i) { \
-                ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buffer[i]; \
-            } \
-            _logger.debug("{}", ss.str()); \
-        }
+        #define DTL_LOG_TAGS(title, tags) \
+            _logger.debug(title); \
+            for (auto& t: tags) { \
+                if(pmt::is_integer(t.value)) { \
+                    _logger.debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
+                } \
+                else { \
+                    _logger.debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
+                } \
+            }
+
+        #define DTL_LOG_BYTES(msg, buffer, length) \
+            { \
+                std::stringstream ss; \
+                for(int i=0; i<length; ++i) { \
+                    ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buffer[i]; \
+                } \
+                _logger.debug("{}", ss.str()); \
+            }
+
+    } // namespace dtl
+    } // namespace gr
 
 #else
     #define INIT_DTL_LOGGER(name)
@@ -49,8 +60,5 @@ namespace dtl {
     #define DTL_LOG_TAGS(title, tags)
     #define DTL_LOG_BYTES(msg, buffer, length)
 #endif
-
-} // namespace dtl
-} // namespace gr
 
 #endif /* INCLUDED_DTL_LOGGER_H */

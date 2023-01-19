@@ -23,6 +23,8 @@ using namespace gr::digital;
 
 static const pmt::pmt_t CONSTELLATION_TAG_KEY = pmt::string_to_symbol("constellation_tag_key");
 static const pmt::pmt_t ESTIMATED_SNR_TAG_KEY = pmt::string_to_symbol("estimated_snr_tag_key");
+static const pmt::pmt_t FEEDBACK_CONSTELLATION_KEY = pmt::string_to_symbol("feedback_constellation_key");
+static const pmt::pmt_t FEEDBACK_FEC_KEY = pmt::string_to_symbol("feedback_fec_key");
 
 
 template <class T>
@@ -100,8 +102,16 @@ pmt::pmt_t DTL_API get_constellation_tag_key() {
     return CONSTELLATION_TAG_KEY;
 }
 
-pmt::pmt_t DTL_API get_estimated_snr_tag_key() {
+pmt::pmt_t DTL_API estimated_snr_tag_key() {
     return ESTIMATED_SNR_TAG_KEY;
+}
+
+pmt::pmt_t DTL_API feedback_constellation_key() {
+    return FEEDBACK_CONSTELLATION_KEY;
+}
+
+pmt::pmt_t DTL_API feedback_fec_key() {
+    return FEEDBACK_FEC_KEY;
 }
 
 } /* namespace dtl */

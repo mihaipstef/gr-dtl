@@ -9,5 +9,8 @@ install(FILES
     dtl_ofdm_adaptive_frame_equalizer_vcvc.block.yml
     dtl_ofdm_adaptive_repack_bits_bb.block.yml
     dtl_ofdm_adaptive_chunks_to_symbols_bc.block.yml
-    dtl_ofdm_adaptive_constellation_decoder_cb.block.yml DESTINATION share/gnuradio/grc/blocks
+    dtl_ofdm_adaptive_constellation_decoder_cb.block.yml
+    dtl_ofdm_adaptive_tx.block.yml
+    dtl_ofdm_adaptive_rx.block.yml
+    DESTINATION share/gnuradio/grc/blocks
 )

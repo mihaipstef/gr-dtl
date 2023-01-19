@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_equalizer_vcvc.h) */
-/* BINDTOOL_HEADER_FILE_HASH(c9226a403e716fe7e309aaebd1f35bb2)                     */
+/* BINDTOOL_HEADER_FILE_HASH(3a3a9e1fe45b843c91ad0ae6031097c4)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -43,9 +43,11 @@ void bind_ofdm_adaptive_frame_equalizer_vcvc(py::module& m)
 
         .def(py::init(&ofdm_adaptive_frame_equalizer_vcvc::make),
              py::arg("equalizer"),
+             py::arg("feedback_decision"),
              py::arg("cp_len"),
              py::arg("tsb_key") = "frame_len",
              py::arg("propagate_channel_state") = false,
+             py::arg("propagate_feedback_tags") = false,
              py::arg("fixed_frame_len") = 0,
              D(ofdm_adaptive_frame_equalizer_vcvc, make))
 

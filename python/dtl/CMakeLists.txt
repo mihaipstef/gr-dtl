@@ -14,16 +14,19 @@ if(NOT PYTHONINTERP_FOUND)
     return()
 endif()
 
-add_subdirectory(bindings)
-
 ########################################################################
 # Install python sources
 ########################################################################
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
+    ofdm_adaptive_config.py
+    ofdm_adaptive_rx.py
+    ofdm_adaptive_tx.py
     DESTINATION ${GR_PYTHON_DIR}/gnuradio/dtl
 )
+
+add_subdirectory(bindings)
 
 ########################################################################
 # Handle the unit tests
@@ -43,3 +46,6 @@ GR_ADD_TEST(qa_ofdm_adaptive_frame_equalizer_vcvc ${PYTHON_EXECUTABLE} ${CMAKE_C
 GR_ADD_TEST(qa_ofdm_adaptive_packet_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_packet_header.py)
 GR_ADD_TEST(qa_ofdm_adaptive_repack_bits_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_repack_bits_bb.py)
 GR_ADD_TEST(qa_ofdm_adaptive_chunks_to_symbols_bc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_chunks_to_symbols_bc.py)
+GR_ADD_TEST(qa_ofdm_adaptive_feedback_format ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_feedback_format.py)
+GR_ADD_TEST(qa_ofdm_adaptive_txrx ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_txrx.py)
+GR_ADD_TEST(qa_ofdm_adaptive_config ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_config.py)

@@ -10,6 +10,7 @@
 
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
+#include <gnuradio/dtl/ofdm_adaptive_feedback_decision.h>
 #include <gnuradio/tagged_stream_block.h>
 
 namespace gr {
@@ -20,7 +21,8 @@ namespace dtl {
  * \ingroup dtl
  *
  */
-class DTL_API ofdm_adaptive_frame_equalizer_vcvc : virtual public ::gr::tagged_stream_block
+class DTL_API ofdm_adaptive_frame_equalizer_vcvc
+    : virtual public ::gr::tagged_stream_block
 {
 public:
     typedef std::shared_ptr<ofdm_adaptive_frame_equalizer_vcvc> sptr;
@@ -35,9 +37,11 @@ public:
      *                        when using tagged streams at the input.
      */
     static sptr make(::gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
+                     ofdm_adaptive_feedback_decision_base::sptr feedback_decision,
                      int cp_len,
                      const std::string& tsb_key = "frame_len",
                      bool propagate_channel_state = false,
+                     bool propagate_feedback_tags = false,
                      int fixed_frame_len = 0);
 };
 

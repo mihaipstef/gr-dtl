@@ -1,5 +1,5 @@
 id: dtl_ofdm_adaptive_repack_bits_bb
-label: Adaptive Repack
+label: OFDM Adaptive Repack
 category: '[DTL]'
 
 templates:
