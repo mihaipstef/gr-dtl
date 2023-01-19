@@ -1,0 +1,25 @@
+grcc "$1"_tx.grc
+grcc "$1"_rx.grc
+python3 "$1"_tx.py > tx.log &
+tx_pid=$!
+echo "TX run with pid=$tx_pid"
+python3 "$1"_rx.py > rx.log &
+rx_pid=$!
+echo "TX run with pid=$rx_pid"
+
+function handle_sigint() {
+	echo "Killing TX and RX"
+	kill "$rx_pid"
+	kill "$tx_pid"
+	exit
+}
+
+trap 'handle_sigint' 2
+
+
+echo "CTRL+C to kill TX and RX"
+while :
+do
+	sleep 1
+done
+
