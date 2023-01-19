@@ -21,7 +21,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(2, 2, [gr.sizeof_char, gr.sizeof_gr_complex]))
+                                gr.io_signature.makev(3, 3, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char]))
         self.message_port_register_hier_out("feedback")
 
         self.fft_len = config.fft_len
@@ -183,7 +183,11 @@ class ofdm_adaptive_rx(gr.hier_block2):
             (self, 0)
         )
 
+        self.connect((self.sync_detect,1), (self, 2))
+
         if self.debug_log:
+            self.connect((self.sync_detect, 1), blocks.file_sink(
+                gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
             self.connect((hpd, 0), blocks.file_sink(
                 gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-header.dat"))
             self.connect((hpd, 1), blocks.file_sinself.k(
