@@ -5,7 +5,7 @@ from gnuradio import (
 import typing as t
 
 @dc.dataclass
-class ofdm_adaptive_tx_config:
+class ofdm_adaptive_config:
     fft_len : int = 64
     cp_len : int = 16
     frame_length_tag_key : str = "frame_length"
@@ -35,6 +35,11 @@ class ofdm_adaptive_tx_config:
     scramble_bits : bool = False
     frame_length : int = 20
 
+
 @dc.dataclass
-class ofdm_adaptive_rx_config(ofdm_adaptive_tx_config):
+class ofdm_adaptive_tx_config(ofdm_adaptive_config):
     pass
+
+@dc.dataclass
+class ofdm_adaptive_rx_config(ofdm_adaptive_config):
+    sync_threshold: float = 0.95

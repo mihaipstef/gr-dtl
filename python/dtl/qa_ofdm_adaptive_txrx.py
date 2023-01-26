@@ -84,7 +84,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
-        rx = ofdm_adaptive_rx(rx_cfg(frame_length=self.frame_len))
+        rx = ofdm_adaptive_rx(rx_cfg(frame_length=self.frame_len, sync_threshold=0.99))
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 

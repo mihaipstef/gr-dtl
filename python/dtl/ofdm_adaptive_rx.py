@@ -36,6 +36,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
+        self.sync_threshold = config.sync_threshold
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -55,7 +56,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         # Synchronization
         self.sync_detect = digital.ofdm_sync_sc_cfb(
-            self.fft_len, self.cp_len, threshold=0.99)
+            self.fft_len, self.cp_len, threshold=self.sync_threshold)
         self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
