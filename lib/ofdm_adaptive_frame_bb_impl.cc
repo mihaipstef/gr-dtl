@@ -194,7 +194,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                           "frame_in_bytes={}, "
                           "read_index={}, write_index={}, expected_frame={}, payload={}",
                           d_tag_offset,
-                          frame_out_symbols,
                           frame_in_bytes,
                           read_index,
                           write_index,
