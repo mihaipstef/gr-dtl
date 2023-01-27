@@ -20,7 +20,7 @@ namespace dtl {
 
 using namespace gr::digital;
 
-INIT_DTL_LOGGER("ofdm_adaptive_packet_header");
+INIT_DTL_LOGGER("ofdm_adaptive_packet_header")
 
 ofdm_adaptive_packet_header::sptr
 ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_carriers,

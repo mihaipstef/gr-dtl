@@ -8,6 +8,8 @@
 #ifndef INCLUDED_DTL_REPACK_H
 #define INCLUDED_DTL_REPACK_H
 
+#include <iomanip>
+
 namespace gr {
 namespace dtl {
 
