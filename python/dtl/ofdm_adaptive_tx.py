@@ -66,7 +66,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         header_mod = digital.chunks_to_symbols_bc(
             header_constellation.points())
         formatter_object = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, 1,
+            self.occupied_carriers, 1, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,

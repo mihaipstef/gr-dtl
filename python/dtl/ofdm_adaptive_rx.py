@@ -37,6 +37,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
         self.sync_threshold = config.sync_threshold
+        self.frame_length = config.frame_length
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -100,7 +101,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         header_demod = digital.constellation_decoder_cb(
             header_constellation.base())
         header_formatter = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, 1,
+            self.occupied_carriers, 1, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,

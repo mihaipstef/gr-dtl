@@ -24,7 +24,8 @@ INIT_DTL_LOGGER("ofdm_adaptive_packet_header");
 
 ofdm_adaptive_packet_header::sptr
 ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_carriers,
-                                  int n_syms,
+                                  int header_syms,
+                                  int payload_syms,
                                   const std::string& len_tag_key,
                                   const std::string& frame_len_tag_key,
                                   const std::string& num_tag_key,
@@ -33,7 +34,8 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
 {
     return ofdm_adaptive_packet_header::sptr(
         new ofdm_adaptive_packet_header(occupied_carriers,
-                                        n_syms,
+                                        header_syms,
+                                        payload_syms,
                                         len_tag_key,
                                         frame_len_tag_key,
                                         num_tag_key,
@@ -44,14 +46,15 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
 
 ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
     const std::vector<std::vector<int>>& occupied_carriers,
-    int n_syms,
+    int header_syms,
+    int payload_syms,
     const std::string& len_tag_key,
     const std::string& frame_len_tag_key,
     const std::string& num_tag_key,
     int bits_per_header_sym,
     bool scramble_header)
     : packet_header_ofdm(occupied_carriers,
-                         n_syms,
+                         header_syms,
                          len_tag_key,
                          frame_len_tag_key,
                          num_tag_key,
@@ -59,7 +62,8 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
                          0,
                          scramble_header),
       d_constellation_tag_key(get_constellation_tag_key()),
-      d_constellation(constellation_type_t::QAM16)
+      d_constellation(constellation_type_t::QAM16),
+      d_payload_syms(payload_syms)
 {
 }
 
@@ -176,10 +180,11 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
         no_of_symbols++;
     }
 
-    DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}",
+    DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}, crc_ok={}",
                   (int)d_constellation,
                   no_of_symbols,
-                  packet_number);
+                  packet_number,
+                  crc_ok);
 
     // Add tags
     tag_t tag;
@@ -192,33 +197,10 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     tag.key = get_constellation_tag_key();
     tag.value = pmt::from_long(static_cast<int>(d_constellation));
     tags.push_back(tag);
-
-    // Determine frame length and add the tag
-    add_frame_length_tag(no_of_symbols, tags);
-
-    return true;
-}
-
-
-void ofdm_adaptive_packet_header::add_frame_length_tag(int packet_len,
-                                                       std::vector<tag_t>& tags)
-{
-    // To figure out how many payload OFDM symbols there are in this frame,
-    // we need to go through the carrier allocation and count the number of
-    // allocated carriers per OFDM symbol.
-    // frame_len == # of payload OFDM symbols in this frame
-    int frame_len = 0;
-    size_t k = 0; // position in the carrier allocation map
-    int symbols_accounted_for = 0;
-    while (symbols_accounted_for < packet_len) {
-        frame_len++;
-        symbols_accounted_for += d_occupied_carriers[k].size();
-        k = (k + 1) % d_occupied_carriers.size();
-    }
-    tag_t tag;
     tag.key = d_frame_len_tag_key;
-    tag.value = pmt::from_long(frame_len);
+    tag.value = pmt::from_long(d_payload_syms);
     tags.push_back(tag);
+    return true;
 }
 
 } /* namespace dtl */
