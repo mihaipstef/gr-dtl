@@ -22,6 +22,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_feedback_format.cc
     ofdm_adaptive_frame_bb_impl.cc
     repack.cc
+    logger.cc
     )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
@@ -45,6 +46,9 @@ if(APPLE)
         INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
     )
 endif(APPLE)
+
+target_compile_definitions(gnuradio-dtl PRIVATE DTL_LOGGING_ENABLE=true)
+
 
 ########################################################################
 # Install built library files
