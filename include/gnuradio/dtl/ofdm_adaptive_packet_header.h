@@ -24,19 +24,20 @@ namespace dtl {
 class DTL_API ofdm_adaptive_packet_header : public gr::digital::packet_header_ofdm
 {
 public:
-
     typedef std::shared_ptr<ofdm_adaptive_packet_header> sptr;
 
     static sptr make(const std::vector<std::vector<int>>& occupied_carriers,
-              int n_syms,
-              const std::string& len_tag_key,
-              const std::string& frame_len_tag_key,
-              const std::string& num_tag_key,
-              int bits_per_header_sym,
-              bool scramble_header);
+                     int header_syms,
+                     int payload_syms,
+                     const std::string& len_tag_key,
+                     const std::string& frame_len_tag_key,
+                     const std::string& num_tag_key,
+                     int bits_per_header_sym,
+                     bool scramble_header);
 
     ofdm_adaptive_packet_header(const std::vector<std::vector<int>>& occupied_carriers,
-                                int n_syms,
+                                int header_syms,
+                                int payload_syms,
                                 const std::string& len_tag_key,
                                 const std::string& frame_len_tag_key,
                                 const std::string& num_tag_key,
@@ -51,10 +52,9 @@ public:
     bool header_parser(const unsigned char* in, std::vector<tag_t>& tags) override;
 
 private:
-    void add_frame_length_tag(int packet_len, std::vector<tag_t>& tags);
-
     pmt::pmt_t d_constellation_tag_key;
     constellation_type_t d_constellation;
+    int d_payload_syms;
 };
 
 } // namespace dtl

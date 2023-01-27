@@ -67,8 +67,6 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             packets, "len_key"
         )
         offset = 0
-        for t in tags:
-            print(t.key, t.value, t.offset)
         # Add frame constellation tag to each packet
         for p, c in zip(packets, constellations):
             tag = tag_t()
@@ -87,7 +85,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             print(t.key, t.value, t.offset)
         src = blocks.vector_source_b(data, tags=tags)
         formatter = ofdm_adaptive_packet_header(
-            self._occupied_carriers_dummy_40, 1, "len_key", "frame_len_key", "head_num", 1, False)
+            self._occupied_carriers_dummy_40, 1, 1, "len_key", "frame_len_key", "head_num", 1, False)
         self.assertEqual(formatter.header_len(), 40)
         self.assertEqual(
             pmt.symbol_to_string(
@@ -111,10 +109,6 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         self.tb.msg_connect(header_parser, "header_data", sink_parse, "store")
 
         self.tb.run()
-
-        print("tags")
-        for t in tag_sink.current_tags():
-            print(t.key, t.value)
 
         # 0x04 0x00 0x00 0x00 0x04 0xaa
         # 0x02 0x00 0x01 0x00 0x03 0x9f
