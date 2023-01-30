@@ -155,16 +155,15 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                (unsigned char)(packet_number >> 8),
                                constellation_type };
     unsigned char crc_calcd = d_crc_impl.compute(buffer, sizeof(buffer));
-    bool crc_ok = true;
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         if ((((int)in[k]) & d_mask) != (((int)crc_calcd >> i) & d_mask)) {
-            crc_ok = false;
-            break;
+            DTL_LOG_DEBUG("header_parser: crc=failed");
+            return false;
         }
     }
 
     // Update constellation only if CRC ok
-    if (crc_ok && constellation_type &&
+    if (constellation_type &&
         constellation_type <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
         d_constellation = static_cast<constellation_type_t>(constellation_type);
     }
@@ -180,11 +179,10 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
         no_of_symbols++;
     }
 
-    DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}, crc_ok={}",
+    DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}, crc=ok",
                   (int)d_constellation,
                   no_of_symbols,
-                  packet_number,
-                  crc_ok);
+                  packet_number);
 
     // Add tags
     tag_t tag;

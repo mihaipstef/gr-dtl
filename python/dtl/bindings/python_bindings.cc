@@ -34,6 +34,7 @@ namespace py = pybind11;
     void bind_ofdm_adaptive_frame_bb(py::module& m);
     void bind_log(py::module& m);
 
+    void bind_ofdm_adaptive_frame_detect_bb(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -74,6 +75,6 @@ PYBIND11_MODULE(dtl_python, m)
     bind_ofdm_adaptive_feedback_format(m);
     bind_ofdm_adaptive_frame_bb(m);
     bind_log(m);
-
+    bind_ofdm_adaptive_frame_detect_bb(m);
     // ) END BINDING_FUNCTION_CALLS
 }

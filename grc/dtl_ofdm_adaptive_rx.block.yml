@@ -61,6 +61,8 @@ outputs:
     dtype: complex
 -   domain: stream
     dtype: byte
+-   domain: stream
+    dtype: byte
 -   domain: message
     id: feedback
 

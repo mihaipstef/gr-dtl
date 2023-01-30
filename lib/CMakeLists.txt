@@ -23,7 +23,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_bb_impl.cc
     repack.cc
     logger.cc
-    )
+    ofdm_adaptive_frame_detect_bb_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

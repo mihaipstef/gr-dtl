@@ -94,6 +94,8 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
         self.tb.connect((rx, 2), blocks.file_sink(
             gr.sizeof_char, f"/tmp/sync-detect.dat"))
+        self.tb.connect((rx, 3), blocks.file_sink(
+            gr.sizeof_char, f"/tmp/sync-correct.dat"))
         self.tb.run()
         rx_data = rx_sink.data()
         packet_success = test_data == rx_data[:buffer_size]
