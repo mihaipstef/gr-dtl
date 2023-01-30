@@ -58,12 +58,17 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 {
     if (pmt::is_dict(feedback)) {
         if (pmt::dict_has_key(feedback, feedback_constellation_key())) {
-            d_constellation =
+            constellation_type_t constellation =
                 static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
                     feedback,
                     feedback_constellation_key(),
                     pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
-            d_bps = compute_no_of_bits_per_symbol(d_constellation);
+            int bps = compute_no_of_bits_per_symbol(d_constellation);
+            // Update constellation only if valid data received
+            if (bps) {
+                d_constellation = constellation;
+                d_bps = bps;
+            }
         }
         if (pmt::dict_has_key(feedback, feedback_fec_key())) {
             d_fec_scheme = pmt::to_long(

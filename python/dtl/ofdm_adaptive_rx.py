@@ -21,7 +21,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(3, 3, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char]))
+                                gr.io_signature.makev(4, 4, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char]))
         self.message_port_register_hier_out("feedback")
 
         self.fft_len = config.fft_len
@@ -61,6 +61,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
+        sync_correct = dtl.ofdm_adaptive_frame_detect_bb((self.frame_length + 3) * (self.fft_len + self.cp_len), 3)
         hpd = digital.header_payload_demux(
             len(self.sync_words) + 1,
             self.fft_len, self.cp_len,
@@ -72,7 +73,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self, 0), self.sync_detect)
         self.connect((self, 0), self.delay, (self.mixer, 0), (hpd, 0))
         self.connect((self.sync_detect, 0), self.oscillator, (self.mixer, 1))
-        self.connect((self.sync_detect, 1), (hpd, 1))
+        self.connect((self.sync_detect, 1), sync_correct, (hpd, 1))
 
         # Header path
         header_fft = fft.fft_vcc(self.fft_len, True, (), True)
@@ -121,6 +122,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             header_parser
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
+        self.msg_connect(header_parser, "header_data", sync_correct, "header_port")
+
 
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
@@ -186,7 +189,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
 
         self.connect((self.sync_detect,1), (self, 2))
+        self.connect(sync_correct, (self, 3))
 
+        # self.connect(sync_correct, blocks.file_sink(
+        #     gr.sizeof_char, f"/tmp/sync-correct.dat"))
+        # self.connect((self.sync_detect, 1), blocks.file_sink(
+        #     gr.sizeof_char, f"/tmp/sync-detect2.dat"))
         if self.debug_log:
             self.connect((self.sync_detect, 1), blocks.file_sink(
                 gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
