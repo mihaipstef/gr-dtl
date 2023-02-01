@@ -128,7 +128,7 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
     constellation_sptr constellation =
         d_constellations[get_constellation_type(*cnst_tag_it)];
 
-
+    d_snr_estimator->reset();
     for (int i = 0; i < n_sym; i++) {
         for (int k = 0; k < d_fft_len; k++) {
             bool is_pilot_carreier = !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];

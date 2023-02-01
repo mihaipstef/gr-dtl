@@ -5,13 +5,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <algorithm>
+#include "constellation.h"
+#include <functional>
 #include "logger.h"
-
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
-
-#include <algorithm>
-#include <functional>
 #include <map>
 
 namespace gr {
@@ -43,7 +42,7 @@ std::map<constellation_type_t, std::function<constellation_sptr()>>
         { constellation_type_t::BPSK,
           constellation_helper<constellation_bpsk>::constructor() },
         { constellation_type_t::QPSK,
-          constellation_helper<constellation_qpsk>::constructor() },
+          constellation_helper<constellation_qpsk_normalized>::constructor() },
         { constellation_type_t::PSK8,
           constellation_helper<constellation_8psk>::constructor() },
         { constellation_type_t::QAM16,
