@@ -1,3 +1,10 @@
+/* -*- c++ -*- */
+/*
+ * Copyright 2022 DTL.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <functional>
 #include <gnuradio/dtl/log.h>
 #include "logger.h"

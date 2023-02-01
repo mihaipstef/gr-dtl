@@ -43,7 +43,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
-        self.frame_len = 10
+        self.frame_len = 20
         self.data_carriers = len(tx_cfg.occupied_carriers[0])
 
     def tearDown(self):
@@ -56,7 +56,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         tx_samples = []
 
         # Tx
-        buffer_size = 13429
+        buffer_size = 32000
         test_data = [random.randint(0, 255) for x in range(buffer_size)]
         src = blocks.vector_source_b(test_data, False, 1, [])
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
@@ -65,7 +65,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.connect(src, (tx,0), sink)
         self.tb.connect(feedback_src, (tx,1))
 
-        cnst = dtl.constellation_type_t.PSK8
+        cnst = dtl.constellation_type_t.QPSK
         tx.set_constellation(cnst)
 
         time.sleep(1)
@@ -78,9 +78,9 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             tx_samples + [0 for x in range(2000)]
 
         # Channel
-        freq_offset = 0
+        freq_offset = 4
         channel = channels.channel_model(
-            0, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
+            0.1, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
 
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)

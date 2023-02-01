@@ -20,5 +20,6 @@ install(FILES
     ofdm_adaptive_feedback_decision.h
     ofdm_adaptive_feedback_decision.h
     ofdm_adaptive_frame_bb.h
-    ofdm_adaptive_frame_detect_bb.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_frame_detect_bb.h
+    DESTINATION include/gnuradio/dtl
 )
