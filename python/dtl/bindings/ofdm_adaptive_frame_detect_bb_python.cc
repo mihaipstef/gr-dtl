@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_detect_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(4ff64ff8f097828fdf47235927c41d72)                     */
+/* BINDTOOL_HEADER_FILE_HASH(0bb3cd0f648eab4b545b653c03f1d4f7)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,7 +42,6 @@ void bind_ofdm_adaptive_frame_detect_bb(py::module& m)
 
         .def(py::init(&ofdm_adaptive_frame_detect_bb::make),
              py::arg("frame_len"),
-             py::arg("detect_counter"),
              D(ofdm_adaptive_frame_detect_bb, make))
 
 
