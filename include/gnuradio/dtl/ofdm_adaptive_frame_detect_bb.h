@@ -24,7 +24,7 @@ class DTL_API ofdm_adaptive_frame_detect_bb : virtual public gr::sync_block
 public:
     typedef std::shared_ptr<ofdm_adaptive_frame_detect_bb> sptr;
 
-    static sptr make(int frame_len, int detect_counter);
+    static sptr make(int frame_len);
 };
 
 } // namespace dtl

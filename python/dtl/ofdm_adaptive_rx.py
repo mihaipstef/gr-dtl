@@ -61,7 +61,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
-        sync_correct = dtl.ofdm_adaptive_frame_detect_bb((self.frame_length + 3) * (self.fft_len + self.cp_len), 3)
+        sync_correct = dtl.ofdm_adaptive_frame_detect_bb((self.frame_length + 3) * (self.fft_len + self.cp_len))
         hpd = digital.header_payload_demux(
             len(self.sync_words) + 1,
             self.fft_len, self.cp_len,
@@ -122,8 +122,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
             header_parser
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
-        self.msg_connect(header_parser, "header_data", sync_correct, "header_port")
-
 
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
