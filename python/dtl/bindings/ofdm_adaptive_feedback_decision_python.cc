@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_feedback_decision.h) */
-/* BINDTOOL_HEADER_FILE_HASH(70d5f1a95eced6fa6162bddbc067c8b9)                     */
+/* BINDTOOL_HEADER_FILE_HASH(e6b810e9ce6f51ea01cc9697aa8cfba5)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,19 +42,20 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
         "ofdm_adaptive_feedback_decision_base",
         D(ofdm_adaptive_feedback_decision_base))
 
-        //    .def(py::init<gr::dtl::ofdm_adaptive_feedback_decision_base const&>(),
-        //         py::arg("arg0"),
-        //         D(ofdm_adaptive_feedback_decision_base,
-        //           ofdm_adaptive_feedback_decision_base,
-        //           0))
-        //    .def(py::init<>(),
-        //         D(ofdm_adaptive_feedback_decision_base,
-        //           ofdm_adaptive_feedback_decision_base,
-        //           1))
+     //    .def(py::init<gr::dtl::ofdm_adaptive_feedback_decision_base const&>(),
+     //         py::arg("arg0"),
+     //         D(ofdm_adaptive_feedback_decision_base,
+     //           ofdm_adaptive_feedback_decision_base,
+     //           0))
+     //    .def(py::init<>(),
+     //         D(ofdm_adaptive_feedback_decision_base,
+     //           ofdm_adaptive_feedback_decision_base,
+     //           1))
 
 
         .def("get_feedback",
              &ofdm_adaptive_feedback_decision_base::get_feedback,
+             py::arg("current_cnst"),
              py::arg("estimated_snr"),
              D(ofdm_adaptive_feedback_decision_base, get_feedback))
 
@@ -67,11 +68,14 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
         m, "ofdm_adaptive_feedback_decision", D(ofdm_adaptive_feedback_decision))
 
         .def(py::init(&ofdm_adaptive_feedback_decision::make),
+             py::arg("hysterisis"),
+             py::arg("decision_th"),
              D(ofdm_adaptive_feedback_decision, make))
 
 
         .def("get_feedback",
              &ofdm_adaptive_feedback_decision::get_feedback,
+             py::arg("current_cnst"),
              py::arg("estimated_snr"),
              D(ofdm_adaptive_feedback_decision, get_feedback))
 
