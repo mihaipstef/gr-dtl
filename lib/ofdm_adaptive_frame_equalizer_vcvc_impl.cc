@@ -181,12 +181,16 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     }
 
 
-    // Publish decided constellation and FEC scheme to decision feedback port.
+    // Publish decided constellation to decision feedback port.
+    auto cnst_tag_it = find_constellation_tag(tags);
+    if (cnst_tag_it == tags.end()) {
+        throw std::invalid_argument("Missing constellation tag.");
+    }
     ofdm_adaptive_feedback_t feedback =
-        d_decision_feedback->get_feedback(d_eq->get_snr());
+        d_decision_feedback->get_feedback(get_constellation_type(*cnst_tag_it), d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
-        static_cast<unsigned char>(feedback.first),
-        static_cast<unsigned char>(feedback.second)
+        static_cast<unsigned char>(feedback),
+        0, // for FEC
     };
     pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
         pmt::init_u8vector(feedback_vector.size(), feedback_vector));
@@ -201,11 +205,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         add_item_tag(0,
                      nitems_written(0),
                      feedback_constellation_key(),
-                     pmt::from_long(static_cast<unsigned char>(feedback.first)));
+                     pmt::from_long(static_cast<unsigned char>(feedback)));
         add_item_tag(0,
                      nitems_written(0),
                      feedback_fec_key(),
-                     pmt::from_double(static_cast<unsigned char>(feedback.second)));
+                     pmt::from_long(0));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

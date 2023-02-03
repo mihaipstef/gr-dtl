@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -36,12 +36,7 @@ static const char* __doc_gr_dtl_ofdm_adaptive_feedback_decision = R"doc()doc";
 
 
 static const char*
-    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision_0 =
-        R"doc()doc";
-
-
-static const char*
-    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision_1 =
+    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision =
         R"doc()doc";
 
 
