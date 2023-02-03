@@ -22,7 +22,6 @@ private:
     bool d_propagate_channel_state;
     const int d_fixed_frame_len;
     std::vector<gr_complex> d_channel_state;
-    const pmt::pmt_t d_decision_feedback_port;
     ofdm_adaptive_feedback_decision_base::sptr d_decision_feedback;
     bool d_propagate_feedback_tags;
 

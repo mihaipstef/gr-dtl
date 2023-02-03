@@ -23,7 +23,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
                                 gr.io_signature.makev(5, 5, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_gr_complex]))
-        self.message_port_register_hier_out("feedback")
+        self.message_port_register_hier_out("monitor")
 
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
@@ -256,7 +256,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         self.msg_connect(self.payload_eq, "feedback_port",
                          self.feedback_formatter, "in")
-        self.msg_connect(self.payload_eq, "feedback_port", self, "feedback")
+        self.msg_connect(self.payload_eq, "monitor_port", self, "monitor")
 
         self.msg_connect(self.feedback_formatter, "header",
                          self.feedback_to_tagged_stream, "pdus")
