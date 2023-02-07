@@ -164,8 +164,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             bits_per_byte=8,  # This is after packing
             reset_tag_key=self.packet_length_tag_key
         )
-        payload_pack = dtl.ofdm_adaptive_repack_bits_bb(
-            self.packet_length_tag_key, False)
+        payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
+            self.packet_length_tag_key)
         self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
         self.connect(
             (hpd, 1),

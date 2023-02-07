@@ -8,9 +8,9 @@
 #ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_H
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_H
 
+#include <gnuradio/block.h>
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
-#include <gnuradio/block.h>
 
 namespace gr {
 namespace dtl {
@@ -25,7 +25,10 @@ class DTL_API ofdm_adaptive_frame_bb : virtual public gr::block
 public:
     typedef std::shared_ptr<ofdm_adaptive_frame_bb> sptr;
 
-    static sptr make(const std::string& len_tag_key, size_t frame_len, size_t n_payload_carriers);
+    static sptr make(const std::string& len_tag_key,
+                     const std::vector<constellation_type_t>& constellations,
+                     size_t frame_len,
+                     size_t n_payload_carriers);
 
     virtual void set_constellation(constellation_type_t constellation) = 0;
 };

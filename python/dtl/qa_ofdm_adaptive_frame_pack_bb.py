@@ -13,7 +13,7 @@ try:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        ofdm_adaptive_repack_bits_bb,
+        ofdm_adaptive_frame_pack_bb,
     )
 except ImportError:
     import os
@@ -23,11 +23,11 @@ except ImportError:
     from gnuradio.dtl import (
         constellation_type_t,
         get_constellation_tag_key,
-        ofdm_adaptive_repack_bits_bb,
+        ofdm_adaptive_frame_pack_bb,
     )
 
 
-class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
+class qa_ofdm_adaptive_frame_pack_bb(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
@@ -36,26 +36,25 @@ class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
         self.tb = None
 
     def test_tx_lsb_first(self):
-        packet_len = 2
-        src_data_2packets = [0b11111101, 0b11111111,
+        src_data_2packets = [0b101,] + [0b111,] * 4 + [0b001,] + 11 * [0b000] +\
+                                  [0b01,] + [0b11] * 7 + 16 * [0b000]
+        expected_data_2packets = [0b11111101, 0b11111111,
                              0b11111101, 0b11111111, ] 
-        expected_data_2packets = [0b101,] + [0b111,] * 4 + [0b001,] +\
-                                  [0b01,] + [0b11] * 7
-        cnsts = [constellation_type_t.PSK8, constellation_type_t.QPSK]
+        cnsts = [(0, constellation_type_t.PSK8, 6 + 11), (6 + 11, constellation_type_t.QPSK, 8 + 16)]
         tags = []
-        for i, cnst in enumerate(cnsts):
+        for i, cnst, len in cnsts:
             cnst_tag = gr.tag_t()
-            cnst_tag.offset = i * packet_len
+            cnst_tag.offset = i
             cnst_tag.key = get_constellation_tag_key()
             cnst_tag.value = pmt.from_long(cnst)
             len_tag = gr.tag_t()
-            len_tag.offset = i * packet_len
+            len_tag.offset = i
             len_tag.key = pmt.string_to_symbol("len_tag")
-            len_tag.value = pmt.from_long(packet_len)
+            len_tag.value = pmt.from_long(len)
             tags += [cnst_tag, len_tag]
 
         src = blocks.vector_source_b(src_data_2packets, False, 1, tags)
-        repack = ofdm_adaptive_repack_bits_bb("len_tag")
+        repack = ofdm_adaptive_frame_pack_bb("len_tag")
         sink = blocks.vector_sink_b()
         self.tb.connect(src, repack, sink)
         self.tb.run()
@@ -63,4 +62,4 @@ class qa_ofdm_adaptive_repack_bits_bb(gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_ofdm_adaptive_repack_bits_bb)
+    gr_unittest.run(qa_ofdm_adaptive_frame_pack_bb)

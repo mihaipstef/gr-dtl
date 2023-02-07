@@ -16,22 +16,24 @@ namespace dtl {
 
 using namespace gr;
 
-
 INIT_DTL_LOGGER("ofdm_adaptive_frame_bb")
 
-
-ofdm_adaptive_frame_bb::sptr ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
-                                                          size_t frame_len,
-                                                          size_t n_payload_carriers)
+ofdm_adaptive_frame_bb::sptr
+ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
+                             const std::vector<constellation_type_t>& constellations,
+                             size_t frame_len,
+                             size_t n_payload_carriers)
 {
     return std::make_shared<ofdm_adaptive_frame_bb_impl>(
-        len_tag_key, frame_len, n_payload_carriers);
+        len_tag_key, constellations, frame_len, n_payload_carriers);
 }
 
 
-ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(const std::string& len_tag_key,
-                                                         size_t frame_len,
-                                                         size_t n_payload_carriers)
+ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
+    const std::string& len_tag_key,
+    const std::vector<constellation_type_t>& constellations,
+    size_t frame_len,
+    size_t n_payload_carriers)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
@@ -43,7 +45,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(const std::string& len_
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
-      d_stop_no_input(true)
+      d_stop_no_input(true),
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -51,6 +54,9 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(const std::string& len_
     d_bps = get_bits_per_symbol(d_constellation);
     set_min_noutput_items(frame_length());
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
+    size_t frame_buffer_max_len =
+        d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
+    d_frame_buffer.resize(frame_buffer_max_len);
 }
 
 
@@ -120,10 +126,12 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
         // calculate input frame size
         int frame_in_bits = d_frame_len * d_payload_carriers * bps;
-        // each frame is carrying an integer number of bytes
-        int frame_in_bytes = frame_in_bits / 8;
+        // number of bytes to be picked from input (each frame is carrying an integer
+        // number of bytes)
+        int frame_in_bytes = frame_in_bits / 8 - d_crc.get_crc_len();
         frame_in_bits = frame_in_bytes * 8;
-        expected_frame_symbols = frame_in_bits / bps;
+        // expected output symbols, including CRC
+        expected_frame_symbols = (frame_in_bits + d_crc.get_crc_len() * 8) / bps;
         if (frame_in_bits % bps) {
             ++expected_frame_symbols;
         }
@@ -139,9 +147,17 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
                 // If we have enough input for a frame ...
                 if (read_index + frame_in_bytes <= ninput_items[0]) {
-                    // ... repack a full frame.
+                    // ... copy frame input bytes, ...
+                    memcpy(&d_frame_buffer[0], &in[read_index], frame_in_bytes);
+                    // ... append CRC ...
+                    d_crc.append_crc(&d_frame_buffer[0], frame_in_bytes);
+                    // ... and repack a full frame.
                     frame_out_symbols = repacker.repack_lsb_first(
-                        &in[read_index], frame_in_bytes, &out[write_index], bps, true);
+                        const_cast<const unsigned char*>(&d_frame_buffer[0]),
+                        frame_in_bytes + d_crc.get_crc_len(),
+                        &out[write_index],
+                        bps,
+                        true);
                     assert(frame_out_symbols == expected_frame_symbols);
                     d_waiting_full_frame = false;
                     // update indexes and offset
@@ -154,10 +170,17 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                     // ... wait for next cycle if new input available.
                     // If we were waiting for new input in previous cycle...
                     if (d_waiting_full_frame) {
+                        // ... copy frame input bytes, ...
+                        memcpy(&d_frame_buffer[0],
+                               &in[read_index],
+                               ninput_items[0] - read_index);
+                        // ... append CRC ...
+                        d_crc.append_crc(&d_frame_buffer[0],
+                                   ninput_items[0] - read_index);
                         // ...repack what we have.
                         frame_out_symbols =
-                            repacker.repack_lsb_first(&in[read_index],
-                                                      ninput_items[0] - read_index,
+                            repacker.repack_lsb_first(const_cast<const unsigned char*>(&d_frame_buffer[0]),
+                                                      ninput_items[0] - read_index + d_crc.get_crc_len(),
                                                       &out[write_index],
                                                       bps,
                                                       true);
@@ -175,7 +198,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             } else {
                 break;
             }
-        // If there is nothing to consume
+            // If there is nothing to consume
         } else {
             if (d_waiting_for_input) {
                 if (d_stop_no_input) {
@@ -205,12 +228,17 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                           expected_frame_symbols,
                           frame_payload);
 
+            // Add TSB length tag - frame payload length in symbols
             add_item_tag(0,
                          d_tag_offset,
                          d_packet_len_tag,
                          pmt::from_long(expected_frame_symbols));
-            add_item_tag(
-                0, d_tag_offset, payload_length_key(), pmt::from_long(frame_payload));
+            // Add transported payload tag - number of payload bytes carried by the frame (including CRC)
+            add_item_tag(0,
+                         d_tag_offset,
+                         payload_length_key(),
+                         pmt::from_long(frame_payload + d_crc.get_crc_len()));
+            // Add constellation tag - constellation used for the frame
             add_item_tag(0,
                          d_tag_offset,
                          get_constellation_tag_key(),
