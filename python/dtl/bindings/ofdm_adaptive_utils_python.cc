@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(fff0685887ec90f98e890baad09957cd)                     */
+/* BINDTOOL_HEADER_FILE_HASH(12a757a08170b00f1f1ffd56f1fdb798)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,10 +42,10 @@ void bind_ofdm_adaptive_utils(py::module& m)
     py::implicitly_convertible<int, ::gr::dtl::constellation_type_t>();
 
 
-    m.def("compute_no_of_bits_per_symbol",
-          &::gr::dtl::compute_no_of_bits_per_symbol,
+    m.def("get_bits_per_symbol",
+          &::gr::dtl::get_bits_per_symbol,
           py::arg("constellation"),
-          D(compute_no_of_bits_per_symbol));
+          D(get_bits_per_symbol));
 
 
     m.def("create_constellation",
