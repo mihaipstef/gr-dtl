@@ -169,7 +169,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     }
 
     d_bits_per_payload_sym =
-        compute_no_of_bits_per_symbol(static_cast<constellation_type_t>(d_constellation));
+        get_bits_per_symbol(static_cast<constellation_type_t>(d_constellation));
 
     if (d_bits_per_payload_sym == 0)
         return false;

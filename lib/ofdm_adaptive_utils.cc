@@ -59,7 +59,7 @@ std::map<constellation_type_t, std::size_t> _bits_per_symbol = {
 };
 
 
-std::size_t DTL_API compute_no_of_bits_per_symbol(constellation_type_t constellation_type)
+std::size_t DTL_API get_bits_per_symbol(constellation_type_t constellation_type)
 {
     if (auto it = _bits_per_symbol.find(constellation_type);
         it != _bits_per_symbol.end()) {

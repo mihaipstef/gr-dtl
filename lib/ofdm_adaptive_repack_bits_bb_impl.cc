@@ -49,7 +49,7 @@ void ofdm_adaptive_repack_bits_bb_impl::parse_length_tags(
 
     constellation_type_t constellation_type = find_constellation_type(tags[0]);
     if (constellation_type_t::UNKNOWN != constellation_type) {
-        d_bits_per_symbol = compute_no_of_bits_per_symbol(constellation_type);
+        d_bits_per_symbol = get_bits_per_symbol(constellation_type);
         if (d_unpack) {
             set_relative_rate(8, d_bits_per_symbol);
         } else {

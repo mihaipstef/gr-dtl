@@ -48,7 +48,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(const std::string& len_
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
-    d_bps = compute_no_of_bits_per_symbol(d_constellation);
+    d_bps = get_bits_per_symbol(d_constellation);
     set_min_noutput_items(frame_length());
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
 }
@@ -63,7 +63,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
                     feedback,
                     feedback_constellation_key(),
                     pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
-            int bps = compute_no_of_bits_per_symbol(d_constellation);
+            int bps = get_bits_per_symbol(d_constellation);
             // Update constellation only if valid data received
             if (bps) {
                 d_constellation = constellation;
@@ -114,7 +114,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     while (write_index < noutput_items) {
         // keep constellation during one frame
         constellation_type_t cnst = d_constellation;
-        unsigned char bps = compute_no_of_bits_per_symbol(cnst);
+        unsigned char bps = get_bits_per_symbol(cnst);
 
         int frame_payload = 0;
 
@@ -243,14 +243,14 @@ size_t ofdm_adaptive_frame_bb_impl::frame_length_bits(size_t frame_len,
                                                       size_t bits_per_symbol)
 {
     size_t n_bits =
-        d_frame_len * d_payload_carriers * compute_no_of_bits_per_symbol(d_constellation);
+        d_frame_len * d_payload_carriers * get_bits_per_symbol(d_constellation);
     return n_bits;
 }
 
 void ofdm_adaptive_frame_bb_impl::set_constellation(constellation_type_t constellation)
 {
     d_constellation = constellation;
-    // d_bps = compute_no_of_bits_per_symbol(d_constellation);
+    // d_bps = get_bits_per_symbol(d_constellation);
 }
 
 } /* namespace dtl */
