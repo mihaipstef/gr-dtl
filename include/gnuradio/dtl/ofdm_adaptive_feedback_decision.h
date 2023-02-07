@@ -57,14 +57,15 @@ public:
 
 private:
 
-    bool is_new_decision(constellation_type_t cnst);
+    void update_decision(constellation_type_t cnst);
 
     std::vector<std::pair<double, ofdm_adaptive_feedback_t>>
         feedback_lut;
     double d_hyteresis;
     int d_decision_th;
     int d_decision_counter;
-    constellation_type_t d_decision;
+    constellation_type_t d_last_decision;
+    constellation_type_t d_new_decision;
 };
 
 } /* namespace dtl */

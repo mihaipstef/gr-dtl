@@ -36,7 +36,12 @@ static const char* __doc_gr_dtl_ofdm_adaptive_feedback_decision = R"doc()doc";
 
 
 static const char*
-    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision =
+    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision_0 =
+        R"doc()doc";
+
+
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_feedback_decision_ofdm_adaptive_feedback_decision_1 =
         R"doc()doc";
 
 
