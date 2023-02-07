@@ -10,6 +10,7 @@ from gnuradio import (
 )
 import pmt
 
+
 class ofdm_adaptive_rx(gr.hier_block2):
     """Adaptive OFDM Rx.
     """
@@ -21,7 +22,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(4, 4, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char]))
+                                gr.io_signature.makev(5, 5, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex]))
         self.message_port_register_hier_out("feedback")
 
         self.fft_len = config.fft_len
@@ -44,7 +45,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 "Length of sync sequence(s) must be FFT length.")
         self.sync_words = [config.sync_word1, config.sync_word2]
 
-
         self._setup_ofdm_rx()
         self._setup_feedback_tx()
 
@@ -58,10 +58,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
         # Synchronization
         self.sync_detect = digital.ofdm_sync_sc_cfb(
             self.fft_len, self.cp_len, threshold=self.sync_threshold)
-        self.delay = blocks.delay(gr.sizeof_gr_complex, self.fft_len + self.cp_len)
+        self.delay = blocks.delay(
+            gr.sizeof_gr_complex, self.fft_len + self.cp_len)
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
-        sync_correct = dtl.ofdm_adaptive_frame_detect_bb((self.frame_length + 3) * (self.fft_len + self.cp_len))
+        sync_correct = dtl.ofdm_adaptive_frame_detect_bb(
+            (self.frame_length + 3) * (self.fft_len + self.cp_len))
         hpd = digital.header_payload_demux(
             len(self.sync_words) + 1,
             self.fft_len, self.cp_len,
@@ -137,7 +139,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.occupied_carriers,
             self.pilot_carriers,
             self.pilot_symbols,
-            symbols_skipped=1, # already in the header
+            symbols_skipped=1,  # already in the header
             alpha=0.1,
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
@@ -177,7 +179,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect(
             (hpd, 1),
             payload_fft,
-            self.payload_eq,
+            (self.payload_eq, 0),
             payload_serializer,
             payload_demod,
             payload_pack,
@@ -186,8 +188,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
             (self, 0)
         )
 
-        self.connect((self.sync_detect,1), (self, 2))
+        self.connect((self.sync_detect, 1), (self, 2))
         self.connect(sync_correct, (self, 3))
+        self.connect((self.payload_eq, 1), (self, 4))
 
         # self.connect(sync_correct, blocks.file_sink(
         #     gr.sizeof_char, f"/tmp/sync-correct.dat"))
@@ -232,13 +235,15 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.feedback_nfilts = 32
         self.feedback_eb = 0.35
         self.feedback_psf_taps = filter.firdes.root_raised_cosine(self.feedback_nfilts, self.feedback_nfilts,
-                                                        1.0, self.feedback_eb, 11*self.feedback_sps*self.feedback_nfilts)
-        self.feedback_taps_per_filt = len(self.feedback_psf_taps) / self.feedback_nfilts
-        self.feedback_filt_delay = int(1 + (self.feedback_taps_per_filt-1) // 2)
+                                                                  1.0, self.feedback_eb, 11*self.feedback_sps*self.feedback_nfilts)
+        self.feedback_taps_per_filt = len(
+            self.feedback_psf_taps) / self.feedback_nfilts
+        self.feedback_filt_delay = int(
+            1 + (self.feedback_taps_per_filt-1) // 2)
         self.feedback_format = dtl.ofdm_adaptive_feedback_format(
             digital.packet_utils.default_access_code, 0)
         self.feedback_constellation = digital.constellation_calcdist(digital.psk_2()[0], digital.psk_2()[1],
-                                                            2, 1, digital.constellation.AMPLITUDE_NORMALIZATION).base()
+                                                                     2, 1, digital.constellation.AMPLITUDE_NORMALIZATION).base()
         self.feedback_constellation.gen_soft_dec_lut(8)
         self.feedback_bps = self.feedback_constellation.bits_per_symbol()
 
@@ -246,7 +251,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             gr.types.byte_t, "packet_len")
         self.feedback_formatter = digital.protocol_formatter_async(
             self.feedback_format.base())
-        self.feedback_mapper = digital.map_bb(self.feedback_constellation.pre_diff_code())
+        self.feedback_mapper = digital.map_bb(
+            self.feedback_constellation.pre_diff_code())
         self.feedback_chunks_to_symbols = digital.chunks_to_symbols_bc(
             self.feedback_constellation.points(), 1)
         self.feedback_burst_shaper = digital.burst_shaper_cc(
@@ -261,15 +267,17 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.feedback_multiply_length_tag = blocks.tagged_stream_multiply_length(
             gr.sizeof_gr_complex*1, "packet_len", self.feedback_sps)
 
-        self.msg_connect(self.payload_eq, "feedback_port", self.feedback_formatter, "in")
+        self.msg_connect(self.payload_eq, "feedback_port",
+                         self.feedback_formatter, "in")
         self.msg_connect(self.payload_eq, "feedback_port", self, "feedback")
 
         self.msg_connect(self.feedback_formatter, "header",
-                        self.feedback_to_tagged_stream, "pdus")
+                         self.feedback_to_tagged_stream, "pdus")
         self.connect(self.feedback_to_tagged_stream, self.feedback_repack_bits,
-                    self.feedback_mapper, self.feedback_chunks_to_symbols, self.feedback_burst_shaper)
+                     self.feedback_mapper, self.feedback_chunks_to_symbols, self.feedback_burst_shaper)
         self.connect(self.feedback_burst_shaper, self.feedback_resampler,
-                    self.feedback_multiply_length_tag)
+                     self.feedback_multiply_length_tag)
         self.connect((self.feedback_multiply_length_tag, 0), (self, 1))
 
-        self.msg_connect(self.feedback_formatter, "header", blocks.message_debug(), "print")
+        self.msg_connect(self.feedback_formatter, "header",
+                         blocks.message_debug(), "print")

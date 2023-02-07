@@ -55,7 +55,7 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     : tagged_stream_block(
           "ofdm_adaptive_frame_equalizer_vcvc",
           io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
-          io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
+          io_signature::make(1, 2, sizeof(gr_complex) * equalizer->fft_len()),
           tsb_key),
       d_fft_len(equalizer->fft_len()),
       d_cp_len(cp_len),
@@ -106,6 +106,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 {
     const gr_complex* in = (const gr_complex*)input_items[0];
     gr_complex* out = (gr_complex*)output_items[0];
+    gr_complex* out_soft = (gr_complex*)output_items[1];
+
     int carrier_offset = 0;
 
     int n_ofdm_sym = ninput_items[0];
@@ -155,7 +157,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     // Do the equalizing
     d_eq->reset();
     try {
-        d_eq->equalize(out, n_ofdm_sym, d_channel_state, tags);
+        d_eq->equalize(out, out_soft, n_ofdm_sym, d_channel_state, tags);
     } catch (const std::exception& e) {
         d_logger->error(e.what());
     }
