@@ -27,15 +27,6 @@ class DTL_API ofdm_adaptive_frame_equalizer_vcvc
 public:
     typedef std::shared_ptr<ofdm_adaptive_frame_equalizer_vcvc> sptr;
 
-    /*!
-     * \param equalizer The equalizer object that will do the actual work
-     * \param cp_len Length of the cyclic prefix in samples (required to correct the
-     * frequency offset) \param tsb_key TSB key \param propagate_channel_state If true,
-     * the channel state after the last symbol will be added to the first symbol as a tag
-     * \param fixed_frame_len Set if the frame length is fixed. When this value is given,
-     *                        the TSB tag key can be left empty, but it is useful even
-     *                        when using tagged streams at the input.
-     */
     static sptr make(::gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
                      ofdm_adaptive_feedback_decision_base::sptr feedback_decision,
                      int cp_len,

@@ -55,10 +55,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
     def _setup_direct_tx(self):
 
         self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-             self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
+            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length, len(self.occupied_carriers[0]))
 
         # Header path blocks
-        crc = digital.crc32_bb(False, self.packet_length_tag_key)
         header_constellation = digital.constellation_bpsk()
         header_mod = digital.chunks_to_symbols_bc(
             header_constellation.points())
@@ -96,13 +95,10 @@ class ofdm_adaptive_tx(gr.hier_block2):
         #     bits_per_byte=8,  # This is before unpacking
         #     reset_tag_key=self.packet_length_tag_key
         # )
-        # frame_unpack = dtl.ofdm_adaptive_repack_bits_bb(
-        #     self.packet_length_tag_key
-        # )
 
         self.connect(
             (self, 0),
-            #payload_scrambler,
+            # payload_scrambler,
             self.frame_unpack,
             payload_mod,
             (header_payload_mux, 1)

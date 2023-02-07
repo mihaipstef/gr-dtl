@@ -57,7 +57,7 @@
                 for(int i=0; i<length; ++i) { \
                     ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buffer[i]; \
                 } \
-                _logger.gr_logger->debug("{}", ss.str()); \
+                _logger.gr_logger->debug("{}: {}", msg, ss.str()); \
             }
 
     } // namespace dtl

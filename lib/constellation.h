@@ -1,11 +1,8 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2010-2012 Free Software Foundation, Inc.
- *
- * This file is part of GNU Radio
+ * Copyright 2023 DTL.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
- *
  */
 
 #ifndef INCLUDED_DTL_CONSTELLATION_H

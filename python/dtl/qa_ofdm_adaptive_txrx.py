@@ -78,9 +78,9 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             tx_samples + [0 for x in range(2000)]
 
         # Channel
-        freq_offset = 4
+        freq_offset = 0
         channel = channels.channel_model(
-            0.1, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
+            0, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
 
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
