@@ -121,6 +121,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         }
     }
 
+    auto cnst_tag_it = find_constellation_tag(tags);
+    if (cnst_tag_it == tags.end()) {
+        throw std::invalid_argument("Missing constellation tag.");
+    }
+
     // Copy the frame and the channel state vector such that the symbols are shifted to
     // the correct position
     if (carrier_offset < 0) {
@@ -182,10 +187,6 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
 
     // Publish decided constellation to decision feedback port.
-    auto cnst_tag_it = find_constellation_tag(tags);
-    if (cnst_tag_it == tags.end()) {
-        throw std::invalid_argument("Missing constellation tag.");
-    }
     ofdm_adaptive_feedback_t feedback =
         d_decision_feedback->get_feedback(get_constellation_type(*cnst_tag_it), d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
