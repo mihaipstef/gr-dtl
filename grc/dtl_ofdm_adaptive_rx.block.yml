@@ -63,6 +63,8 @@ outputs:
     dtype: byte
 -   domain: stream
     dtype: byte
+-   domain: stream
+    dtype: complex
 -   domain: message
     id: feedback
 
