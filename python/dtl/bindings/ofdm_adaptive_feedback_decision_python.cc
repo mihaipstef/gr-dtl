@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_feedback_decision.h) */
-/* BINDTOOL_HEADER_FILE_HASH(f9711ceee28ec92dcd403212127f421a)                     */
+/* BINDTOOL_HEADER_FILE_HASH(0eb97173f445d70227117c7ad30fce49)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -70,6 +70,7 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
         .def(py::init(&ofdm_adaptive_feedback_decision::make),
              py::arg("hysterisis"),
              py::arg("decision_th"),
+             py::arg("lut"),
              D(ofdm_adaptive_feedback_decision, make))
 
 

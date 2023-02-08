@@ -18,6 +18,7 @@ import time
 
 try:
     from gnuradio.dtl import (
+        ofdm_adaptive_config,
         ofdm_adaptive_feedback_decision,
         constellation_type_t,
     )
@@ -27,19 +28,10 @@ except ImportError:
     dirname, filename = os.path.split(os.path.abspath(__file__))
     sys.path.append(os.path.join(dirname, "bindings"))
     from gnuradio.dtl import (
+        ofdm_adaptive_config,
         ofdm_adaptive_feedback_decision,
         constellation_type_t,
     )
-
-
-def print_pmt_dict_keys(d):
-    items = pmt.dict_items(d)
-    nitems = pmt.length(items)
-    for i in range(nitems):
-        item = pmt.nth(i, items)
-        key = pmt.symbol_to_string(pmt.car(item))
-        val = pmt.cdr(item)
-        print("{0}: {1}".format(key, val))
 
 
 class qa_ofdm_adaptive_feedback_decision(gr_unittest.TestCase):
@@ -47,12 +39,13 @@ class qa_ofdm_adaptive_feedback_decision(gr_unittest.TestCase):
     def setUp(self):
         self.tb = gr.top_block()
         self.decision_counter = 3
+        self.constellations = ofdm_adaptive_config.ofdm_adaptive_config.constellations
 
     def tearDown(self):
         self.tb = None
 
     def test_feedback_decision(self):
-        feedback_decision = ofdm_adaptive_feedback_decision(1, self.decision_counter)
+        feedback_decision = ofdm_adaptive_feedback_decision(1, self.decision_counter, self.constellations)
 
         test_input = ((self.decision_counter + 1) * 3 - 1) * [(constellation_type_t.QPSK, 23),] + (
             (self.decision_counter + 1) * 3 - 1) * [(constellation_type_t.PSK8, 14.5),]

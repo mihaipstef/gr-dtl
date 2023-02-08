@@ -19,26 +19,32 @@ INIT_DTL_LOGGER("ofdm_adaptive_feedback_decision");
 
 ofdm_adaptive_feedback_decision_base::~ofdm_adaptive_feedback_decision_base() {}
 
-ofdm_adaptive_feedback_decision::sptr
-ofdm_adaptive_feedback_decision::make(double hysterisis, int decision_th)
+ofdm_adaptive_feedback_decision::sptr ofdm_adaptive_feedback_decision::make(
+    double hysterisis,
+    int decision_th,
+    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut)
 {
-    return std::make_shared<ofdm_adaptive_feedback_decision>(hysterisis, decision_th);
+    return std::make_shared<ofdm_adaptive_feedback_decision>(
+        hysterisis, decision_th, lut);
 }
 
-ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision(double hysterisis,
-                                                                 int decision_th)
-    : d_hyteresis(hysterisis),
+ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision(
+    double hysterisis,
+    int decision_th,
+    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut)
+    : d_feedback_lut(lut),
+      d_hyteresis(hysterisis),
       d_decision_th(decision_th),
       d_decision_counter(0),
       d_last_decision(constellation_type_t::UNKNOWN),
       d_new_decision(constellation_type_t::UNKNOWN)
 {
     // Construct the lookup table for decision
-    feedback_lut.push_back(
-        std::make_pair(std::numeric_limits<double>::min(), constellation_type_t::BPSK));
-    feedback_lut.push_back(std::make_pair(15, constellation_type_t::QPSK));
-    feedback_lut.push_back(std::make_pair(18, constellation_type_t::PSK8));
-    feedback_lut.push_back(std::make_pair(21, constellation_type_t::QAM16));
+    if (d_feedback_lut.size() == 0) {
+        throw std::runtime_error("Feedback lookup table is empty");
+    }
+    // SNR of the first entry must be minimum possible value
+    d_feedback_lut[0].first = std::numeric_limits<double>::min();
 }
 
 ofdm_adaptive_feedback_decision::~ofdm_adaptive_feedback_decision() {}
@@ -58,11 +64,11 @@ ofdm_adaptive_feedback_decision::get_feedback(constellation_type_t current_cnst,
         d_last_decision = current_cnst;
     }
 
-    auto it = std::find_if(feedback_lut.begin(), feedback_lut.end(), [&](auto& t) {
+    auto it = std::find_if(d_feedback_lut.begin(), d_feedback_lut.end(), [&](auto& t) {
         return t.second == d_last_decision;
     });
 
-    if (it == feedback_lut.end()) {
+    if (it == d_feedback_lut.end()) {
         // Something terribly wrong must have happen, so fallback to current constellation
         d_last_decision = current_cnst;
         return static_cast<ofdm_adaptive_feedback_t>(current_cnst);
@@ -70,7 +76,7 @@ ofdm_adaptive_feedback_decision::get_feedback(constellation_type_t current_cnst,
 
     if (estimated_snr < it->first) {
         update_decision((--it)->second);
-    } else if (++it != feedback_lut.end() && estimated_snr > (it->first + d_hyteresis)) {
+    } else if (++it != d_feedback_lut.end() && estimated_snr > (it->first + d_hyteresis)) {
         update_decision(it->second);
     }
     return static_cast<ofdm_adaptive_feedback_t>(d_last_decision);

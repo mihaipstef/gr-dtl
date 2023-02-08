@@ -39,6 +39,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.debug_folder = config.debug_folder
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
+        self.constellations = config.constellations
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -129,12 +130,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
-            [
-                dtl.constellation_type_t.BPSK,
-                dtl.constellation_type_t.QPSK,
-                dtl.constellation_type_t.PSK8,
-                dtl.constellation_type_t.QAM16,
-            ],
+            list(zip(*self.constellations))[1],
             dtl.ofdm_adaptive_frame_snr_simple(0.1),
             self.occupied_carriers,
             self.pilot_carriers,
@@ -144,7 +140,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(1, 3),
+            dtl.ofdm_adaptive_feedback_decision(1, 3, list(self.constellations)),
             self.cp_len,
             self.frame_length_tag_key,
             False,
@@ -157,12 +153,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             1  # Skip 1 symbol (that was already in the header)
         )
         payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
-            [
-                dtl.constellation_type_t.BPSK,
-                dtl.constellation_type_t.QPSK,
-                dtl.constellation_type_t.PSK8,
-                dtl.constellation_type_t.QAM16,
-            ],
+            list(zip(*self.constellations))[1],
             self.packet_length_tag_key,
         )
         self.payload_descrambler = digital.additive_scrambler_bb(
@@ -192,10 +183,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect(sync_correct, (self, 3))
         self.connect((self.payload_eq, 1), (self, 4))
 
-        # self.connect(sync_correct, blocks.file_sink(
-        #     gr.sizeof_char, f"/tmp/sync-correct.dat"))
-        # self.connect((self.sync_detect, 1), blocks.file_sink(
-        #     gr.sizeof_char, f"/tmp/sync-detect2.dat"))
         if self.debug_log:
             self.connect((self.sync_detect, 1), blocks.file_sink(
                 gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))

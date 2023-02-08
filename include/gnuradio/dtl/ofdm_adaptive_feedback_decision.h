@@ -46,9 +46,14 @@ class DTL_API ofdm_adaptive_feedback_decision
 public:
     typedef std::shared_ptr<ofdm_adaptive_feedback_decision> sptr;
 
-    static sptr make(double hysterisis, int decision_th);
+    static sptr make(double hysterisis,
+                     int decision_th,
+                     const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut);
 
-    ofdm_adaptive_feedback_decision(double hysterisis, int decision_counter);
+    ofdm_adaptive_feedback_decision(
+        double hysterisis,
+        int decision_counter,
+        const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut);
 
     ~ofdm_adaptive_feedback_decision() override;
 
@@ -56,11 +61,9 @@ public:
                                                   double estimated_snr) override;
 
 private:
-
     void update_decision(constellation_type_t cnst);
 
-    std::vector<std::pair<double, ofdm_adaptive_feedback_t>>
-        feedback_lut;
+    std::vector<std::pair<double, ofdm_adaptive_feedback_t>> d_feedback_lut;
     double d_hyteresis;
     int d_decision_th;
     int d_decision_counter;

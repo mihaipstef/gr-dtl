@@ -38,6 +38,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.debug_folder = config.debug_folder
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
+        self.constellations = config.constellations
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -53,13 +54,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
     def _setup_direct_tx(self):
 
-        # # Transmission control from feedback blocks
-        # self.tx_control = dtl.ofdm_adaptive_frame_bb(
-        #     self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
-        # self.connect(
-        #     (self, 0),
-        #     self.tx_control
-        # )
+        self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
+             self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
+
         # Header path blocks
         crc = digital.crc32_bb(False, self.packet_length_tag_key)
         header_constellation = digital.constellation_bpsk()
@@ -80,8 +77,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
             lengthtagname=self.packet_length_tag_key,
             tag_preserve_head_pos=1  # Head tags on the payload stream stay on the head
         )
-        self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-             self.packet_length_tag_key, self.frame_length, len(self.occupied_carriers[0]))
         self.connect(
             self.frame_unpack,
             header_gen,
@@ -90,12 +85,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         )
         # Payload path blocks
         payload_mod = dtl.ofdm_adaptive_chunks_to_symbols_bc(
-            [
-                dtl.constellation_type_t.BPSK,
-                dtl.constellation_type_t.QPSK,
-                dtl.constellation_type_t.PSK8,
-                dtl.constellation_type_t.QAM16,
-            ],
+            list(zip(*self.constellations))[1],
             self.packet_length_tag_key
         )
         # payload_scrambler = digital.additive_scrambler_bb(
