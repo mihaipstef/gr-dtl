@@ -22,6 +22,7 @@ try:
         constellation_type_t,
         get_constellation_tag_key,
         estimated_snr_tag_key,
+        ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -36,6 +37,7 @@ except ImportError:
         constellation_type_t,
         get_constellation_tag_key,
         estimated_snr_tag_key,
+        ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
@@ -106,7 +108,8 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
                 rx_signal, False, fft_len, (chan_tag, const_tag))
             feedback_decision_sink = blocks.message_debug()
             eq = ofdm_adaptive_frame_equalizer_vcvc(
-                equalizer.base(), ofdm_adaptive_feedback_decision(1, 3), 0, "tsb_key", True, True)
+                equalizer.base(), ofdm_adaptive_feedback_decision(
+                    1, 3, ofdm_adaptive_config.ofdm_adaptive_config.constellations), 0, "tsb_key", True, True)
             self.tb.msg_connect(eq, 'feedback_port',
                                 feedback_decision_sink, 'store')
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")
@@ -137,7 +140,8 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
                           t.key for t in sink.tags()])
             self.assertEqual(feedback_decision_sink.num_messages(), 1)
             feedback_msg = feedback_decision_sink.get_message(0)
-            self.assertEqual(pmt.u8vector_elements(pmt.cdr(feedback_msg)), [int(c), 0])
+            self.assertEqual(pmt.u8vector_elements(
+                pmt.cdr(feedback_msg)), [int(c), 0])
 
 
 if __name__ == '__main__':
