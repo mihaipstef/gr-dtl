@@ -22,7 +22,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(5, 5, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex]))
+                                gr.io_signature.makev(5, 5, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_gr_complex]))
         self.message_port_register_hier_out("feedback")
 
         self.fft_len = config.fft_len
@@ -179,8 +179,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             (self, 0)
         )
 
-        self.connect((self.sync_detect, 1), (self, 2))
-        self.connect(sync_correct, (self, 3))
+        self.connect(sync_correct, (self, 2))
+        self.connect((self.payload_eq, 0), (self, 3))
         self.connect((self.payload_eq, 1), (self, 4))
 
         if self.debug_log:

@@ -69,7 +69,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
                     feedback,
                     feedback_constellation_key(),
                     pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
-            int bps = get_bits_per_symbol(d_constellation);
+            int bps = get_bits_per_symbol(constellation);
             // Update constellation only if valid data received
             if (bps) {
                 d_constellation = constellation;
@@ -124,15 +124,14 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
         int frame_payload = 0;
 
-        // calculate input frame size
-        int frame_in_bits = d_frame_len * d_payload_carriers * bps;
-        // number of bytes to be picked from input (each frame is carrying an integer
-        // number of bytes)
-        int frame_in_bytes = frame_in_bits / 8 - d_crc.get_crc_len();
-        frame_in_bits = frame_in_bytes * 8;
+        // Calculate input frame size.
+        // Number of bytes to be picked from input - each frame is carrying an integer
+        // number of bytes.
+        int frame_in_bytes = d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
+        int frame_bits = frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
         // expected output symbols, including CRC
-        expected_frame_symbols = (frame_in_bits + d_crc.get_crc_len() * 8) / bps;
-        if (frame_in_bits % bps) {
+        expected_frame_symbols = frame_bits / bps;
+        if (frame_bits % bps) {
             ++expected_frame_symbols;
         }
         repacker.set_indexes(0, 0);
