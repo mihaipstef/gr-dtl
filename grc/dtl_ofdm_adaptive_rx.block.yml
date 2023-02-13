@@ -62,7 +62,7 @@ outputs:
 -   domain: stream
     dtype: byte
 -   domain: stream
-    dtype: byte
+    dtype: complex
 -   domain: stream
     dtype: complex
 -   domain: message

@@ -55,7 +55,7 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     : tagged_stream_block(
           "ofdm_adaptive_frame_equalizer_vcvc",
           io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
-          io_signature::make(1, 2, sizeof(gr_complex) * equalizer->fft_len()),
+          io_signature::make2(1, 2, sizeof(gr_complex) * equalizer->fft_len(), sizeof(gr_complex)),
           tsb_key),
       d_fft_len(equalizer->fft_len()),
       d_cp_len(cp_len),
