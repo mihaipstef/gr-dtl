@@ -15,9 +15,11 @@ namespace gr {
 namespace dtl {
 
 
-INIT_DTL_LOGGER("ofdm_adaptive_frame_pack_bb");
+static const pmt::pmt_t PAYLOAD_CRC_FAILED_KEY = pmt::mp("payload_crc_failed");
+static const pmt::pmt_t PAYLOAD_CRC_SUCCESS_KEY = pmt::mp("payload_crc_success");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor_port");
 
-static const pmt::pmt_t CRC_STATISTICS_PORT = pmt::mp("crc_statistics_port");
+INIT_DTL_LOGGER("ofdm_adaptive_frame_pack_bb");
 
 ofdm_adaptive_frame_pack_bb::sptr ofdm_adaptive_frame_pack_bb::make(
     const std::string& tsb_tag_key)
@@ -37,7 +39,7 @@ ofdm_adaptive_frame_pack_bb_impl::ofdm_adaptive_frame_pack_bb_impl(
       d_len_tag_key(len_tag_key),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
 {
-    message_port_register_out(CRC_STATISTICS_PORT);
+    message_port_register_out(MONITOR_PORT);
 }
 
 ofdm_adaptive_frame_pack_bb_impl::~ofdm_adaptive_frame_pack_bb_impl() {}
@@ -70,7 +72,14 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
 
     bool crc_ok = d_crc.verify_crc(out, n_written);
 
-    message_port_pub(CRC_STATISTICS_PORT, pmt::from_double(d_crc.get_fer()));
+    pmt::pmt_t monitor_msg = pmt::make_dict();
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 PAYLOAD_CRC_SUCCESS_KEY,
+                                 pmt::from_long(d_crc.get_success()));
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 PAYLOAD_CRC_FAILED_KEY,
+                                 pmt::from_float(d_crc.get_failed()));
+    message_port_pub(MONITOR_PORT, monitor_msg);
 
     DTL_LOG_DEBUG("d_bits_per_symbol: {}, n_written: {}, "
                   "ninput_items: {}, crc_ok: {}",

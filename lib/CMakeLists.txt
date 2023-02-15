@@ -26,7 +26,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_detect_bb_impl.cc
     constellation.cc
     crc_util.cc
-    )
+    zmq_msq_pub_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -34,9 +34,12 @@ if(NOT dtl_sources)
     return()
 endif(NOT dtl_sources)
 
+find_package(ZeroMQ)
+
 add_library(gnuradio-dtl SHARED ${dtl_sources})
 target_link_libraries(gnuradio-dtl gnuradio::gnuradio-runtime)
 target_link_libraries(gnuradio-dtl gnuradio-digital)
+target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 
 target_include_directories(gnuradio-dtl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>

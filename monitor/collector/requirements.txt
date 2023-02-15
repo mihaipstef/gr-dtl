@@ -1,0 +1,8 @@
+pyzmq
+Flask
+werkzeug
+sqlalchemy==1.4.31
+flask-sqlalchemy==3.0.3
+flask-migrate
+flask-script
+celery
