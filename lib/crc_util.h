@@ -33,8 +33,9 @@ public:
 
     unsigned long append_crc(unsigned char* buffer, std::size_t len);
 
-    void reset_statistics();
-    double get_fer() const;
+    void reset_monitoring();
+    std::size_t get_failed() const;
+    std::size_t get_success() const;
     std::size_t get_crc_len() const;
 };
 

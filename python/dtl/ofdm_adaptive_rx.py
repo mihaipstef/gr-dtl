@@ -183,6 +183,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self.payload_eq, 0), (self, 3))
         self.connect((self.payload_eq, 1), (self, 4))
 
+        self.msg_connect(self.payload_eq, "monitor_port", self, "monitor")
+        self.msg_connect(payload_pack, "monitor_port", self, "monitor")
+
         if self.debug_log:
             self.connect((self.sync_detect, 1), blocks.file_sink(
                 gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
@@ -256,8 +259,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         self.msg_connect(self.payload_eq, "feedback_port",
                          self.feedback_formatter, "in")
-        self.msg_connect(self.payload_eq, "monitor_port", self, "monitor")
-
         self.msg_connect(self.feedback_formatter, "header",
                          self.feedback_to_tagged_stream, "pdus")
         self.connect(self.feedback_to_tagged_stream, self.feedback_repack_bits,

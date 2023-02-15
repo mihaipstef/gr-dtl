@@ -3,3 +3,5 @@
 *.pyo
 build*/
 examples/grc/*.py
+monitor/collector/instance*/
+monitor/collector/pmt_util/build*/

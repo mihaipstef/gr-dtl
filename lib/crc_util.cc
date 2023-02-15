@@ -24,7 +24,6 @@ crc_util::crc_util(size_t len,
       d_crc_len(len),
       d_count(0),
       d_failed(0)
-
 {
 }
 
@@ -59,18 +58,21 @@ bool crc_util::verify_crc(unsigned char* buffer, std::size_t len)
 }
 
 
-void crc_util::reset_statistics()
+void crc_util::reset_monitoring()
 {
     d_count = 0;
     d_failed = 0;
 }
 
-double crc_util::get_fer() const
+size_t crc_util::get_failed() const
 {
-    if (d_count) {
-        return static_cast<double>(d_failed) / d_count;
-    }
-    return std::numeric_limits<double>::min();
+    return d_failed;
+}
+
+
+size_t crc_util::get_success() const
+{
+    return d_count - d_failed;
 }
 
 size_t crc_util::get_crc_len() const { return d_crc_len; }
