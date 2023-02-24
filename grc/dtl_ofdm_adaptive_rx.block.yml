@@ -65,6 +65,8 @@ outputs:
     dtype: complex
 -   domain: stream
     dtype: complex
+-   domain: stream
+    dtype: float
 -   domain: message
     id: monitor
 

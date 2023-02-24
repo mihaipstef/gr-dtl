@@ -49,7 +49,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '3'
+    value: '2'
   states:
     bus_sink: false
     bus_source: false
@@ -61,7 +61,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '600000'
+    value: '900000'
   states:
     bus_sink: false
     bus_source: false
@@ -126,7 +126,7 @@ blocks:
     minoutbuf: '0'
     offset: '0'
     phase: '0'
-    samp_rate: '600000'
+    samp_rate: samp_rate
     type: complex
     waveform: analog.GR_COS_WAVE
   states:
@@ -233,8 +233,8 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    attenuation1: '20.0'
-    bandwidth: '400000'
+    attenuation1: '0.0'
+    bandwidth: '1200000'
     buffer_size: '32768'
     comment: ''
     cyclic: 'False'
@@ -259,7 +259,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    bandwidth: '400000'
+    bandwidth: '1200000'
     bbdc: 'True'
     buffer_size: '32768'
     comment: ''
@@ -275,7 +275,7 @@ blocks:
     minoutbuf: '0'
     quadrature: 'True'
     rfdc: 'True'
-    samplerate: '600000'
+    samplerate: samp_rate
     type: fc32
     uri: ip:192.168.2.1
   states:

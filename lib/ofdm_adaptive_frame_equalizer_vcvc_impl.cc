@@ -16,7 +16,7 @@
 namespace gr {
 namespace dtl {
 
-INIT_DTL_LOGGER(__FILE__);
+INIT_DTL_LOGGER("ofdm_adaptive_frame_equalizer_vcvc");
 
 using namespace gr::digital;
 
@@ -144,6 +144,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                (void*)(in + carrier_offset),
                sizeof(gr_complex) * (d_fft_len * n_ofdm_sym - carrier_offset));
     }
+
+    DTL_LOG_DEBUG("carrier_offset={}", carrier_offset);
 
     // Correct the frequency shift on the symbols
     gr_complex phase_correction;
