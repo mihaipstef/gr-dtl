@@ -52,25 +52,27 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char *in, char *out, int
     for (int i = 0; i < len; ++i) {
         if (out[i]) {
             int frame_len_detected = i - last_trigger_index;
-            int error = abs(frame_len_detected - d_frame_len);
-            // If there is a gap between 2 triggers ...
-            if (abs(error - d_frame_len) < 3) {
-                out[last_trigger_index + d_frame_len] = 1;
-                last_trigger_index = i;
-                ++d_gaps_count;
-            } else if (error > 1 && error < 5) {      
-                if (last_trigger_index + d_frame_len < len) {         
-                    out[i] = 0;
+            if (frame_len_detected) {
+                int error = abs(frame_len_detected - d_frame_len);
+                // If there is a gap between 2 triggers ...
+                if (abs(error - d_frame_len) < 10) {
                     out[last_trigger_index + d_frame_len] = 1;
-                    last_trigger_index += d_frame_len;
-                    ++d_correction_count;
+                    last_trigger_index = i;
+                    ++d_gaps_count;
+                } else if (error > 1 && error < 10) {      
+                    if (last_trigger_index + d_frame_len < len) {         
+                        out[i] = 0;
+                        out[last_trigger_index + d_frame_len] = 1;
+                        last_trigger_index += d_frame_len;
+                        ++d_correction_count;
+                    } else {
+                        last_trigger_index = i;
+                    }
                 } else {
                     last_trigger_index = i;
                 }
-            } else {
-                last_trigger_index = i;
+                d_remainder = len - last_trigger_index;
             }
-            d_remainder = len - last_trigger_index;
         }
     }
     DTL_LOG_DEBUG("gaps detected={}, triggers corrected={}", d_gaps_count, d_correction_count);
