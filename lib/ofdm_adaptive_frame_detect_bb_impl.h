@@ -18,6 +18,9 @@ class ofdm_adaptive_frame_detect_bb_impl : virtual public ofdm_adaptive_frame_de
 {
 private:
     int d_frame_len;
+    int d_remainder;
+    std::size_t d_gaps_count;
+    std::size_t d_correction_count;
 
 public:
     static const pmt::pmt_t header_port();
