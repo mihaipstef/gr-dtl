@@ -34,7 +34,10 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
           "ofdm_adaptive_frame_detect_bb",
           gr::io_signature::make(1 /* min inputs */, 1 /* max inputs */, sizeof(char)),
           gr::io_signature::make(1 /* min outputs */, 1 /*max outputs */, sizeof(char))),
-        d_frame_len(frame_len)
+        d_frame_len(frame_len),
+        d_remainder(0),
+        d_gaps_count(0),
+        d_correction_count(0)
 {
 }
 
@@ -44,17 +47,33 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
 ofdm_adaptive_frame_detect_bb_impl::~ofdm_adaptive_frame_detect_bb_impl() {}
 
 void ofdm_adaptive_frame_detect_bb_impl::fill_gap(const char *in, char *out, int len) {
-    int last_trigger_index = -1;
+    int last_trigger_index = -d_remainder;
     memcpy(out, in, len);
     for (int i = 0; i < len; ++i) {
-        if (in[i]) {
+        if (out[i]) {
             int frame_len_detected = i - last_trigger_index;
-            if (abs(frame_len_detected - 2 * d_frame_len) < 3) {
+            int error = abs(frame_len_detected - d_frame_len);
+            // If there is a gap between 2 triggers ...
+            if (abs(error - d_frame_len) < 3) {
                 out[last_trigger_index + d_frame_len] = 1;
+                last_trigger_index = i;
+                ++d_gaps_count;
+            } else if (error > 1 && error < 5) {      
+                if (last_trigger_index + d_frame_len < len) {         
+                    out[i] = 0;
+                    out[last_trigger_index + d_frame_len] = 1;
+                    last_trigger_index += d_frame_len;
+                    ++d_correction_count;
+                } else {
+                    last_trigger_index = i;
+                }
+            } else {
+                last_trigger_index = i;
             }
-            last_trigger_index = i;
+            d_remainder = len - last_trigger_index;
         }
     }
+    DTL_LOG_DEBUG("gaps detected={}, triggers corrected={}", d_gaps_count, d_correction_count);
 }
 
 int ofdm_adaptive_frame_detect_bb_impl::work(int noutput_items,
