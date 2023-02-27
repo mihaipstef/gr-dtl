@@ -46,7 +46,7 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
  */
 ofdm_adaptive_frame_detect_bb_impl::~ofdm_adaptive_frame_detect_bb_impl() {}
 
-void ofdm_adaptive_frame_detect_bb_impl::fill_gap(const char *in, char *out, int len) {
+void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char *in, char *out, int len) {
     int last_trigger_index = -d_remainder;
     memcpy(out, in, len);
     for (int i = 0; i < len; ++i) {
@@ -83,7 +83,7 @@ int ofdm_adaptive_frame_detect_bb_impl::work(int noutput_items,
     auto in = static_cast<const char*>(input_items[0]);
     auto out = static_cast<char*>(output_items[0]);
 
-    fill_gap(in, out, noutput_items);
+    fix_sync(in, out, noutput_items);
 
     return noutput_items;
 }
