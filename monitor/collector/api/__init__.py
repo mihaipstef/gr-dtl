@@ -1,9 +1,8 @@
-from celery import Celery, Task, current_app
+from celery import Celery, current_app
 from flask import Flask
 from flask_celeryext import FlaskCeleryExt 
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-import os
 
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///monitor.sqlite"
@@ -34,3 +33,5 @@ def flask_create_app():
     celery_app.init_app(flask_app)
 
     return flask_app
+
+flask_app = flask_create_app()
