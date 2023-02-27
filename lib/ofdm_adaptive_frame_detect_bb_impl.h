@@ -28,7 +28,7 @@ public:
     ofdm_adaptive_frame_detect_bb_impl(int frame_len);
     ~ofdm_adaptive_frame_detect_bb_impl();
 
-    void fill_gap(const char *in, char *out, int len);
+    void fix_sync(const char *in, char *out, int len);
     int work(int noutput_items,
              gr_vector_const_void_star& input_items,
              gr_vector_void_star& output_items) override;
