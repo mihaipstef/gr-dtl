@@ -1,41 +1,15 @@
-from celery import Celery, Task
-from celery.result import AsyncResult
-import crud
-from db import db
-from flask import Flask, jsonify, request
-from flask_migrate import Migrate
-import os
-from sub import subscriber
-
-
-def celery_init_app(app: Flask) -> Celery:
-    class FlaskTask(Task):
-        def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery_app = Celery(app.name, task_cls=FlaskTask)
-    celery_app.config_from_object(app.config["CELERY"])
-    celery_app.set_default()
-    app.extensions["celery"] = celery_app
-    return celery_app
-
-# App init
-
-
-app = Flask(__name__)
-app.config.from_mapping(
-    SQLALCHEMY_DATABASE_URI=os.getenv(
-        "SQLALCHEMY_DATABASE_URI", "sqlite:///monitor.sqlite"),
-    CELERY=dict(
-        broker_url="sqla+sqlite:///celerydb.sqlite",
-        result_backend="db+sqlite:///results.sqlite",
-        task_ignore_result=True,
-    ),
+from api import (
+    celery_app,
+    crud,
+    flask_create_app,
 )
-db.init_app(app)
-migrate = Migrate(app, db)
-celery_app = celery_init_app(app)
+from celery.result import AsyncResult
+from flask import jsonify, request
+import sub
+
+
+app = flask_create_app()
+celery = celery_app.celery
 
 # Routes
 
@@ -79,7 +53,7 @@ def set_subscriber_handler():
     # Start subscriber tasks
     for id_key, url in [("rx_id", rx_url), ("tx_id", tx_url)]:
         if url is not None:
-            result = subscriber.delay(pair_id, 10000, url)
+            result = sub.subscriber.delay(pair_id, 10000, url)
             subscribers[id_key] = result.id
     
     # Create subscriber entry in DB
