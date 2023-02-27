@@ -6,3 +6,4 @@ flask-sqlalchemy==3.0.3
 flask-migrate
 flask-script
 celery
+Flask-CeleryExt==0.4.3

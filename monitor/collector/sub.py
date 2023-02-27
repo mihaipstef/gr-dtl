@@ -1,6 +1,6 @@
+from api import crud
 from celery import shared_task
 from celery.result import AsyncResult
-import crud
 import pmt
 import time
 import zmq

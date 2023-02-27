@@ -1,9 +1,8 @@
-from db import db
-from models import (
+from api.models import (
     MonitorData,
     Subscribers,
 )
-
+from api import db
 
 def create_subscibers(pair_id: str, rx_sub_id: str, tx_sub_id: str, **kwargs):
     subs = Subscribers()
