@@ -48,7 +48,7 @@ def set_subscriber_handler():
     # Start subscriber tasks
     for id_key, url in [("rx_id", rx_url), ("tx_id", tx_url)]:
         if url is not None:
-            result = sub.subscriber.delay(pair_id, 10000, url)
+            result = sub.subscriber.delay(pair_id, 60000, url)
             subscribers[id_key] = result.id
 
     # Create subscriber entry in DB

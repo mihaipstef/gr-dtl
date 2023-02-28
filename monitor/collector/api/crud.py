@@ -3,6 +3,7 @@ from api.models import (
     Subscribers,
 )
 from api import db
+from sqlalchemy import desc
 
 def create_subscibers(pair_id: str, rx_sub_id: str, tx_sub_id: str, **kwargs):
     subs = Subscribers()
@@ -23,10 +24,10 @@ def retrieve_subscribers(is_active: bool = None):
         Subscribers,
     )
     if is_active is not None:
-        q.filter(
+        q = q.filter(
             Subscribers.is_active == is_active,
         )
-    q.order_by(Subscribers.date_updated.desc())
+    q = q.order_by(desc(Subscribers.date_created))
     return q.all()
 
 

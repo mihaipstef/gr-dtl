@@ -13,20 +13,22 @@ _db_mapping = {
     "": "header_crc_success",
     "": "header_crc_failed",
     "estimated_snr_tag_key": "snr_est",
-    "": "current_bps",
+    "feedback_constellation_key": "current_bps",
 }
 
 def parse_msg(msg):
     try:
         msg = pmt.deserialize_str(msg.decode('ascii'))
         monitor_data = {}
+
         if pmt.is_dict(msg):
             d = pmt.to_python(msg)
+            print(d)
             for k in _db_mapping.keys():
                 if k in d:
                     monitor_data[_db_mapping[k]] = d[k]
         return monitor_data
-    except:
+    except Exception as e:
         # We get weird encoding even when serialize_str is used
         pass
     return {}
@@ -62,5 +64,7 @@ def subscriber(pair_id, timeout, url="tcp://*:5551", bind=False):
                     r = AsyncResult(s_id)
                     if not r.ready():
                         active_count += 1
+            print(f"active subscribers={active_count}")
             crud.update_subscribers(pair_id, is_active=(active_count > 0))
+        print("done")
     return True
