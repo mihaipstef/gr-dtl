@@ -1,4 +1,4 @@
-from api import crud
+from api import crud, flask_app
 from celery import shared_task
 from celery.result import AsyncResult
 import pmt
@@ -44,22 +44,23 @@ def subscriber(pair_id, timeout, url="tcp://*:5551", bind=False):
         socket.connect(url)
     socket.setsockopt(zmq.SUBSCRIBE, "".encode("ascii"))
     print(f"Subscribe to: {url}\nWaiting for data...")
-    while time_wait <= timeout:
-        try:
-            msg = socket.recv(zmq.NOBLOCK)
-            msg_dict = parse_msg(msg)
-            crud.update_monitor_data(pair_id, **msg_dict)
-            time_wait = 0
-        except Exception as e:
-            time_wait += step
-            time.sleep(step/1000)
-    db_sub = crud.retrieve_subscriber(pair_id=pair_id)
-    if db_sub:
-        active_count = 0
-        for s_id in [db_sub.rx_sub_id, db_sub.tx_sub_id]:
-            if s_id:
-                r = AsyncResult(s_id)
-                if not r.ready():
-                    active_count += 1
-        crud.update_subscribers(pair_id, is_active=(active_count > 0))
+    with flask_app.app_context():
+        while time_wait <= timeout:
+            try:
+                msg = socket.recv(zmq.NOBLOCK)
+                msg_dict = parse_msg(msg)
+                crud.update_monitor_data(pair_id, **msg_dict)
+                time_wait = 0
+            except Exception as e:
+                time_wait += step
+                time.sleep(step/1000)
+        db_sub = crud.retrieve_subscriber(pair_id=pair_id)
+        if db_sub:
+            active_count = 0
+            for s_id in [db_sub.rx_sub_id, db_sub.tx_sub_id]:
+                if s_id:
+                    r = AsyncResult(s_id)
+                    if not r.ready():
+                        active_count += 1
+            crud.update_subscribers(pair_id, is_active=(active_count > 0))
     return True
