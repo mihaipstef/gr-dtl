@@ -8,7 +8,10 @@ RUN apt-get -y update \
     && apt-get install -y pip \
     && apt-get install -y sqlite3 libsqlite3-dev
 
-RUN apt-get install -y gnuradio
+# Add unstable repo for newer version of gnuradio
+RUN echo "deb http://deb.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y gnuradio=3.10.5.1-2
 
 # Copy collector
 RUN mkdir -p collector
