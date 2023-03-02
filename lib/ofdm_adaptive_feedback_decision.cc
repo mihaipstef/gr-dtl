@@ -78,6 +78,8 @@ ofdm_adaptive_feedback_decision::get_feedback(constellation_type_t current_cnst,
         update_decision((--it)->second);
     } else if (++it != d_feedback_lut.end() && estimated_snr > (it->first + d_hyteresis)) {
         update_decision(it->second);
+    } else {
+        d_decision_counter = 0;
     }
     return static_cast<ofdm_adaptive_feedback_t>(d_last_decision);
 }
