@@ -14,8 +14,7 @@ namespace dtl {
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_detect_bb");
 
-ofdm_adaptive_frame_detect_bb::sptr
-ofdm_adaptive_frame_detect_bb::make(int frame_len)
+ofdm_adaptive_frame_detect_bb::sptr ofdm_adaptive_frame_detect_bb::make(int frame_len)
 {
     return gnuradio::make_block_sptr<ofdm_adaptive_frame_detect_bb_impl>(frame_len);
 }
@@ -34,10 +33,12 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
           "ofdm_adaptive_frame_detect_bb",
           gr::io_signature::make(1 /* min inputs */, 1 /* max inputs */, sizeof(char)),
           gr::io_signature::make(1 /* min outputs */, 1 /*max outputs */, sizeof(char))),
-        d_frame_len(frame_len),
-        d_remainder(0),
-        d_gaps_count(0),
-        d_correction_count(0)
+      d_frame_len(frame_len),
+      d_remainder(0),
+      d_gaps_count(0),
+      d_correction_count(0),
+      d_acc_error(0),
+      d_trigger_counter(0)
 {
 }
 
@@ -46,24 +47,51 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
  */
 ofdm_adaptive_frame_detect_bb_impl::~ofdm_adaptive_frame_detect_bb_impl() {}
 
-void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char *in, char *out, int len) {
+
+void ofdm_adaptive_frame_detect_bb_impl::forecast(int noutput_items,
+                                                  gr_vector_int& ninput_items_required)
+{
+    ninput_items_required[0] = d_frame_len;
+}
+
+
+void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int len)
+{
     int last_trigger_index = -d_remainder;
+
     memcpy(out, in, len);
+    bool trigger_found = false;
     for (int i = 0; i < len; ++i) {
         if (out[i]) {
             int frame_len_detected = i - last_trigger_index;
-            if (frame_len_detected) {
-                int error = abs(frame_len_detected - d_frame_len);
-                // If there is a gap between 2 triggers ...
-                if (abs(error - d_frame_len) < 10) {
-                    out[last_trigger_index + d_frame_len] = 1;
-                    last_trigger_index = i;
-                    ++d_gaps_count;
-                } else if (error > 1 && error < 10) {      
-                    if (last_trigger_index + d_frame_len < len) {         
+            int diff = frame_len_detected - d_frame_len;
+            int inst_error = abs(diff);
+
+            // Count triggers id 1 sample error detected
+            if (d_acc_error) {
+                ++d_trigger_counter;
+            }
+
+            // If there is a gap between 2 triggers ...
+            if (abs(inst_error - d_frame_len) < 10) {
+                // ... fill the gap.
+                last_trigger_index += d_frame_len;
+                out[last_trigger_index] = 1;
+                i = last_trigger_index;
+                ++d_gaps_count;
+            // otherwise try to correct the error.
+            } else {
+                // Accumulate 1 sample errors
+                if (inst_error == 1) {
+                    d_acc_error += diff;
+                }
+                if (d_acc_error > 1 || (inst_error > 1 && inst_error < 10)) {
+                    if (last_trigger_index + d_frame_len < len) {
                         out[i] = 0;
-                        out[last_trigger_index + d_frame_len] = 1;
                         last_trigger_index += d_frame_len;
+                        out[last_trigger_index] = 1;
+                        //i = last_trigger_index;
+                        d_acc_error = 0;
                         ++d_correction_count;
                     } else {
                         last_trigger_index = i;
@@ -71,11 +99,25 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char *in, char *out, int
                 } else {
                     last_trigger_index = i;
                 }
-                d_remainder = len - last_trigger_index;
+            }
+            d_remainder = len - last_trigger_index;
+            DTL_LOG_DEBUG("start_buffer={} ,gaps detected={}, triggers corrected={}, "
+                          "error={}, acc_error={}",
+                          !trigger_found,
+                          d_gaps_count,
+                          d_correction_count,
+                          diff,
+                          d_acc_error);
+            trigger_found = true;
+            // Reset accumulated error after a given numbers of triggers
+            if (d_trigger_counter > 10) {
+                d_acc_error = 0;
             }
         }
     }
-    DTL_LOG_DEBUG("gaps detected={}, triggers corrected={}", d_gaps_count, d_correction_count);
+    if (!trigger_found) {
+        d_remainder += len;
+    }
 }
 
 int ofdm_adaptive_frame_detect_bb_impl::work(int noutput_items,

@@ -21,12 +21,16 @@ private:
     int d_remainder;
     std::size_t d_gaps_count;
     std::size_t d_correction_count;
+    int d_acc_error;
+    int d_trigger_counter;
 
 public:
     static const pmt::pmt_t header_port();
 
     ofdm_adaptive_frame_detect_bb_impl(int frame_len);
     ~ofdm_adaptive_frame_detect_bb_impl();
+
+    void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
 
     void fix_sync(const char *in, char *out, int len);
     int work(int noutput_items,
