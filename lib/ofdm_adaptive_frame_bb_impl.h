@@ -9,6 +9,7 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_IMPL_H
 
 #include "crc_util.h"
+#include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
 
 namespace gr {
@@ -25,7 +26,8 @@ public:
     ofdm_adaptive_frame_bb_impl(const std::string& len_tag_key,
                                 const std::vector<constellation_type_t>& constellations,
                                 size_t frame_len,
-                                size_t n_payload_carriers);
+                                size_t n_payload_carriers,
+                                std::string frames_fname);
 
     void process_feedback(pmt::pmt_t feedback);
 
@@ -58,6 +60,8 @@ private:
     bool d_stop_no_input;
     crc_util d_crc;
     std::vector<unsigned char> d_frame_buffer;
+    unsigned long d_frame_count;
+    frame_file_store d_frame_store;
 };
 
 } // namespace dtl

@@ -137,6 +137,7 @@ bool ofdm_adaptive_feedback_format::parse(int nbits_in,
             DTL_LOG_DEBUG("Detect feedback: {}/{}", nbits_in - nbits_processed, nbits_in);
             if (parse_feedback(
                     nbits_in, input, info, nbits_processed)) {
+                DTL_LOG_DEBUG("Feedback: {}", info.size());
                 return true;
             }
         }

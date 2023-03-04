@@ -54,7 +54,7 @@ class qa_ofdm_adaptive_frame_pack_bb(gr_unittest.TestCase):
             tags += [cnst_tag, len_tag]
 
         src = blocks.vector_source_b(src_data_2packets, False, 1, tags)
-        repack = ofdm_adaptive_frame_pack_bb("len_tag")
+        repack = ofdm_adaptive_frame_pack_bb("len_tag", "", "")
         sink = blocks.vector_sink_b()
         self.tb.connect(src, repack, sink)
         self.tb.run()

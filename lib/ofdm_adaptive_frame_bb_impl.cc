@@ -14,18 +14,22 @@ namespace gr {
 namespace dtl {
 
 
-using namespace gr;
+using namespace std;
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_bb")
+
+static const pmt::pmt_t FRAME_COUNT_KEY = pmt::mp("frame_count_key");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 ofdm_adaptive_frame_bb::sptr
 ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
                              const std::vector<constellation_type_t>& constellations,
                              size_t frame_len,
-                             size_t n_payload_carriers)
+                             size_t n_payload_carriers,
+                             std::string frames_fname)
 {
     return std::make_shared<ofdm_adaptive_frame_bb_impl>(
-        len_tag_key, constellations, frame_len, n_payload_carriers);
+        len_tag_key, constellations, frame_len, n_payload_carriers, frames_fname);
 }
 
 
@@ -33,7 +37,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     const std::string& len_tag_key,
     const std::vector<constellation_type_t>& constellations,
     size_t frame_len,
-    size_t n_payload_carriers)
+    size_t n_payload_carriers,
+    string frames_fname)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
@@ -46,7 +51,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
       d_stop_no_input(true),
-      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
+      d_frame_count(0)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -57,6 +63,10 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     size_t frame_buffer_max_len =
         d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
     d_frame_buffer.resize(frame_buffer_max_len);
+    message_port_register_out(MONITOR_PORT);
+    if (!frames_fname.empty()) {
+        d_frame_store = frame_file_store(frames_fname);
+    }
 }
 
 
@@ -108,6 +118,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     repack repacker;
     int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
+    bool frame_count_change = false;
 
     DTL_LOG_DEBUG("work: d_frame_len={}, d_payload_carriers={}, "
                   "noutput_items={}, nitems_written={}, ninput_items={}",
@@ -243,11 +254,17 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
             d_tag_offset += expected_frame_symbols;
+            d_frame_store.store(frame_payload, d_frame_count, reinterpret_cast<char*>(&d_frame_buffer[0]));
+            ++d_frame_count;
+            pmt::pmt_t monitor_msg = pmt::make_dict();
+            monitor_msg = pmt::dict_add(monitor_msg,
+                                    FRAME_COUNT_KEY,
+                                    pmt::from_long(d_frame_count));
+            message_port_pub(MONITOR_PORT, monitor_msg);
         }
     }
 
-
-    DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}, frame_count={}", read_index, write_index, d_frame_count);
     consume_each(read_index);
     return write_index;
 }

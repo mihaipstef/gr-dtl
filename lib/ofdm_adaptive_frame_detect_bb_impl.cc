@@ -5,18 +5,22 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "logger.h"
 #include "ofdm_adaptive_frame_detect_bb_impl.h"
+
+#include "logger.h"
 #include <gnuradio/io_signature.h>
+#include <vector>
 
 namespace gr {
 namespace dtl {
+
+using namespace std;
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_detect_bb");
 
 static const int CONSECUTIVE_SYNCED_FRAMES_TH = 3;
 static const int MAX_CONSECUTIVE_MISSING_CORRECTION = 5;
-
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 ofdm_adaptive_frame_detect_bb::sptr ofdm_adaptive_frame_detect_bb::make(int frame_len)
 {
@@ -38,8 +42,10 @@ ofdm_adaptive_frame_detect_bb_impl::ofdm_adaptive_frame_detect_bb_impl(int frame
       d_acc_error(0),
       d_trigger_counter(0),
       d_synced(0),
-      d_in_sync(false)
+      d_in_sync(false),
+      d_error_count(0)
 {
+    message_port_register_out(MONITOR_PORT);
 }
 
 /*
@@ -58,9 +64,10 @@ void ofdm_adaptive_frame_detect_bb_impl::forecast(int noutput_items,
 void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int len)
 {
     int last_trigger_index = -d_remainder;
+    bool trigger_found = false;
 
     memcpy(out, in, len);
-    bool trigger_found = false;
+
     DTL_LOG_DEBUG("fix_sync begin: len={}, last_trigger={}, frame_len={}",
                   len,
                   last_trigger_index,
@@ -77,10 +84,13 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
             }
 
             int inst_error = abs(diff);
+
             // Accumulate 1-sample errors
             if (inst_error == 1) {
                 d_acc_error += diff;
             }
+
+            d_error_count += static_cast<bool>(inst_error);            
 
             // Count conseccutive synced frames
             if (inst_error == 0 || inst_error == 1) {
@@ -151,6 +161,15 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
     DTL_LOG_DEBUG("trigger correction counters: missing_triggers={}, trigger_correct={}",
                   d_missing_count,
                   d_correction_count);
+
+    pmt::pmt_t monitor_msg = pmt::make_dict();
+    pmt::dict_add(monitor_msg,
+                  pmt::mp("errors_count"),
+                  pmt::from_long(d_error_count));
+    pmt::dict_add(monitor_msg,
+                  pmt::mp("corrections_count"),
+                  pmt::from_long(d_missing_count + d_correction_count));
+    message_port_pub(MONITOR_PORT, monitor_msg);
 }
 
 int ofdm_adaptive_frame_detect_bb_impl::work(int noutput_items,

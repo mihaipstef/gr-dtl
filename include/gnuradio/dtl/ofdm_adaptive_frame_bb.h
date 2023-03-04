@@ -28,7 +28,8 @@ public:
     static sptr make(const std::string& len_tag_key,
                      const std::vector<constellation_type_t>& constellations,
                      size_t frame_len,
-                     size_t n_payload_carriers);
+                     size_t n_payload_carriers,
+                     std::string frames_fname = "");
 
     virtual void set_constellation(constellation_type_t constellation) = 0;
 };

@@ -9,9 +9,10 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_PACK_BB_IMPL_H
 
 #include "crc_util.h"
+#include "frame_file_store.h"
+#include "repack.h"
 #include <gnuradio/blocks/repack_bits_bb.h>
 #include <gnuradio/dtl/ofdm_adaptive_frame_pack_bb.h>
-#include "repack.h"
 
 namespace gr {
 namespace dtl {
@@ -23,14 +24,17 @@ private:
     std::string d_len_tag_key;
     repack repacker;
     crc_util d_crc;
-
+    frame_file_store d_frame_store;
+    pmt::pmt_t d_packet_number_key;
 
 protected:
     void parse_length_tags(const std::vector<std::vector<tag_t>>& tags,
-                                            gr_vector_int& n_input_items_reqd) override;
+                           gr_vector_int& n_input_items_reqd) override;
 
 public:
-    ofdm_adaptive_frame_pack_bb_impl(const std::string& tsb_tag_key);
+    ofdm_adaptive_frame_pack_bb_impl(const std::string& tsb_tag_key,
+                                     const std::string& packet_number_key,
+                                     const std::string& frames_fname);
     ~ofdm_adaptive_frame_pack_bb_impl();
 
     // Where all the action really happens

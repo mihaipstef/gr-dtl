@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_pack_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(231ec1ce0ddc172ab2978f42c9169a3c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(3ab306d60c6c6e4a20cfba9f188d88bf)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,6 +42,8 @@ void bind_ofdm_adaptive_frame_pack_bb(py::module& m)
 
         .def(py::init(&ofdm_adaptive_frame_pack_bb::make),
              py::arg("tsb_tag_key"),
+             py::arg("packet_number_key"),
+             py::arg("frames_fname") = "",
              D(ofdm_adaptive_frame_pack_bb, make))
 
 

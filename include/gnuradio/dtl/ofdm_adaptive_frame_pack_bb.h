@@ -29,7 +29,9 @@ public:
     /*!
      * \param tsb_tag_key If not empty, this is the key for the length tag.
      */
-    static sptr make(const std::string& tsb_tag_key);
+    static sptr make(const std::string& tsb_tag_key,
+                     const std::string& packet_number_key,
+                     const std::string& frames_fname = "");
 };
 
 } // namespace dtl
