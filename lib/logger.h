@@ -25,6 +25,7 @@
             std::shared_ptr<gr::logger> gr_logger;
             dtl_logger_wrapper(const std::string& name) {
                 gr_logger = std::make_shared<gr::logger>(name);
+                gr_logger->d_logger->set_pattern("%v");
                 register_logger(
                     gr_logger
                 );
@@ -38,7 +39,7 @@
         #define VA_ARGS(...) ,##__VA_ARGS__
 
         #define DTL_LOG_INFO(msg, ...) _logger.gr_logger->info(msg VA_ARGS(__VA_ARGS__));
-        #define DTL_LOG_DEBUG(msg, ...)  _logger.gr_logger->debug(msg VA_ARGS(__VA_ARGS__));
+        #define DTL_LOG_DEBUG(msg, ...) _logger.gr_logger->debug(msg VA_ARGS(__VA_ARGS__));
 
         #define DTL_LOG_TAGS(title, tags) \
             _logger.gr_logger->debug(title); \

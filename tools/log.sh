@@ -1,7 +1,7 @@
 tx_log=$1
 rx_log=$2
 
-received=$(cat $rx_log | grep header_parser | wc -l)
+received=$(cat $rx_log | grep "header_parser" | wc -l)
 sent=$(cat $tx_log | grep header_formatter | wc -l)
 crc_fail=$(cat $rx_log | grep "header_parser" | grep "crc=failed" | wc -l)
 missed_frames=$((sent - received))
