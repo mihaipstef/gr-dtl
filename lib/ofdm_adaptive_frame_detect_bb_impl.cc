@@ -65,7 +65,6 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
         if (out[i]) {
             int frame_len_detected = i - last_trigger_index;
             int diff = frame_len_detected - d_frame_len;
-            int inst_error = abs(diff);
 
             // Count triggers id 1 sample error detected
             if (d_acc_error) {
@@ -73,7 +72,7 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
             }
 
             // If there is a gap between 2 triggers ...
-            if (abs(inst_error - d_frame_len) < 10) {
+            if (abs(frame_len_detected - 2* d_frame_len) < 10) {
                 // ... fill the gap.
                 last_trigger_index += d_frame_len;
                 out[last_trigger_index] = 1;
@@ -81,6 +80,7 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
                 ++d_gaps_count;
             // otherwise try to correct the error.
             } else {
+                int inst_error = abs(diff);
                 // Accumulate 1 sample errors
                 if (inst_error == 1) {
                     d_acc_error += diff;
@@ -94,6 +94,7 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
                         d_acc_error = 0;
                         ++d_correction_count;
                     } else {
+                        DTL_LOG_DEBUG("aici");
                         last_trigger_index = i;
                     }
                 } else {
@@ -115,7 +116,14 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
             }
         }
     }
-    if (!trigger_found) {
+
+    if(trigger_found) {
+        if (len - last_trigger_index > d_frame_len) {
+            last_trigger_index += d_frame_len;
+            out[last_trigger_index] = 1;
+            d_remainder = len - last_trigger_index;
+        }
+    } else {
         d_remainder += len;
     }
 }
