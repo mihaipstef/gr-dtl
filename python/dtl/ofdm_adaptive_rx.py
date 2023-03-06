@@ -73,6 +73,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             True,
             header_padding=self.fft_len * 0
         )
+        freq_cmd_avg = blocks.moving_average_ff(1000, 1.0/1000, 4000, 1)
         self.connect((self, 0), self.sync_detect)
         self.connect((self, 0), self.delay, (self.mixer, 0), (hpd, 0))
         self.connect((self.sync_detect, 0), self.oscillator, (self.mixer, 1))

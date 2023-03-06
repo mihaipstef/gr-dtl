@@ -230,7 +230,7 @@ blocks:
     affinity: ''
     alias: ''
     attenuation1: '10.0'
-    bandwidth: '1200000'
+    bandwidth: '900000'
     buffer_size: '32768'
     comment: ''
     cyclic: 'False'
@@ -255,7 +255,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    bandwidth: '1000000'
+    bandwidth: '450000'
     bbdc: 'True'
     buffer_size: '32768'
     comment: ''
@@ -281,6 +281,30 @@ blocks:
     coordinate: [24, 436.0]
     rotation: 0
     state: true
+- name: low_pass_filter_0
+  id: low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: '450000'
+    decim: '2'
+    gain: '1'
+    interp: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: fir_filter_ccf
+    width: '20000'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [472, 164.0]
+    rotation: 0
+    state: disabled
 - name: qtgui_const_sink_x_0
   id: qtgui_const_sink_x
   parameters:
@@ -391,7 +415,7 @@ blocks:
     autoscale: 'False'
     average: '0.1'
     axislabels: 'True'
-    bw: '600000'
+    bw: '900000'
     color1: '"blue"'
     color10: '"dark blue"'
     color2: '"red"'
@@ -736,7 +760,7 @@ blocks:
     alias: ''
     comment: ''
     decim: resampling
-    fbw: '0'
+    fbw: '0.49'
     interp: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -756,7 +780,7 @@ blocks:
     alias: ''
     comment: ''
     decim: '1'
-    fbw: '0'
+    fbw: '0.49'
     interp: resampling
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -803,6 +827,7 @@ connections:
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '0']
 - [blocks_char_to_float_0, '0', qtgui_time_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', rational_resampler_xxx_0_0, '0']
+- [blocks_multiply_xx_0, '0', low_pass_filter_0, '0']
 - [blocks_multiply_xx_0, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_multiply_xx_0, '0', rational_resampler_xxx_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '0', blocks_char_to_float_0, '0']
@@ -813,6 +838,7 @@ connections:
 - [dtl_ofdm_adaptive_rx_0, '5', qtgui_time_sink_x_0_0, '0']
 - [dtl_ofdm_adaptive_rx_0, monitor, zeromq_pub_msg_sink_0, in]
 - [iio_pluto_source_0, '0', blocks_multiply_xx_0, '1']
+- [low_pass_filter_0, '0', dtl_ofdm_adaptive_rx_0, '0']
 - [rational_resampler_xxx_0, '0', dtl_ofdm_adaptive_rx_0, '0']
 - [rational_resampler_xxx_0_0, '0', blocks_null_sink_0, '0']
 - [rational_resampler_xxx_0_0, '0', iio_pluto_sink_0, '0']

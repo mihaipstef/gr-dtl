@@ -14,10 +14,10 @@ function handle_sigint() {
 if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
 	grcc "$1"_tx.grc
 	grcc "$1"_rx.grc
-	python3 "$1"_tx.py > tx.log &
+	python3 "$1"_tx.py > $2/tx.log &
 	tx_pid=$!
 	echo "TX run with pid=$tx_pid"
-	python3 "$1"_rx.py > rx.log &
+	python3 "$1"_rx.py > $2/rx.log &
 	rx_pid=$!
 	echo "TX run with pid=$rx_pid"
 	trap 'handle_sigint_txrx' 2
