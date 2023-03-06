@@ -94,7 +94,6 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
                         d_acc_error = 0;
                         ++d_correction_count;
                     } else {
-                        DTL_LOG_DEBUG("aici");
                         last_trigger_index = i;
                     }
                 } else {
@@ -117,13 +116,11 @@ void ofdm_adaptive_frame_detect_bb_impl::fix_sync(const char* in, char* out, int
         }
     }
 
-    if(trigger_found) {
-        if (len - last_trigger_index > d_frame_len) {
-            last_trigger_index += d_frame_len;
-            out[last_trigger_index] = 1;
-            d_remainder = len - last_trigger_index;
-        }
-    } else {
+    if (len - last_trigger_index > d_frame_len) {
+        last_trigger_index += d_frame_len;
+        out[last_trigger_index] = 1;
+        d_remainder = len - last_trigger_index;
+    } else if (!trigger_found) {
         d_remainder += len;
     }
 }
