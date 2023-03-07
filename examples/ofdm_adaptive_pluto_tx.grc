@@ -61,7 +61,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '900000'
+    value: '800000'
   states:
     bus_sink: false
     bus_source: false
@@ -104,14 +104,14 @@ blocks:
     minoutbuf: '0'
     offset: '0'
     phase: '0'
-    samp_rate: '10000'
+    samp_rate: '25000'
     type: byte
     waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [168, 124.0]
+    coordinate: [176, 108.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0_0
