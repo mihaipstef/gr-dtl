@@ -121,6 +121,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
             d_channel_state = pmt::c32vector_elements(tags[i].value);
         } else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
             carrier_offset = pmt::to_long(tags[i].value);
+            DTL_LOG_DEBUG("carrier_offset={}", carrier_offset);
         }
     }
 
@@ -145,7 +146,6 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                sizeof(gr_complex) * (d_fft_len * n_ofdm_sym - carrier_offset));
     }
 
-    DTL_LOG_DEBUG("carrier_offset={}", carrier_offset);
 
     // Correct the frequency shift on the symbols
     gr_complex phase_correction;

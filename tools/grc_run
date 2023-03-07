@@ -23,7 +23,7 @@ if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
 	trap 'handle_sigint_txrx' 2
 else
 	grcc "$1".grc
-	python3 "$1".py > "$1".log &
+	python3 "$1".py > "$2/$1".log &
 	pid=$!
 	echo "Run with pid=$pid"
 	trap 'handle_sigint' 2
