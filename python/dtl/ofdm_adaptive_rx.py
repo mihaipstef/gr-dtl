@@ -141,7 +141,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(1, 5, list(self.constellations)),
+            dtl.ofdm_adaptive_feedback_decision(2, 5, list(self.constellations)),
             self.cp_len,
             self.frame_length_tag_key,
             False,
