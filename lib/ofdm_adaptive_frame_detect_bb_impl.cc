@@ -14,8 +14,8 @@ namespace dtl {
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_detect_bb");
 
-static const int CONSECUTIVE_SYNCED_FRAMES_TH = 5;
-static const int MAX_CONSECUTIVE_MISSING_CORRECTION = 3;
+static const int CONSECUTIVE_SYNCED_FRAMES_TH = 3;
+static const int MAX_CONSECUTIVE_MISSING_CORRECTION = 5;
 
 
 ofdm_adaptive_frame_detect_bb::sptr ofdm_adaptive_frame_detect_bb::make(int frame_len)

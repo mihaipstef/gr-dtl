@@ -12,6 +12,8 @@ function handle_sigint() {
 }
 
 if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
+	rm "$1"_tx.py
+	rm "$1"_rx.py
 	grcc "$1"_tx.grc
 	grcc "$1"_rx.grc
 	python3 "$1"_tx.py > $2/tx.log &
