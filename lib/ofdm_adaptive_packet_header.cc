@@ -20,11 +20,12 @@ namespace dtl {
 
 using namespace gr::digital;
 
-INIT_DTL_LOGGER("ofdm_adaptive_packet_header");
+INIT_DTL_LOGGER("ofdm_adaptive_packet_header")
 
 ofdm_adaptive_packet_header::sptr
 ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_carriers,
-                                  int n_syms,
+                                  int header_syms,
+                                  int payload_syms,
                                   const std::string& len_tag_key,
                                   const std::string& frame_len_tag_key,
                                   const std::string& num_tag_key,
@@ -33,7 +34,8 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
 {
     return ofdm_adaptive_packet_header::sptr(
         new ofdm_adaptive_packet_header(occupied_carriers,
-                                        n_syms,
+                                        header_syms,
+                                        payload_syms,
                                         len_tag_key,
                                         frame_len_tag_key,
                                         num_tag_key,
@@ -44,14 +46,15 @@ ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_
 
 ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
     const std::vector<std::vector<int>>& occupied_carriers,
-    int n_syms,
+    int header_syms,
+    int payload_syms,
     const std::string& len_tag_key,
     const std::string& frame_len_tag_key,
     const std::string& num_tag_key,
     int bits_per_header_sym,
     bool scramble_header)
     : packet_header_ofdm(occupied_carriers,
-                         n_syms,
+                         header_syms,
                          len_tag_key,
                          frame_len_tag_key,
                          num_tag_key,
@@ -59,7 +62,8 @@ ofdm_adaptive_packet_header::ofdm_adaptive_packet_header(
                          0,
                          scramble_header),
       d_constellation_tag_key(get_constellation_tag_key()),
-      d_constellation(constellation_type_t::QAM16)
+      d_constellation(constellation_type_t::QAM16),
+      d_payload_syms(payload_syms)
 {
 }
 
@@ -70,29 +74,43 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
                                                    unsigned char* out,
                                                    const std::vector<tag_t>& tags)
 {
-    // Use default
-    unsigned int previous_header_number = d_header_number;
-    bool ret_val = packet_header_default::header_formatter(packet_len, out, tags);
-    // Overwrite CRC with constellation type (Bit 24-31 - 8 bits)
-    auto it = find_constellation_tag(tags);
 
+    auto it = find_constellation_tag(tags);
     if (it == tags.end()) {
         throw std::invalid_argument("Missing constellation tag.");
     }
-
     unsigned char constellation_type_tag_value = pmt::to_long(it->value) & 0xFF;
+    it = find_tag(tags, payload_length_key());
+    if (it == tags.end()) {
+        throw std::invalid_argument("Missing payload length tag.");
+    }
+    size_t payload_length = pmt::to_long(it->value) & 0xFFF;
 
-    int k = 24;
+    DTL_LOG_DEBUG("header_formatter: cnst={}, payload_len={}, frame_no={}",
+                  (int)constellation_type_tag_value,
+                  payload_length,
+                  d_header_number);
+
+    memset(out, 0x00, d_header_len);
+    int k = 0;
+    // Data (payload) length
+    for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
+        out[k] = (unsigned char)((payload_length >> i) & d_mask);
+    }
+    // Packet number
+    for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
+        out[k] = (unsigned char)((d_header_number >> i) & d_mask);
+    }
+    // Constellation
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         out[k] = (unsigned char)((constellation_type_tag_value >> i) & d_mask);
     }
 
-    // Re-compute CRC and insert (Bit 32-39 - 8 bits)
-    packet_len &= 0x0FFF;
-    unsigned char buffer[] = { (unsigned char)(packet_len & 0xFF),
-                               (unsigned char)(packet_len >> 8),
-                               (unsigned char)(previous_header_number & 0xFF),
-                               (unsigned char)(previous_header_number >> 8),
+    // Compute CRC and insert (Bit 32-39 - 8 bits)
+    unsigned char buffer[] = { (unsigned char)(payload_length & 0xFF),
+                               (unsigned char)(payload_length >> 8),
+                               (unsigned char)(d_header_number & 0xFF),
+                               (unsigned char)(d_header_number >> 8),
                                (unsigned char)constellation_type_tag_value };
 
     unsigned char crc = d_crc_impl.compute(buffer, sizeof(buffer));
@@ -101,11 +119,15 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
         out[k] = (unsigned char)((crc >> i) & d_mask);
     }
 
+    // Incement packet number
+    d_header_number++;
+    d_header_number &= 0x0FFF;
+
     // Scramble
     for (int i = 0; i < d_header_len; i++) {
         out[i] ^= d_scramble_mask[i];
     }
-    return ret_val;
+    return true;
 }
 
 bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
@@ -128,35 +150,39 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     }
 
     unsigned char buffer[] = { (unsigned char)(packet_len & 0xFF),
-                               (unsigned char)(packet_len>> 8),
+                               (unsigned char)(packet_len >> 8),
                                (unsigned char)(packet_number & 0xFF),
                                (unsigned char)(packet_number >> 8),
-                                constellation_type };
+                               constellation_type };
     unsigned char crc_calcd = d_crc_impl.compute(buffer, sizeof(buffer));
-    bool crc_ok = true;
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         if ((((int)in[k]) & d_mask) != (((int)crc_calcd >> i) & d_mask)) {
-            crc_ok = false;
-            break;
+            DTL_LOG_DEBUG("header_parser: crc=failed");
+            return false;
         }
     }
 
-    // Update constellation only if CRC ok 
-    if (crc_ok && constellation_type && constellation_type <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
+    // Update constellation only if CRC ok
+    if (constellation_type &&
+        constellation_type <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
         d_constellation = static_cast<constellation_type_t>(constellation_type);
     }
 
-    d_bits_per_payload_sym = compute_no_of_bits_per_symbol(
-        static_cast<constellation_type_t>(d_constellation)
-    );
+    d_bits_per_payload_sym =
+        get_bits_per_symbol(static_cast<constellation_type_t>(d_constellation));
 
-    DTL_LOG_DEBUG("header_parser: {}", (int)d_constellation);
-    if (d_bits_per_payload_sym == 0) return false;
+    if (d_bits_per_payload_sym == 0)
+        return false;
 
     size_t no_of_symbols = packet_len * 8 / d_bits_per_payload_sym;
     if (packet_len * 8 % d_bits_per_payload_sym) {
         no_of_symbols++;
     }
+
+    DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}, crc=ok",
+                  (int)d_constellation,
+                  no_of_symbols,
+                  packet_number);
 
     // Add tags
     tag_t tag;
@@ -169,33 +195,10 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     tag.key = get_constellation_tag_key();
     tag.value = pmt::from_long(static_cast<int>(d_constellation));
     tags.push_back(tag);
-
-    // Determine frame length and add the tag
-    add_frame_length_tag(no_of_symbols, tags);
-
-    return true;
-}
-
-
-void ofdm_adaptive_packet_header::add_frame_length_tag(int packet_len,
-                                                       std::vector<tag_t>& tags)
-{
-    // To figure out how many payload OFDM symbols there are in this frame,
-    // we need to go through the carrier allocation and count the number of
-    // allocated carriers per OFDM symbol.
-    // frame_len == # of payload OFDM symbols in this frame
-    int frame_len = 0;
-    size_t k = 0; // position in the carrier allocation map
-    int symbols_accounted_for = 0;
-    while (symbols_accounted_for < packet_len) {
-        frame_len++;
-        symbols_accounted_for += d_occupied_carriers[k].size();
-        k = (k + 1) % d_occupied_carriers.size();
-    }
-    tag_t tag;
     tag.key = d_frame_len_tag_key;
-    tag.value = pmt::from_long(frame_len);
+    tag.value = pmt::from_long(d_payload_syms);
     tags.push_back(tag);
+    return true;
 }
 
 } /* namespace dtl */

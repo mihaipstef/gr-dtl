@@ -32,14 +32,16 @@ list(APPEND dtl_python_files
     ofdm_adaptive_frame_equalizer_vcvc_python.cc
     ofdm_adaptive_packet_header_python.cc
     ofdm_adaptive_utils_python.cc
-    ofdm_adaptive_repack_bits_bb_python.cc
+    ofdm_adaptive_frame_pack_bb_python.cc
     ofdm_adaptive_chunks_to_symbols_bc_python.cc
     ofdm_adaptive_constellation_decoder_cb_python.cc
     ofdm_adaptive_frame_snr_python.cc
     ofdm_adaptive_feedback_decision_python.cc
     ofdm_adaptive_feedback_format_python.cc
-    ofdm_adaptive_tx_control_bb_python.cc
-    python_bindings.cc)
+    ofdm_adaptive_frame_bb_python.cc
+    log_python.cc
+    ofdm_adaptive_frame_detect_bb_python.cc
+    zmq_msq_pub_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..

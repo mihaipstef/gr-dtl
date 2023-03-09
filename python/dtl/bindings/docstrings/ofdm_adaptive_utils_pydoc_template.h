@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -15,7 +15,10 @@
  */
 
 
-static const char* __doc_gr_dtl_compute_no_of_bits_per_symbol = R"doc()doc";
+static const char* __doc_gr_dtl_get_bits_per_symbol = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_get_max_bps = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_create_constellation = R"doc()doc";
@@ -30,6 +33,9 @@ static const char* __doc_gr_dtl_get_constellation_type = R"doc()doc";
 static const char* __doc_gr_dtl_find_constellation_tag = R"doc()doc";
 
 
+static const char* __doc_gr_dtl_find_tag = R"doc()doc";
+
+
 static const char* __doc_gr_dtl_get_constellation_tag_key = R"doc()doc";
 
 
@@ -40,3 +46,6 @@ static const char* __doc_gr_dtl_feedback_constellation_key = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_feedback_fec_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_payload_length_key = R"doc()doc";

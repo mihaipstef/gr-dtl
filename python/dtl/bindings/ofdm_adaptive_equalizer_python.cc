@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_equalizer.h) */
-/* BINDTOOL_HEADER_FILE_HASH(b2e511953d6532ea5a53241be13ef0af)                     */
+/* BINDTOOL_HEADER_FILE_HASH(ff6f261d0c9278afa09a97a345edeb5b)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -56,9 +56,40 @@ void bind_ofdm_adaptive_equalizer(py::module& m)
      //         py::arg("arg0"),
      //         D(ofdm_adaptive_equalizer_base, ofdm_adaptive_equalizer_base, 1))
 
+
         .def("get_snr",
              &ofdm_adaptive_equalizer_base::get_snr,
              D(ofdm_adaptive_equalizer_base, get_snr))
+
+
+        .def("equalize",
+             (void(ofdm_adaptive_equalizer_base::*)(
+                 gr_complex*,
+                 int,
+                 std::vector<std::complex<float>> const&,
+                 std::vector<gr::tag_t> const&)) &
+                 ofdm_adaptive_equalizer_base::equalize,
+             py::arg("frame"),
+             py::arg("n_sym"),
+             py::arg("initial_taps") = std::vector<gr_complex>(),
+             py::arg("tags") = std::vector<gr::tag_t>(),
+             D(ofdm_adaptive_equalizer_base, equalize, 0))
+
+
+        .def("equalize",
+             (void(ofdm_adaptive_equalizer_base::*)(
+                 gr_complex*,
+                 gr_complex*,
+                 int,
+                 std::vector<std::complex<float>> const&,
+                 std::vector<gr::tag_t> const&)) &
+                 ofdm_adaptive_equalizer_base::equalize,
+             py::arg("frame"),
+             py::arg("frame_soft"),
+             py::arg("n_sym"),
+             py::arg("initial_taps") = std::vector<gr_complex>(),
+             py::arg("tags") = std::vector<gr::tag_t>(),
+             D(ofdm_adaptive_equalizer_base, equalize, 1))
 
         ;
 
@@ -78,17 +109,35 @@ void bind_ofdm_adaptive_equalizer(py::module& m)
              py::arg("symbols_skipped") = 0,
              py::arg("alpha") = 0.10000000000000001,
              py::arg("input_is_shifted") = true,
-             py::arg("enable_soft_output") = false,
              D(ofdm_adaptive_equalizer, make))
 
 
         .def("equalize",
-             &ofdm_adaptive_equalizer::equalize,
+             (void(ofdm_adaptive_equalizer::*)(gr_complex*,
+                                               int,
+                                               std::vector<std::complex<float>> const&,
+                                               std::vector<gr::tag_t> const&)) &
+                 ofdm_adaptive_equalizer::equalize,
              py::arg("frame"),
              py::arg("n_sym"),
              py::arg("initial_taps") = std::vector<gr_complex>(),
              py::arg("tags") = std::vector<gr::tag_t>(),
-             D(ofdm_adaptive_equalizer, equalize))
+             D(ofdm_adaptive_equalizer, equalize, 0))
+
+
+        .def("equalize",
+             (void(ofdm_adaptive_equalizer::*)(gr_complex*,
+                                               gr_complex*,
+                                               int,
+                                               std::vector<std::complex<float>> const&,
+                                               std::vector<gr::tag_t> const&)) &
+                 ofdm_adaptive_equalizer::equalize,
+             py::arg("frame"),
+             py::arg("frame_soft"),
+             py::arg("n_sym"),
+             py::arg("initial_taps") = std::vector<gr_complex>(),
+             py::arg("tags") = std::vector<gr::tag_t>(),
+             D(ofdm_adaptive_equalizer, equalize, 1))
 
 
         .def("get_snr",

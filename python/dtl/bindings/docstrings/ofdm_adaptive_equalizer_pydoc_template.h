@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -31,6 +31,12 @@ static const char*
 static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_base_get_snr = R"doc()doc";
 
 
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_base_equalize_0 = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_base_equalize_1 = R"doc()doc";
+
+
 static const char* __doc_gr_dtl_ofdm_adaptive_equalizer = R"doc()doc";
 
 
@@ -42,7 +48,10 @@ static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_ofdm_adaptive_equalizer_
     R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize_0 = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize_1 = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_get_snr = R"doc()doc";

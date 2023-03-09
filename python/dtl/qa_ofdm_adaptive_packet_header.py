@@ -25,6 +25,7 @@ try:
     from gnuradio.dtl import (
         ofdm_adaptive_packet_header,
         get_constellation_tag_key,
+        payload_length_key,
     )
 except ImportError:
     import os
@@ -34,6 +35,7 @@ except ImportError:
     from gnuradio.dtl import (
         ofdm_adaptive_packet_header,
         get_constellation_tag_key,
+        payload_length_key,
     )
 
 
@@ -65,8 +67,6 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             packets, "len_key"
         )
         offset = 0
-        for t in tags:
-            print(t.key, t.value, t.offset)
         # Add frame constellation tag to each packet
         for p, c in zip(packets, constellations):
             tag = tag_t()
@@ -74,13 +74,18 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tag.key = get_constellation_tag_key()
             tag.value = pmt.from_long(c[0])
             tags.append(tag)
+            tag = tag_t()
+            tag.offset = offset
+            tag.key = payload_length_key()
+            tag.value = pmt.from_long(len(p))
+            tags.append(tag)
             offset = offset + len(p)
             packet_lenghts_in_symbols.append(len(p) * 8 // c[1] + int(len(p) * 8 % c[1] > 0))
         for t in tags:
             print(t.key, t.value, t.offset)
         src = blocks.vector_source_b(data, tags=tags)
         formatter = ofdm_adaptive_packet_header(
-            self._occupied_carriers_dummy_40, 1, "len_key", "frame_len_key", "head_num", 1, False)
+            self._occupied_carriers_dummy_40, 1, 1, "len_key", "frame_len_key", "head_num", 1, False)
         self.assertEqual(formatter.header_len(), 40)
         self.assertEqual(
             pmt.symbol_to_string(
@@ -104,10 +109,6 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         self.tb.msg_connect(header_parser, "header_data", sink_parse, "store")
 
         self.tb.run()
-
-        print("tags")
-        for t in tag_sink.current_tags():
-            print(t.key, t.value)
 
         # 0x04 0x00 0x00 0x00 0x04 0xaa
         # 0x02 0x00 0x01 0x00 0x03 0x9f

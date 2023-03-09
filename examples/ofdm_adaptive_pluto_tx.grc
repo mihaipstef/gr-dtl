@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: Not titled yet
+    title: OFDM Adaptive TX
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -33,23 +33,11 @@ options:
     state: enabled
 
 blocks:
-- name: amp
-  id: variable
-  parameters:
-    comment: ''
-    value: '0.05'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [384, 12.0]
-    rotation: 0
-    state: enabled
 - name: resampling
   id: variable
   parameters:
     comment: ''
-    value: '3'
+    value: '2'
   states:
     bus_sink: false
     bus_source: false
@@ -61,7 +49,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '600000'
+    value: '700000'
   states:
     bus_sink: false
     bus_source: false
@@ -69,27 +57,50 @@ blocks:
     coordinate: [184, 12]
     rotation: 0
     state: enabled
-- name: variable_qtgui_range_0
+- name: tx_amp
   id: variable_qtgui_range
   parameters:
     comment: ''
-    gui_hint: ''
-    label: ''
+    gui_hint: 0,1,1,1
+    label: Anti clipping factor
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     outputmsgname: value
     rangeType: float
     showports: 'False'
-    start: '-40000'
-    step: '10'
-    stop: '40000'
-    value: '-11500'
-    widget: counter_slider
+    start: '0.001'
+    step: '0.02'
+    stop: '2'
+    value: '0.02'
+    widget: counter
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 12.0]
+    coordinate: [584, 12.0]
+    rotation: 0
+    state: true
+- name: tx_at
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: 0,0,1,1
+    label: Pluto TX attenuation
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    outputmsgname: value
+    rangeType: float
+    showports: 'False'
+    start: '0'
+    step: '1'
+    stop: '50'
+    value: '14'
+    widget: counter
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [424, 12.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -104,36 +115,14 @@ blocks:
     minoutbuf: '0'
     offset: '0'
     phase: '0'
-    samp_rate: '10000'
+    samp_rate: '25000'
     type: byte
     waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [168, 124.0]
-    rotation: 0
-    state: enabled
-- name: analog_sig_source_x_0_0
-  id: analog_sig_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    amp: '1'
-    comment: ''
-    freq: variable_qtgui_range_0
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    offset: '0'
-    phase: '0'
-    samp_rate: '600000'
-    type: complex
-    waveform: analog.GR_COS_WAVE
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [40, 340.0]
+    coordinate: [40, 156.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_0
@@ -147,7 +136,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1024, 432.0]
+    coordinate: [896, 272.0]
     rotation: 0
     state: true
 - name: blocks_multiply_const_vxx_0
@@ -156,7 +145,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    const: amp
+    const: tx_amp
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -165,46 +154,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1000, 292.0]
+    coordinate: [888, 196.0]
     rotation: 0
     state: true
-- name: blocks_multiply_xx_0
-  id: blocks_multiply_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [288, 384.0]
-    rotation: 0
-    state: enabled
-- name: blocks_null_source_0
-  id: blocks_null_source
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_source: '[[0,],]'
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_outputs: '1'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [176, 272.0]
-    rotation: 0
-    state: disabled
 - name: dtl_ofdm_adaptive_tx_0
   id: dtl_ofdm_adaptive_tx
   parameters:
@@ -225,7 +177,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 276.0]
+    coordinate: [536, 180.0]
     rotation: 0
     state: true
 - name: iio_pluto_sink_0
@@ -233,8 +185,8 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    attenuation1: '20.0'
-    bandwidth: '400000'
+    attenuation1: tx_at
+    bandwidth: int(samp_rate)
     buffer_size: '32768'
     comment: ''
     cyclic: 'False'
@@ -251,7 +203,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1392, 316.0]
+    coordinate: [1344, 140.0]
     rotation: 0
     state: true
 - name: iio_pluto_source_0
@@ -259,7 +211,7 @@ blocks:
   parameters:
     affinity: ''
     alias: ''
-    bandwidth: '400000'
+    bandwidth: samp_rate
     bbdc: 'True'
     buffer_size: '32768'
     comment: ''
@@ -275,14 +227,14 @@ blocks:
     minoutbuf: '0'
     quadrature: 'True'
     rfdc: 'True'
-    samplerate: '600000'
+    samplerate: samp_rate
     type: fc32
     uri: ip:192.168.2.1
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [40, 476.0]
+    coordinate: [40, 340.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -300,7 +252,7 @@ blocks:
     alpha7: '1.0'
     alpha8: '1.0'
     alpha9: '1.0'
-    autoscale: 'False'
+    autoscale: 'True'
     average: '1.0'
     axislabels: 'True'
     bw: samp_rate
@@ -320,7 +272,7 @@ blocks:
     fftsize: '1024'
     freqhalf: 'True'
     grid: 'False'
-    gui_hint: ''
+    gui_hint: 2,1,1,1
     label: Relative Gain
     label1: ''
     label10: ''''''
@@ -335,7 +287,7 @@ blocks:
     legend: 'True'
     maxoutbuf: '0'
     minoutbuf: '0'
-    name: '""'
+    name: TX Spectrum
     nconnections: '1'
     norm_window: 'False'
     showports: 'False'
@@ -363,7 +315,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1392, 220.0]
+    coordinate: [1344, 308.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_1
@@ -381,10 +333,10 @@ blocks:
     alpha7: '1.0'
     alpha8: '1.0'
     alpha9: '1.0'
-    autoscale: 'False'
-    average: '1.0'
+    autoscale: 'True'
+    average: '0.1'
     axislabels: 'True'
-    bw: samp_rate
+    bw: int(samp_rate)
     color1: '"blue"'
     color10: '"dark blue"'
     color2: '"red"'
@@ -401,7 +353,7 @@ blocks:
     fftsize: '1024'
     freqhalf: 'True'
     grid: 'False'
-    gui_hint: ''
+    gui_hint: 2,0,1,1
     label: Relative Gain
     label1: ''
     label10: ''''''
@@ -416,7 +368,7 @@ blocks:
     legend: 'True'
     maxoutbuf: '0'
     minoutbuf: '0'
-    name: '""'
+    name: Feedback RX Spectrum
     nconnections: '1'
     norm_window: 'False'
     showports: 'False'
@@ -444,9 +396,106 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [440, 548.0]
+    coordinate: [320, 444.0]
     rotation: 0
     state: enabled
+- name: qtgui_time_sink_x_1
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'False'
+    entags: 'True'
+    grid: 'False'
+    gui_hint: 1,0,1,2
+    label1: Signal 1
+    label10: Signal 10
+    label2: Signal 2
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: TX SIgnal
+    nconnections: '1'
+    size: '1024'
+    srate: samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '0.675'
+    ymin: '-0.675'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1344, 412.0]
+    rotation: 0
+    state: true
 - name: rational_resampler_xxx_0
   id: rational_resampler_xxx
   parameters:
@@ -454,7 +503,7 @@ blocks:
     alias: ''
     comment: ''
     decim: '1'
-    fbw: '0'
+    fbw: '0.49'
     interp: resampling
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -464,7 +513,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1184, 268.0]
+    coordinate: [1080, 172.0]
     rotation: 0
     state: true
 - name: rational_resampler_xxx_0_0
@@ -474,7 +523,7 @@ blocks:
     alias: ''
     comment: ''
     decim: resampling
-    fbw: '0'
+    fbw: '0.49'
     interp: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -484,22 +533,20 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 372.0]
+    coordinate: [320, 324.0]
     rotation: 0
     state: enabled
 
 connections:
 - [analog_sig_source_x_0, '0', dtl_ofdm_adaptive_tx_0, '0']
-- [analog_sig_source_x_0_0, '0', blocks_multiply_xx_0, '0']
 - [blocks_multiply_const_vxx_0, '0', rational_resampler_xxx_0, '0']
-- [blocks_multiply_xx_0, '0', qtgui_freq_sink_x_1, '0']
-- [blocks_multiply_xx_0, '0', rational_resampler_xxx_0_0, '0']
-- [blocks_null_source_0, '0', dtl_ofdm_adaptive_tx_0, '1']
 - [dtl_ofdm_adaptive_tx_0, '0', blocks_multiply_const_vxx_0, '0']
-- [dtl_ofdm_adaptive_tx_0, feedback_rcvd, blocks_message_debug_0, print]
-- [iio_pluto_source_0, '0', blocks_multiply_xx_0, '1']
+- [dtl_ofdm_adaptive_tx_0, feedback_rcvd, blocks_message_debug_0, store]
+- [iio_pluto_source_0, '0', qtgui_freq_sink_x_1, '0']
+- [iio_pluto_source_0, '0', rational_resampler_xxx_0_0, '0']
 - [rational_resampler_xxx_0, '0', iio_pluto_sink_0, '0']
 - [rational_resampler_xxx_0, '0', qtgui_freq_sink_x_0, '0']
+- [rational_resampler_xxx_0, '0', qtgui_time_sink_x_1, '0']
 - [rational_resampler_xxx_0_0, '0', dtl_ofdm_adaptive_tx_0, '1']
 
 metadata:

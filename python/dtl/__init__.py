@@ -18,7 +18,11 @@ except ModuleNotFoundError:
     dirname, filename = os.path.split(os.path.abspath(__file__))
     __path__.append(os.path.join(dirname, "bindings"))
     from .dtl_python import *
+
 # import any pure python here
-from .ofdm_adaptive_config import *
+from .ofdm_adaptive_config import (
+    ofdm_adaptive_rx_config,
+    ofdm_adaptive_tx_config,
+)
 from .ofdm_adaptive_rx import *
 from .ofdm_adaptive_tx import *

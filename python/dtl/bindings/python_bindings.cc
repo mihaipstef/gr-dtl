@@ -25,14 +25,16 @@ namespace py = pybind11;
     void bind_ofdm_adaptive_frame_equalizer_vcvc(py::module& m);
     void bind_ofdm_adaptive_packet_header(py::module& m);
     void bind_ofdm_adaptive_utils(py::module& m);
-    void bind_ofdm_adaptive_repack_bits_bb(py::module& m);
+    void bind_ofdm_adaptive_frame_pack_bb(py::module& m);
     void bind_ofdm_adaptive_chunks_to_symbols_bc(py::module& m);
     void bind_ofdm_adaptive_constellation_decoder_cb(py::module& m);
     void bind_ofdm_adaptive_frame_snr(py::module& m);
     void bind_ofdm_adaptive_feedback_decision(py::module& m);
     void bind_ofdm_adaptive_feedback_format(py::module& m);
-    void bind_ofdm_adaptive_tx_control_bb(py::module& m);
-
+    void bind_ofdm_adaptive_frame_bb(py::module& m);
+    void bind_log(py::module& m);
+    void bind_ofdm_adaptive_frame_detect_bb(py::module& m);
+    void bind_zmq_msq_pub(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -65,13 +67,15 @@ PYBIND11_MODULE(dtl_python, m)
     bind_ofdm_adaptive_frame_equalizer_vcvc(m);
     bind_ofdm_adaptive_packet_header(m);
     bind_ofdm_adaptive_utils(m);
-    bind_ofdm_adaptive_repack_bits_bb(m);
+    bind_ofdm_adaptive_frame_pack_bb(m);
     bind_ofdm_adaptive_chunks_to_symbols_bc(m);
     bind_ofdm_adaptive_constellation_decoder_cb(m);
     bind_ofdm_adaptive_frame_snr(m);
     bind_ofdm_adaptive_feedback_decision(m);
     bind_ofdm_adaptive_feedback_format(m);
-    bind_ofdm_adaptive_tx_control_bb(m);
-
+    bind_ofdm_adaptive_frame_bb(m);
+    bind_log(m);
+    bind_ofdm_adaptive_frame_detect_bb(m);
+    bind_zmq_msq_pub(m);
     // ) END BINDING_FUNCTION_CALLS
 }

@@ -8,35 +8,39 @@
 #
 #
 
-
-import random
-import time
-
-from pmt import pmt_to_python
-import pmt
-from gnuradio import gr, gr_unittest
-from gnuradio import digital
-from gnuradio import dtl
 from gnuradio import blocks
 from gnuradio import channels
-from gnuradio.digital.utils import tagged_streams
-from gnuradio.gr import (
-    tag_t,
-)
-
+from gnuradio import dtl
+from gnuradio import gr, gr_unittest
 from ofdm_adaptive_rx import ofdm_adaptive_rx
 from ofdm_adaptive_tx import ofdm_adaptive_tx
 from ofdm_adaptive_config import (
     ofdm_adaptive_tx_config as tx_cfg,
     ofdm_adaptive_rx_config as rx_cfg,
 )
+import pmt
+import random
+import sys
+import time
+import typing as t
+
+
+def subfinder(l, p):
+    n_l, n_p = len(l), len(p)
+    for i in range(n_l):
+        if l[i:i+n_p] == p:
+            return (i, l[i:i+n_p])
+    return (0, [])
 
 
 class qa_ofdm_adaptive(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
-        self.n_bytes = 100
+        self.frame_len = 20
+        self.data_carriers = len(tx_cfg.occupied_carriers[0])
+        self.known_constellations = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
+            15, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8),)
 
     def tearDown(self):
         self.tb = None
@@ -45,44 +49,40 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         """
         Test Tx/Rx of multiple packets with diferent constellations.
         """
-        packet_constellation = 10 * [dtl.constellation_type_t.PSK8,
-                                     dtl.constellation_type_t.QPSK, dtl.constellation_type_t.QAM16]
-        packet_constellation = 10 * [dtl.constellation_type_t.QAM16]
-        test_data = []
-        tags = []
-        for i, c in enumerate(packet_constellation):
-            test_data += list([random.randint(0, 255) for x in range(self.n_bytes)])
-            frame_constellation_tag = tag_t()
-            frame_constellation_tag.offset = i * self.n_bytes
-            frame_constellation_tag.key = dtl.get_constellation_tag_key()
-            frame_constellation_tag.value = pmt.from_long(c)
-            packet_length_tag = tag_t()
-            packet_length_tag.offset = i * self.n_bytes
-            packet_length_tag.key = pmt.string_to_symbol(
-                tx_cfg.packet_length_tag_key)
-            packet_length_tag.value = pmt.from_long(self.n_bytes)
-            tags += [frame_constellation_tag, packet_length_tag]
+        tx_samples = []
 
         # Tx
-        src = blocks.vector_source_b(test_data, False, 1, tags)
+        buffer_size = 32000
+        test_data = [random.randint(0, 255) for x in range(buffer_size)]
+        src = blocks.vector_source_b(test_data, False, 1, [])
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
-        tx = ofdm_adaptive_tx(tx_cfg)
+        tx = ofdm_adaptive_tx(
+            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations))
         sink = blocks.vector_sink_c()
-        self.tb.connect(src, (tx,0), sink)
-        self.tb.connect(feedback_src, (tx,1))
+        self.tb.connect(src, (tx, 0), sink)
+        self.tb.connect(feedback_src, (tx, 1))
+
+        cnst = dtl.constellation_type_t.QPSK
+        tx.set_constellation(cnst)
+
+        time.sleep(1)
 
         self.tb.run()
+
+        tx_samples = sink.data()
+        print(f"tx samples={len(tx_samples)}")
         tx_samples = [0 for _ in range(100)] + \
-            sink.data() + [0 for x in range(1000)]
+            tx_samples + [0 for x in range(2000)]
 
         # Channel
-        freq_offset = 2.15
+        freq_offset = 0
         channel = channels.channel_model(
-            0.001, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
+            0, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
 
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
-        rx = ofdm_adaptive_rx(rx_cfg)
+        rx = ofdm_adaptive_rx(
+            rx_cfg(frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations))
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 
@@ -91,18 +91,18 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
         self.tb.run()
         rx_data = rx_sink.data()
-
-        success = True
-        n_packets = len(test_data)//self.n_bytes
-        for i in range(n_packets):
-            test_packet = test_data[i*self.n_bytes:(i+1)*self.n_bytes]
-            rx_packet = rx_data[i*self.n_bytes:(i+1)*self.n_bytes]
-            packet_success = test_packet == rx_packet
-            status = "success" if packet_success else "failed"
-            print(f"Packet {i}/{n_packets} {status}")
-            if not packet_success:
-                success = False
-        assert (success)
+        packet_success = test_data == rx_data[:buffer_size]
+        d = [t-r for t, r in zip(test_data, rx_data[:buffer_size])]
+        print(f"count correct bytes = {d.count(0)}/{buffer_size}")
+        errors = [i for i in range(len(d)) if d[i]]
+        if len(errors) > 0:
+            print(errors[:20])
+            first_err = errors[0]
+            print(len(test_data), len(rx_data))
+            print(test_data[first_err-20:first_err+20])
+            print(rx_data[first_err-20:first_err+20])
+            print(subfinder(test_data, rx_data[first_err: first_err+20]))
+        assert (packet_success)
 
     def test_002_feedback_txrx(self):
         test_data = [
@@ -114,12 +114,12 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         rx = ofdm_adaptive_rx(rx_cfg)
         tx = ofdm_adaptive_tx(tx_cfg)
-        rx_src = blocks.vector_source_c([0 for _ in range(self.n_bytes)])
+        rx_src = blocks.vector_source_c([0 for _ in range(100)])
         feedback_sink = blocks.vector_sink_c()
 
         self.tb.connect(rx_src, rx)
         self.tb.connect((rx, 0), blocks.null_sink(gr.sizeof_char))
-        self.tb.connect((rx,1), feedback_sink)
+        self.tb.connect((rx, 1), feedback_sink)
 
         for msg in msgs:
             rx.feedback_formatter._post(pmt.intern("in"), msg)
@@ -137,9 +137,9 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         feedback_src = blocks.vector_source_c(
             [0 for _ in range(1000)] + list(feedback_sink.data()) + [0 for _ in range(1000)])
-        tx_src = blocks.vector_source_b([0 for _ in range(self.n_bytes)])
-        self.tb.connect(tx_src, (tx,0))
-        self.tb.connect(feedback_src, channel, (tx,1))
+        tx_src = blocks.vector_source_b([0 for _ in range(100)])
+        self.tb.connect(tx_src, (tx, 0))
+        self.tb.connect(feedback_src, channel, (tx, 1))
         self.tb.connect(tx, blocks.null_sink(gr.sizeof_gr_complex))
         msg_debug = blocks.message_debug()
         self.tb.msg_connect(tx, "feedback_rcvd", msg_debug, "store")

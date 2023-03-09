@@ -1,23 +1,37 @@
-grcc "$1"_tx.grc
-grcc "$1"_rx.grc
-python3 "$1"_tx.py > tx.log &
-tx_pid=$!
-echo "TX run with pid=$tx_pid"
-python3 "$1"_rx.py > rx.log &
-rx_pid=$!
-echo "TX run with pid=$rx_pid"
-
-function handle_sigint() {
+function handle_sigint_txrx() {
 	echo "Killing TX and RX"
 	kill "$rx_pid"
 	kill "$tx_pid"
 	exit
 }
 
-trap 'handle_sigint' 2
+function handle_sigint() {
+	echo "Killing process: $pid"
+	kill "$pid"
+	exit
+}
 
+if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
+	rm "$1"_tx.py
+	rm "$1"_rx.py
+	grcc "$1"_tx.grc
+	grcc "$1"_rx.grc
+	python3 "$1"_tx.py > $2/tx.log &
+	tx_pid=$!
+	echo "TX run with pid=$tx_pid"
+	python3 "$1"_rx.py > $2/rx.log &
+	rx_pid=$!
+	echo "TX run with pid=$rx_pid"
+	trap 'handle_sigint_txrx' 2
+else
+	grcc "$1".grc
+	python3 "$1".py > "$2/$1".log &
+	pid=$!
+	echo "Run with pid=$pid"
+	trap 'handle_sigint' 2
+fi
 
-echo "CTRL+C to kill TX and RX"
+echo "CTRL+C to kill"
 while :
 do
 	sleep 1

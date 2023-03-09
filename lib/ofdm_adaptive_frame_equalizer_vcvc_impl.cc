@@ -16,13 +16,14 @@
 namespace gr {
 namespace dtl {
 
-INIT_DTL_LOGGER(__FILE__);
+INIT_DTL_LOGGER("ofdm_adaptive_frame_equalizer_vcvc");
 
 using namespace gr::digital;
 
 static const pmt::pmt_t CARR_OFFSET_KEY = pmt::mp("ofdm_sync_carr_offset");
 static const pmt::pmt_t CHAN_TAPS_KEY = pmt::mp("ofdm_sync_chan_taps");
 static const pmt::pmt_t FEEDBACK_PORT = pmt::mp("feedback_port");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor_port");
 
 
 ofdm_adaptive_frame_equalizer_vcvc::sptr ofdm_adaptive_frame_equalizer_vcvc::make(
@@ -55,7 +56,8 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     : tagged_stream_block(
           "ofdm_adaptive_frame_equalizer_vcvc",
           io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
-          io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
+          io_signature::make2(
+              1, 2, sizeof(gr_complex) * equalizer->fft_len(), sizeof(gr_complex)),
           tsb_key),
       d_fft_len(equalizer->fft_len()),
       d_cp_len(cp_len),
@@ -63,7 +65,6 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
       d_propagate_channel_state(propagate_channel_state),
       d_fixed_frame_len(fixed_frame_len),
       d_channel_state(equalizer->fft_len(), gr_complex(1, 0)),
-      d_decision_feedback_port(FEEDBACK_PORT),
       d_decision_feedback(feedback_decision),
       d_propagate_feedback_tags(propagate_feedback_tags)
 {
@@ -80,7 +81,8 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     // Really, we have TPP_ONE_TO_ONE, but the channel state is not propagated
     set_tag_propagation_policy(TPP_DONT);
 
-    message_port_register_out(d_decision_feedback_port);
+    message_port_register_out(FEEDBACK_PORT);
+    message_port_register_out(MONITOR_PORT);
 }
 
 ofdm_adaptive_frame_equalizer_vcvc_impl::~ofdm_adaptive_frame_equalizer_vcvc_impl() {}
@@ -106,6 +108,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 {
     const gr_complex* in = (const gr_complex*)input_items[0];
     gr_complex* out = (gr_complex*)output_items[0];
+    gr_complex* out_soft = (gr_complex*)output_items[1];
+
     int carrier_offset = 0;
 
     int n_ofdm_sym = ninput_items[0];
@@ -115,10 +119,15 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     for (unsigned i = 0; i < tags.size(); i++) {
         if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_chan_taps") {
             d_channel_state = pmt::c32vector_elements(tags[i].value);
-        }
-        else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
+        } else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
             carrier_offset = pmt::to_long(tags[i].value);
+            DTL_LOG_DEBUG("carrier_offset={}", carrier_offset);
         }
+    }
+
+    auto cnst_tag_it = find_constellation_tag(tags);
+    if (cnst_tag_it == tags.end()) {
+        throw std::invalid_argument("Missing constellation tag.");
     }
 
     // Copy the frame and the channel state vector such that the symbols are shifted to
@@ -137,6 +146,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                sizeof(gr_complex) * (d_fft_len * n_ofdm_sym - carrier_offset));
     }
 
+
     // Correct the frequency shift on the symbols
     gr_complex phase_correction;
     for (int i = 0; i < n_ofdm_sym; i++) {
@@ -150,7 +160,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     // Do the equalizing
     d_eq->reset();
     try {
-        d_eq->equalize(out, n_ofdm_sym, d_channel_state, tags);
+        d_eq->equalize(out, out_soft, n_ofdm_sym, d_channel_state, tags);
     } catch (const std::exception& e) {
         d_logger->error(e.what());
     }
@@ -181,16 +191,27 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     }
 
 
-    // Publish decided constellation and FEC scheme to decision feedback port.
-    ofdm_adaptive_feedback_t feedback =
-        d_decision_feedback->get_feedback(d_eq->get_snr());
+    // Publish decided constellation to decision feedback port.
+    ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(
+        get_constellation_type(*cnst_tag_it), d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
-        static_cast<unsigned char>(feedback.first),
-        static_cast<unsigned char>(feedback.second)
+        static_cast<unsigned char>(feedback),
+        0, // for FEC
     };
     pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
         pmt::init_u8vector(feedback_vector.size(), feedback_vector));
-    message_port_pub(d_decision_feedback_port, feedback_msg);
+
+    message_port_pub(FEEDBACK_PORT, feedback_msg);
+
+    pmt::pmt_t monitor_msg = pmt::make_dict();
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 feedback_constellation_key(),
+                                 pmt::from_long(static_cast<unsigned char>(feedback)));
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 estimated_snr_tag_key(),
+                                 pmt::from_float(d_eq->get_snr()));
+
+    message_port_pub(MONITOR_PORT, monitor_msg);
 
     // Propagate feedback via tags
     if (d_propagate_feedback_tags) {
@@ -201,11 +222,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         add_item_tag(0,
                      nitems_written(0),
                      feedback_constellation_key(),
-                     pmt::from_long(static_cast<unsigned char>(feedback.first)));
-        add_item_tag(0,
-                     nitems_written(0),
-                     feedback_fec_key(),
-                     pmt::from_double(static_cast<unsigned char>(feedback.second)));
+                     pmt::from_long(static_cast<unsigned char>(feedback)));
+        add_item_tag(0, nitems_written(0), feedback_fec_key(), pmt::from_long(0));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

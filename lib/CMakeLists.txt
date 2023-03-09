@@ -15,13 +15,18 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_equalizer_vcvc_impl.cc
     ofdm_adaptive_packet_header.cc
     ofdm_adaptive_utils.cc
-    ofdm_adaptive_repack_bits_bb_impl.cc
+    ofdm_adaptive_frame_pack_bb_impl.cc
     ofdm_adaptive_chunks_to_symbols_bc_impl.cc
     ofdm_adaptive_constellation_decoder_cb_impl.cc
     ofdm_adaptive_feedback_decision.cc
     ofdm_adaptive_feedback_format.cc
-    ofdm_adaptive_tx_control_bb_impl.cc
-    )
+    ofdm_adaptive_frame_bb_impl.cc
+    repack.cc
+    logger.cc
+    ofdm_adaptive_frame_detect_bb_impl.cc
+    constellation.cc
+    crc_util.cc
+    zmq_msq_pub_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -29,9 +34,12 @@ if(NOT dtl_sources)
     return()
 endif(NOT dtl_sources)
 
+find_package(ZeroMQ)
+
 add_library(gnuradio-dtl SHARED ${dtl_sources})
 target_link_libraries(gnuradio-dtl gnuradio::gnuradio-runtime)
 target_link_libraries(gnuradio-dtl gnuradio-digital)
+target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 
 target_include_directories(gnuradio-dtl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
@@ -44,6 +52,9 @@ if(APPLE)
         INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
     )
 endif(APPLE)
+
+target_compile_definitions(gnuradio-dtl PRIVATE DTL_LOGGING_ENABLE=true)
+
 
 ########################################################################
 # Install built library files

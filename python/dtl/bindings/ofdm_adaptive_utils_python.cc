@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Free Software Foundation, Inc.
+ * Copyright 2023 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(f258c23ee076c46f49ac4f9d46b2ebc0)                     */
+/* BINDTOOL_HEADER_FILE_HASH(f361d9b1d49572e06db8002780cb202b)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,10 +42,13 @@ void bind_ofdm_adaptive_utils(py::module& m)
     py::implicitly_convertible<int, ::gr::dtl::constellation_type_t>();
 
 
-    m.def("compute_no_of_bits_per_symbol",
-          &::gr::dtl::compute_no_of_bits_per_symbol,
+    m.def("get_bits_per_symbol",
+          &::gr::dtl::get_bits_per_symbol,
           py::arg("constellation"),
-          D(compute_no_of_bits_per_symbol));
+          D(get_bits_per_symbol));
+
+
+    m.def("get_max_bps", &::gr::dtl::get_max_bps, py::arg("cnsts"), D(get_max_bps));
 
 
     m.def("create_constellation",
@@ -72,6 +75,9 @@ void bind_ofdm_adaptive_utils(py::module& m)
           D(find_constellation_tag));
 
 
+    m.def("find_tag", &::gr::dtl::find_tag, py::arg("tags"), py::arg("key"), D(find_tag));
+
+
     m.def("get_constellation_tag_key",
           &::gr::dtl::get_constellation_tag_key,
           D(get_constellation_tag_key));
@@ -88,4 +94,7 @@ void bind_ofdm_adaptive_utils(py::module& m)
 
 
     m.def("feedback_fec_key", &::gr::dtl::feedback_fec_key, D(feedback_fec_key));
+
+
+    m.def("payload_length_key", &::gr::dtl::payload_length_key, D(payload_length_key));
 }

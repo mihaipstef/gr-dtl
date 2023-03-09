@@ -36,7 +36,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.debug_log = config.debug
         self.debug_folder = config.debug_folder
-        self.packet_length = config.packet_length
+        self.frame_length = config.frame_length
+        self.payload_length_tag_key = "payload_length"
+        self.constellations = config.constellations
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -52,20 +54,15 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
     def _setup_direct_tx(self):
 
-        # Transmission control from feedback blocks
-        self.tx_control = dtl.ofdm_adaptive_tx_control_bb(
-            self.packet_length_tag_key, self.packet_length)
-        self.connect(
-            (self, 0),
-            self.tx_control
-        )
+        self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
+            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length, len(self.occupied_carriers[0]))
+
         # Header path blocks
-        crc = digital.crc32_bb(False, self.packet_length_tag_key)
         header_constellation = digital.constellation_bpsk()
         header_mod = digital.chunks_to_symbols_bc(
             header_constellation.points())
         formatter_object = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, 1,
+            self.occupied_carriers, 1, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,
@@ -80,38 +77,29 @@ class ofdm_adaptive_tx(gr.hier_block2):
             tag_preserve_head_pos=1  # Head tags on the payload stream stay on the head
         )
         self.connect(
-            self.tx_control,
-            #crc,
+            self.frame_unpack,
             header_gen,
             header_mod,
             (header_payload_mux, 0)
         )
         # Payload path blocks
         payload_mod = dtl.ofdm_adaptive_chunks_to_symbols_bc(
-            [
-                dtl.constellation_type_t.BPSK,
-                dtl.constellation_type_t.QPSK,
-                dtl.constellation_type_t.PSK8,
-                dtl.constellation_type_t.QAM16,
-            ],
+            list(zip(*self.constellations))[1],
             self.packet_length_tag_key
         )
-        payload_scrambler = digital.additive_scrambler_bb(
-            0x8a,
-            self.scramble_seed,
-            7,
-            0,  # Don't reset after fixed length (let the reset tag do that)
-            bits_per_byte=8,  # This is before unpacking
-            reset_tag_key=self.packet_length_tag_key
-        )
-        payload_unpack = dtl.ofdm_adaptive_repack_bits_bb(
-            self.packet_length_tag_key
-        )
+        # payload_scrambler = digital.additive_scrambler_bb(
+        #     0x8a,
+        #     self.scramble_seed,
+        #     7,
+        #     0,  # Don't reset after fixed length (let the reset tag do that)
+        #     bits_per_byte=8,  # This is before unpacking
+        #     reset_tag_key=self.packet_length_tag_key
+        # )
+
         self.connect(
-            # crc,
-            self.tx_control,
-            payload_scrambler,
-            payload_unpack,
+            (self, 0),
+            # payload_scrambler,
+            self.frame_unpack,
             payload_mod,
             (header_payload_mux, 1)
         )
@@ -205,6 +193,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
                      (self.feedback_parser, 0))
         self.msg_connect(self.feedback_parser, "info", self, "feedback_rcvd")
         self.msg_connect(self.feedback_parser, "info",
-                         self.tx_control, "feedback")
-        self.connect((self.feedback_sync_word_correlator, 0),
-                     blocks.tag_debug(8, "time_est"))
+                         self.frame_unpack, "feedback")
+        # self.connect((self.feedback_sync_word_correlator, 0),
+        #              blocks.tag_debug(8, "time_est"))
+
+    def set_constellation(self, constellation):
+        self.frame_unpack.set_constellation(constellation)

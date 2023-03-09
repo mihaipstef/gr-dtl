@@ -34,8 +34,7 @@ ofdm_adaptive_equalizer::make(int fft_len,
                               const std::vector<std::vector<gr_complex>>& pilot_symbols,
                               int symbols_skipped,
                               float alpha,
-                              bool input_is_shifted,
-                              bool enable_soft_output)
+                              bool input_is_shifted)
 {
     return ofdm_adaptive_equalizer::sptr(new ofdm_adaptive_equalizer(fft_len,
                                                                      constellations,
@@ -45,8 +44,7 @@ ofdm_adaptive_equalizer::make(int fft_len,
                                                                      pilot_symbols,
                                                                      symbols_skipped,
                                                                      alpha,
-                                                                     input_is_shifted,
-                                                                     enable_soft_output));
+                                                                     input_is_shifted));
 }
 
 
@@ -76,8 +74,7 @@ ofdm_adaptive_equalizer::ofdm_adaptive_equalizer(
     const std::vector<std::vector<gr_complex>>& pilot_symbols,
     int symbols_skipped,
     float alpha,
-    bool input_is_shifted,
-    bool enable_soft_output)
+    bool input_is_shifted)
     : ofdm_adaptive_equalizer_base(fft_len,
                                    occupied_carriers,
                                    pilot_carriers,
@@ -85,7 +82,6 @@ ofdm_adaptive_equalizer::ofdm_adaptive_equalizer(
                                    symbols_skipped,
                                    input_is_shifted),
       d_alpha(alpha),
-      d_enable_soft_output(enable_soft_output),
       d_snr_estimator(snr_est)
 {
     // Populate constellation dictionary
@@ -103,6 +99,7 @@ ofdm_adaptive_equalizer::~ofdm_adaptive_equalizer() {}
 
 
 void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
+                                       gr_complex* frame_soft,
                                        int n_sym,
                                        const std::vector<gr_complex>& initial_taps,
                                        const std::vector<tag_t>& tags)
@@ -110,8 +107,7 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
     if (!initial_taps.empty()) {
         d_channel_state = initial_taps;
     }
-    gr_complex sym_eq, sym_est;
-    bool enable_soft_output = d_enable_soft_output;
+    gr_complex sym_eq, sym_est, pilot_eq;
 
     auto cnst_tag_it = find_constellation_tag(tags);
 
@@ -128,20 +124,23 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
     constellation_sptr constellation =
         d_constellations[get_constellation_type(*cnst_tag_it)];
 
-
+    // Reset SNR estimator each frame
+    d_snr_estimator->reset();
     for (int i = 0; i < n_sym; i++) {
         for (int k = 0; k < d_fft_len; k++) {
-            bool is_pilot_carreier = !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];
-             if (!d_occupied_carriers[k] && !is_pilot_carreier) {
-                 continue;
-             }
+            bool is_pilot_carreier =
+                !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];
+            if (!d_occupied_carriers[k] && !is_pilot_carreier) {
+                continue;
+            }
             if (is_pilot_carreier) {
+                pilot_eq = frame[i * d_fft_len + k] / d_channel_state[k];
                 // Update SNR estimation with each pilot
-                d_snr_estimator->update(1, &frame[i * d_fft_len + k]);
+                d_snr_estimator->update(1, &pilot_eq);
                 // Update channel state
-                d_channel_state[k] = d_alpha * d_channel_state[k] +
-                                     (1 - d_alpha) * frame[i * d_fft_len + k] /
-                                         d_pilot_symbols[d_pilot_carr_set][k];
+                // d_channel_state[k] = d_alpha * d_channel_state[k] +
+                //                      (1 - d_alpha) * frame[i * d_fft_len + k] /
+                //                          d_pilot_symbols[d_pilot_carr_set][k];
                 frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
             } else {
                 sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
@@ -151,7 +150,10 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
                                              &sym_est);
                 d_channel_state[k] = d_alpha * d_channel_state[k] +
                                      (1 - d_alpha) * frame[i * d_fft_len + k] / sym_est;
-                frame[i * d_fft_len + k] = enable_soft_output ? sym_eq : sym_est;
+                frame[i * d_fft_len + k] = sym_est;
+                if (frame_soft) {
+                    frame_soft[i * d_fft_len + k] = sym_eq;
+                }
             }
         }
         if (!d_pilot_carriers.empty()) {
@@ -159,7 +161,19 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
         }
     }
     DTL_LOG_DEBUG("n_sym:{}, SNRest:{}, Constellation:{}, d_pilot_carr_set:{}",
-        n_sym, get_snr(), static_cast<int>(cnst_type), d_pilot_carriers.empty());
+                  n_sym,
+                  get_snr(),
+                  static_cast<int>(cnst_type),
+                  d_pilot_carriers.empty());
+
+}
+
+void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
+                                       int n_sym,
+                                       const std::vector<gr_complex>& initial_taps,
+                                       const std::vector<tag_t>& tags)
+{
+    equalize(frame, nullptr, n_sym, initial_taps, tags);
 }
 
 

@@ -62,7 +62,6 @@ ofdm_adaptive_constellation_decoder_cb_impl::
 int ofdm_adaptive_constellation_decoder_cb_impl::calculate_output_stream_length(
     const gr_vector_int& ninput_items)
 {
-    DTL_LOG_DEBUG("calculate_output_stream_length: {}", ninput_items[0]);
     return ninput_items[0];
 }
 
@@ -83,7 +82,7 @@ int ofdm_adaptive_constellation_decoder_cb_impl::work(
     if (constellation_type_t::UNKNOWN == constellation_type) {
         throw std::invalid_argument("Constellation type not found in tags");
     }
-
+    DTL_LOG_DEBUG("work: {}", ninput_items[0]);
     constellation_sptr constellation = d_constellations[constellation_type];
     for (int i = 0; i < ninput_items[0]; ++i) {
         *out = constellation->decision_maker(in);

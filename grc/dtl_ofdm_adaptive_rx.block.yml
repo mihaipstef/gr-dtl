@@ -61,8 +61,14 @@ outputs:
     dtype: complex
 -   domain: stream
     dtype: byte
+-   domain: stream
+    dtype: complex
+-   domain: stream
+    dtype: complex
+-   domain: stream
+    dtype: float
 -   domain: message
-    id: feedback
+    id: monitor
 
 templates:
     imports: from gnuradio import dtl
