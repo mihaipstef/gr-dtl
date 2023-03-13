@@ -40,7 +40,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
         self.constellations = config.constellations
-        self.frame_store_fname = config.frame_store_fname
+        self.frame_store_fname = f"{config.frame_store_fname}/rx.dat"
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(

@@ -40,7 +40,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
         self.constellations = config.constellations
-        self.frame_store_fname = config.frame_store_fname
+        self.frame_store_fname = f"{config.frame_store_fname}/tx.dat"
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")

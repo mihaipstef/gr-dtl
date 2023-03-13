@@ -254,7 +254,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
             d_tag_offset += expected_frame_symbols;
-            d_frame_store.store(frame_payload, d_frame_count, reinterpret_cast<char*>(&d_frame_buffer[0]));
+            d_frame_store.store(frame_payload, d_frame_count & 0xFFF, reinterpret_cast<char*>(&d_frame_buffer[0]));
             ++d_frame_count;
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(monitor_msg,

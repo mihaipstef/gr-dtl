@@ -41,7 +41,7 @@ class ofdm_adaptive_config:
     frame_length: int = 20
     constellations: t.Tuple[t.Tuple[float, dtl.constellation_type_t]] = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
         13, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8), (23, dtl.constellation_type_t.QAM16),)
-    frame_store_fname: str = ""
+    frame_store_fname: str = "/tmp"
 
 
 @dc.dataclass

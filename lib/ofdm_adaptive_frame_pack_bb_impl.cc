@@ -101,7 +101,7 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
 
     auto it = find_tag(tags, d_packet_number_key);
     if (it != tags.end()) {
-        d_frame_store.store(n_written - d_crc.get_crc_len(),
+        d_frame_store.store((n_written - d_crc.get_crc_len()) & 0xFFF,
                             pmt::to_long(it->value),
                             reinterpret_cast<char*>(out));
     }
