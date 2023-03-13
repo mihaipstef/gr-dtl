@@ -40,6 +40,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
         self.constellations = config.constellations
+        self.frame_store_fname = f"{config.frame_store_fname}/rx.dat"
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -166,7 +167,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             reset_tag_key=self.packet_length_tag_key
         )
         payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
-            self.packet_length_tag_key)
+            self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
         self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
         self.connect(
             (hpd, 1),
@@ -185,6 +186,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self.payload_eq, 1), (self, 4))
         self.connect((self.sync_detect, 0), (self, 5))
 
+        self.msg_connect(header_parser, "header_data", self, "monitor")
         self.msg_connect(self.payload_eq, "monitor_port", self, "monitor")
         self.msg_connect(payload_pack, "monitor_port", self, "monitor")
 

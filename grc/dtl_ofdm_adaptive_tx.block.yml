@@ -60,7 +60,7 @@ outputs:
 -   domain: stream
     dtype: complex
 -   domain: message
-    id: feedback_rcvd
+    id: monitor
 
 templates:
     imports: from gnuradio import dtl

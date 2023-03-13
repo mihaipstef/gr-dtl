@@ -25,6 +25,7 @@ private:
     int d_trigger_counter;
     int d_synced;
     bool d_in_sync;
+    std::size_t d_error_count;
 
 public:
     static const pmt::pmt_t header_port();
