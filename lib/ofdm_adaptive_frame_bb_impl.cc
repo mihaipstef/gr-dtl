@@ -118,7 +118,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     repack repacker;
     int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
-    bool frame_count_change = false;
 
     DTL_LOG_DEBUG("work: d_frame_len={}, d_payload_carriers={}, "
                   "noutput_items={}, nitems_written={}, ninput_items={}",
@@ -138,7 +137,8 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         // Calculate input frame size.
         // Number of bytes to be picked from input - each frame is carrying an integer
         // number of bytes.
-        int frame_in_bytes = d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
+        int frame_in_bytes =
+            d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
         int frame_bits = frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
         // expected output symbols, including CRC
         expected_frame_symbols = frame_bits / bps;
@@ -186,14 +186,14 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                                ninput_items[0] - read_index);
                         // ... append CRC ...
                         d_crc.append_crc(&d_frame_buffer[0],
-                                   ninput_items[0] - read_index);
+                                         ninput_items[0] - read_index);
                         // ...repack what we have.
-                        frame_out_symbols =
-                            repacker.repack_lsb_first(const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                                                      ninput_items[0] - read_index + d_crc.get_crc_len(),
-                                                      &out[write_index],
-                                                      bps,
-                                                      true);
+                        frame_out_symbols = repacker.repack_lsb_first(
+                            const_cast<const unsigned char*>(&d_frame_buffer[0]),
+                            ninput_items[0] - read_index + d_crc.get_crc_len(),
+                            &out[write_index],
+                            bps,
+                            true);
                         // update indexes
                         frame_payload = ninput_items[0] - read_index;
                         read_index += frame_payload;
@@ -230,20 +230,24 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
             DTL_LOG_DEBUG("add tags: offset={}, "
                           "frame_in_bytes={}, "
-                          "read_index={}, write_index={}, expected_frame={}, payload={}",
+                          "read_index={}, write_index={}, expected_frame={}, payload={}, "
+                          "frame_count={}, constelation={}",
                           d_tag_offset,
                           frame_in_bytes,
                           read_index,
                           write_index,
                           expected_frame_symbols,
-                          frame_payload);
+                          frame_payload,
+                          d_frame_count,
+                          static_cast<int>(cnst));
 
             // Add TSB length tag - frame payload length in symbols
             add_item_tag(0,
                          d_tag_offset,
                          d_packet_len_tag,
                          pmt::from_long(expected_frame_symbols));
-            // Add transported payload tag - number of payload bytes carried by the frame (including CRC)
+            // Add transported payload tag - number of payload bytes carried by the frame
+            // (including CRC)
             add_item_tag(0,
                          d_tag_offset,
                          payload_length_key(),
@@ -254,17 +258,20 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
             d_tag_offset += expected_frame_symbols;
-            d_frame_store.store(frame_payload, d_frame_count & 0xFFF, reinterpret_cast<char*>(&d_frame_buffer[0]));
+            d_frame_store.store(frame_payload,
+                                d_frame_count & 0xFFF,
+                                reinterpret_cast<char*>(&d_frame_buffer[0]));
             ++d_frame_count;
             pmt::pmt_t monitor_msg = pmt::make_dict();
-            monitor_msg = pmt::dict_add(monitor_msg,
-                                    FRAME_COUNT_KEY,
-                                    pmt::from_long(d_frame_count));
+            monitor_msg = pmt::dict_add(
+                monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
             message_port_pub(MONITOR_PORT, monitor_msg);
         }
     }
 
-    DTL_LOG_DEBUG("work: consumed={}, produced={}, frame_count={}", read_index, write_index, d_frame_count);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}",
+                  read_index,
+                  write_index);
     consume_each(read_index);
     return write_index;
 }
