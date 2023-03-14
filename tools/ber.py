@@ -85,17 +85,19 @@ for tx_n, tx_len, tx_offset in headers(tx_fname, start_tx_offset):
     frames_sent += 1
 
 # Fetch RX headers
-for rx_n, rx_len, rx_offset in headers(rx_fname, 0):
+failed = []
+for rx_n, rx_len, rx_offset in headers(rx_fname, start_rx_offset):
     if rx_n not in tx_headers:
         missing_tx += 1
         continue
     tx_offset, tx_len = tx_headers[rx_n]
     if tx_len != rx_len:
         mismatch_lens += 1
+        print(rx_n, tx_len, rx_len, tx_offset, rx_offset)
+        #break
         continue
     offsets.append((rx_offset + header_len, tx_offset + header_len, rx_len, rx_n))
     rx_headers[rx_n] = (rx_offset, rx_len)
-
 
 for tx_n, tx_len, tx_offset in headers(tx_fname, start_tx_offset):
     if tx_n not in rx_headers:
@@ -106,7 +108,7 @@ for tx_n, tx_len, tx_offset in headers(tx_fname, start_tx_offset):
 print(f"Errors: mismatch length={mismatch_lens}, missing txs={missing_tx}")
 print(f"Matched frames:  {len(offsets)}")
 
-
+crc_ok = 0
 with open(tx_fname,"rb") as tx_f, open(rx_fname, "rb") as rx_f:
     for rx_offset, tx_offset, l, _ in offsets:
         tx_f.seek(tx_offset)
@@ -119,11 +121,13 @@ with open(tx_fname,"rb") as tx_f, open(rx_fname, "rb") as rx_f:
         errors_count += e
         if e > 0:
             frame_errors_count += 1
+        else:
+            crc_ok += 1
 
 
 print(f"Sent: frames={frames_sent}, bits={bits_sent}")
-print(f"Eeceived: frames={frames_received}, bits={bits_received}")
-print(f"Missed frames: {missing_frames}")
+print(f"Received: frames={frames_received}, bits={bits_received}")
+print(f"Frames: missed={missing_frames}, crc_ok={crc_ok}, crc_fail={frame_errors_count}")
 print(f"BER (overall): {(errors_count + missing_bits)/bits_sent}")
 print(f"BER (detected frames): {(errors_count)/bits_received}")
 print(f"FER: {(frame_errors_count + missing_frames)/frames_sent}")

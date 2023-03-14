@@ -25,6 +25,7 @@ private:
     std::ofstream d_stream;
     unsigned d_frame_last_number;
     unsigned long long d_frame_long_count;
+    unsigned char d_skip_count;
 };
 
 } // namespace dtl
