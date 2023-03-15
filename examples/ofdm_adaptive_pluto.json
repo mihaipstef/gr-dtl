@@ -1,0 +1,5 @@
+{
+    "direct_tx_attenuation": 5,
+    "direct_tx_anticlipping_factor": 0.02,
+    "direct_carrier_frequency": 2000000
+}
