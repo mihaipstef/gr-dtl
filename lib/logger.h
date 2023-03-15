@@ -11,23 +11,28 @@
 
 #if DTL_LOGGING_ENABLE
 
-    #include <gnuradio/logger.h>
     #include <iomanip>
+    #include <gnuradio/logger.h>
     #include <memory>
+    #include <spdlog/logger.h>
     #include <tuple>
+
 
     namespace gr {
     namespace dtl {
 
+        std::shared_ptr<spdlog::sinks::dist_sink_mt> dtl_logging_backend();
+
         void register_logger(const std::shared_ptr<gr::logger>& logger);
 
         struct dtl_logger_wrapper {
-            std::shared_ptr<gr::logger> gr_logger;
+            std::shared_ptr<spdlog::logger> logger;
             dtl_logger_wrapper(const std::string& name) {
-                gr_logger = std::make_shared<gr::logger>(name);
-                gr_logger->d_logger->set_pattern("%v");
+                logger = std::make_shared<spdlog::logger>(name, dtl_logging_backend());
+                logger->set_level(logging::singleton().default_level());
+                logger->set_pattern("%D %H:%M:%S.%f %n:%v");
                 register_logger(
-                    gr_logger
+                    logger
                 );
             }
         };
@@ -38,17 +43,17 @@
         // HACK: This is not standard.
         #define VA_ARGS(...) ,##__VA_ARGS__
 
-        #define DTL_LOG_INFO(msg, ...) _logger.gr_logger->info(msg VA_ARGS(__VA_ARGS__));
-        #define DTL_LOG_DEBUG(msg, ...) _logger.gr_logger->debug(msg VA_ARGS(__VA_ARGS__));
+        #define DTL_LOG_INFO(msg, ...) _logger.logger->info(msg VA_ARGS(__VA_ARGS__));
+        #define DTL_LOG_DEBUG(msg, ...) _logger.logger->debug(msg VA_ARGS(__VA_ARGS__));
 
         #define DTL_LOG_TAGS(title, tags) \
-            _logger.gr_logger->debug(title); \
+            _logger.logger->debug(title); \
             for (auto& t: tags) { \
                 if(pmt::is_integer(t.value)) { \
-                    _logger.gr_logger->debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
+                    _logger.logger->debug("k:{}, v:{}, offset:{}", pmt::symbol_to_string(t.key), pmt::to_long(t.value), t.offset); \
                 } \
                 else { \
-                    _logger.gr_logger->debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
+                    _logger.logger->debug("k:{}, offset:{}", pmt::symbol_to_string(t.key), t.offset); \
                 } \
             }
 
@@ -58,7 +63,7 @@
                 for(int i=0; i<length; ++i) { \
                     ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buffer[i]; \
                 } \
-                _logger.gr_logger->debug("{}: {}", msg, ss.str()); \
+                _logger.logger->debug("{}: {}", msg, ss.str()); \
             }
 
     } // namespace dtl
