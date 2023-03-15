@@ -33,18 +33,20 @@ options:
     state: enabled
 
 blocks:
-- name: amp
-  id: variable
+- name: json_config
+  id: json_config
   parameters:
+    alias: ''
     comment: ''
-    value: '0.1'
+    config_file: /home/ubuntu-lab/dtl-flows/gr-dtl/examples/ofdm_adaptive_pluto.run.json
+    schema_file: ''
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 4.0]
+    coordinate: [0, 76.0]
     rotation: 0
-    state: enabled
+    state: true
 - name: resampling
   id: variable
   parameters:
@@ -61,7 +63,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '700000'
+    value: json_config["sample_rate"]
   states:
     bus_sink: false
     bus_source: false
@@ -92,7 +94,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    const: amp
+    const: json_config["feedback_anticlipping"]
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -157,7 +159,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '850000000'
+    frequency: json_config["feedback_carrier"]
     fstop: '0'
     len_tag_key: ''
     samplerate: samp_rate
@@ -182,7 +184,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '2400000000'
+    frequency: json_config["direct_carrier"]
     fstop: '0'
     gain1: '''slow_attack'''
     len_tag_key: packet_len
