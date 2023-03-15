@@ -1,5 +1,8 @@
 {
-    "direct_tx_attenuation": 5,
-    "direct_tx_anticlipping_factor": 0.02,
-    "direct_carrier_frequency": 2000000
+    "sample_rate": 900000,
+    "direct_carrier": 2300000000,
+    "direct_att": 18,
+    "direct_anticlipping": 0.02,
+    "feedback_carrier": 850000000,
+    "feedback_anticlipping": 0.1
 }

@@ -33,6 +33,20 @@ options:
     state: enabled
 
 blocks:
+- name: json_config
+  id: json_config
+  parameters:
+    alias: ''
+    comment: ''
+    config_file: /home/ubuntu-lab/dtl-flows/gr-dtl/examples/ofdm_adaptive_pluto.run.json
+    schema_file: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [728, 12.0]
+    rotation: 0
+    state: true
 - name: resampling
   id: variable
   parameters:
@@ -49,7 +63,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '700000'
+    value: json_config["sample_rate"]
   states:
     bus_sink: false
     bus_source: false
@@ -71,13 +85,13 @@ blocks:
     start: '0.001'
     step: '0.02'
     stop: '2'
-    value: '0.02'
+    value: json_config["direct_anticlipping"]
     widget: counter
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [584, 12.0]
+    coordinate: [560, 12.0]
     rotation: 0
     state: true
 - name: tx_at
@@ -94,13 +108,13 @@ blocks:
     start: '0'
     step: '1'
     stop: '50'
-    value: '14'
+    value: json_config["direct_att"]
     widget: counter
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [424, 12.0]
+    coordinate: [400, 12.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -193,7 +207,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '2400000000'
+    frequency: json_config["direct_carrier"]
     fstop: '0'
     len_tag_key: ''
     samplerate: samp_rate
@@ -218,7 +232,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '850000000'
+    frequency: json_config["feedback_carrier"]
     fstop: '0'
     gain1: '''manual'''
     len_tag_key: packet_len
