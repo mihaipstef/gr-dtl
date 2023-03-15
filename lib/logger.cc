@@ -8,7 +8,6 @@
 #include "logger.h"
 #include <gnuradio/dtl/log.h>
 #include <functional>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace gr {
 namespace dtl {
@@ -17,10 +16,8 @@ namespace dtl {
 
 std::shared_ptr<spdlog::sinks::dist_sink_mt> dtl_logging_backend()
 {
-    static std::shared_ptr<spdlog::sinks::dist_sink_mt> backend =
-        std::make_shared<spdlog::sinks::dist_sink_mt>();
-    backend->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_st>());
-    return backend;
+    static dtl_logging_backend_wrapper backend;
+    return backend.backend;
 }
 
 std::vector<std::shared_ptr<gr::logger>>& dtl_loggers()
