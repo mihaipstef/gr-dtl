@@ -41,6 +41,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.payload_length_tag_key = "payload_length"
         self.constellations = config.constellations
         self.frame_store_fname = f"{config.frame_store_fname}/tx.dat"
+        self.stop_no_input = config.stop_no_input
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -57,7 +58,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
     def _setup_direct_tx(self):
 
         self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length, len(self.occupied_carriers[0]), self.frame_store_fname)
+            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length,
+            len(self.occupied_carriers[0]), self.frame_store_fname, self.stop_no_input)
 
         # Header path blocks
         header_constellation = digital.constellation_bpsk()

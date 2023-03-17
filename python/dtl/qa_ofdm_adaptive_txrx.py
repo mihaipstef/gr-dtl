@@ -57,7 +57,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data, False, 1, [])
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations))
+            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))

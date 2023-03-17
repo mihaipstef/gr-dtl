@@ -8,6 +8,7 @@
 #include "logger.h"
 #include <gnuradio/dtl/log.h>
 #include <functional>
+#include <stdexcept>
 
 namespace gr {
 namespace dtl {
@@ -36,6 +37,13 @@ void set_dtl_log_level(const std::string& level)
     for (auto& logger : dtl_loggers()) {
         logger->set_level(level);
     }
+}
+
+#else
+
+void set_dtl_log_level(const std::string& level)
+{
+    throw std::runtime_error("Not implemented");
 }
 
 #endif

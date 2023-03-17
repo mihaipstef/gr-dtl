@@ -11,6 +11,7 @@
 #include "crc_util.h"
 #include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
+#include <random>
 
 namespace gr {
 namespace dtl {
@@ -27,7 +28,8 @@ public:
                                 const std::vector<constellation_type_t>& constellations,
                                 size_t frame_len,
                                 size_t n_payload_carriers,
-                                std::string frames_fname);
+                                std::string frames_fname,
+                                bool stop_no_input);
 
     void process_feedback(pmt::pmt_t feedback);
 
@@ -46,6 +48,8 @@ private:
                              size_t n_payload_carriers,
                              size_t bits_per_symbol);
     size_t frame_length();
+
+    void rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist);
 
     constellation_type_t d_constellation;
     unsigned char d_fec_scheme;
