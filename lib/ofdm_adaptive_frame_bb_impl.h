@@ -28,7 +28,8 @@ public:
                                 const std::vector<constellation_type_t>& constellations,
                                 size_t frame_len,
                                 size_t n_payload_carriers,
-                                std::string frames_fname);
+                                std::string frames_fname,
+                                bool stop_no_input);
 
     void process_feedback(pmt::pmt_t feedback);
 

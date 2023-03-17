@@ -46,7 +46,7 @@ class ofdm_adaptive_config:
 
 @dc.dataclass
 class ofdm_adaptive_tx_config(ofdm_adaptive_config):
-    pass
+    stop_no_input: bool = False
 
 
 @dc.dataclass

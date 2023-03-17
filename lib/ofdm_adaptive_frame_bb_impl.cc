@@ -26,10 +26,11 @@ ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
                              const std::vector<constellation_type_t>& constellations,
                              size_t frame_len,
                              size_t n_payload_carriers,
-                             std::string frames_fname)
+                             std::string frames_fname,
+                             bool stop_no_input)
 {
     return std::make_shared<ofdm_adaptive_frame_bb_impl>(
-        len_tag_key, constellations, frame_len, n_payload_carriers, frames_fname);
+        len_tag_key, constellations, frame_len, n_payload_carriers, frames_fname, stop_no_input);
 }
 
 
@@ -38,7 +39,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     const std::vector<constellation_type_t>& constellations,
     size_t frame_len,
     size_t n_payload_carriers,
-    string frames_fname)
+    string frames_fname,
+    bool stop_no_input)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
@@ -50,7 +52,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
-      d_stop_no_input(false),
+      d_stop_no_input(stop_no_input),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_frame_count(0)
 {

@@ -22,7 +22,7 @@ const int MAX_SKIP = 3;
 frame_file_store::frame_file_store(string fname)
     : d_stream(fname, ios::binary),
       d_frame_last_number(0),
-      d_frame_long_count(),
+      d_frame_long_count(0),
       d_skip_count(MAX_SKIP)
 {
 }
