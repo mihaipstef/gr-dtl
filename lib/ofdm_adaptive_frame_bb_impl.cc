@@ -50,7 +50,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
-      d_stop_no_input(true),
+      d_stop_no_input(false),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_frame_count(0)
 {
@@ -100,7 +100,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 void ofdm_adaptive_frame_bb_impl::forecast(int noutput_items,
                                            gr_vector_int& ninput_items_required)
 {
-    ninput_items_required[0] = 1;
+    ninput_items_required[0] = 0;
 }
 
 int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
@@ -118,6 +118,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     repack repacker;
     int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
+    std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
     DTL_LOG_DEBUG("work: d_frame_len={}, d_payload_carriers={}, "
                   "noutput_items={}, nitems_written={}, ninput_items={}",
@@ -131,6 +132,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         // keep constellation during one frame
         constellation_type_t cnst = d_constellation;
         unsigned char bps = get_bits_per_symbol(cnst);
+        std::uniform_int_distribution<> rnd_symbols_dist(0, pow(2, bps)-1);
 
         int frame_payload = 0;
 
@@ -181,21 +183,22 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                     // If we were waiting for new input in previous cycle...
                     if (d_waiting_full_frame) {
                         // ... copy frame input bytes, ...
-                        memcpy(&d_frame_buffer[0],
-                               &in[read_index],
-                               ninput_items[0] - read_index);
+                        frame_payload = ninput_items[0] - read_index;
+                        DTL_LOG_DEBUG("pad payload_len={}", frame_payload);
+                        memcpy(&d_frame_buffer[0], &in[read_index], frame_payload);
                         // ... append CRC ...
-                        d_crc.append_crc(&d_frame_buffer[0],
-                                         ninput_items[0] - read_index);
+                        d_crc.append_crc(&d_frame_buffer[0], frame_payload);
+                        rand_pad(&d_frame_buffer[frame_payload + d_crc.get_crc_len()],
+                                 expected_frame_symbols - frame_payload -
+                                     d_crc.get_crc_len(), rnd_bytes_dist);
                         // ...repack what we have.
                         frame_out_symbols = repacker.repack_lsb_first(
                             const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                            ninput_items[0] - read_index + d_crc.get_crc_len(),
+                            expected_frame_symbols,
                             &out[write_index],
                             bps,
                             true);
                         // update indexes
-                        frame_payload = ninput_items[0] - read_index;
                         read_index += frame_payload;
                         write_index += expected_frame_symbols;
                         // frame_out_symbols = expected_frame_symbols;
@@ -215,9 +218,11 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                     return WORK_DONE;
                 } else {
                     // Fill with empty frame
-                    memset(&out[write_index], 0, expected_frame_symbols);
+                    DTL_LOG_DEBUG("empty frame");
+                    rand_pad(&out[write_index], expected_frame_symbols, rnd_symbols_dist);
                     write_index += expected_frame_symbols;
                     frame_out_symbols = expected_frame_symbols;
+                    d_waiting_for_input = false;
                 }
             } else {
                 d_waiting_for_input = true;
@@ -269,13 +274,18 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
     }
 
-    DTL_LOG_DEBUG("work: consumed={}, produced={}",
-                  read_index,
-                  write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
     consume_each(read_index);
     return write_index;
 }
 
+void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist)
+{
+    std::mt19937 gen(std::random_device{}());
+    for (unsigned int i=0; i<len; ++i) {
+        buf[i] = dist(gen);
+    }
+}
 
 bool ofdm_adaptive_frame_bb_impl::start()
 {
