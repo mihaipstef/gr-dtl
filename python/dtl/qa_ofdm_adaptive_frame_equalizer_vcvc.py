@@ -103,10 +103,13 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             const_tag.key = get_constellation_tag_key()
             const_tag.value = pmt.from_long(c)
             rx_signal = numpy.multiply(tx_signal, channel) + [x if y != 0 else 0 for (
-                x, y) in zip(numpy.random.normal(0, 0.01, len(tx_signal)), tx_signal)]
+                x, y) in zip(numpy.random.normal(0, 0.001, len(tx_signal)), tx_signal)]
+
             src = blocks.vector_source_c(
                 rx_signal, False, fft_len, (chan_tag, const_tag))
+
             feedback_decision_sink = blocks.message_debug()
+
             eq = ofdm_adaptive_frame_equalizer_vcvc(
                 equalizer.base(), ofdm_adaptive_feedback_decision(
                     1, 3, ofdm_adaptive_config.ofdm_adaptive_config.constellations), 0, "tsb_key", True, True)

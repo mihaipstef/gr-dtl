@@ -138,9 +138,9 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
                 // Update SNR estimation with each pilot
                 d_snr_estimator->update(1, &pilot_eq);
                 // Update channel state
-                // d_channel_state[k] = d_alpha * d_channel_state[k] +
-                //                      (1 - d_alpha) * frame[i * d_fft_len + k] /
-                //                          d_pilot_symbols[d_pilot_carr_set][k];
+                d_channel_state[k] = d_alpha * d_channel_state[k] +
+                                     (1 - d_alpha) * frame[i * d_fft_len + k] /
+                                         d_pilot_symbols[d_pilot_carr_set][k];
                 frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
             } else {
                 sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
