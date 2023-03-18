@@ -35,12 +35,10 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.pilot_symbols = config.pilot_symbols
         self.scramble_bits = config.scramble_bits
         self.rolloff = config.rolloff
-        self.debug_log = config.debug
-        self.debug_folder = config.debug_folder
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
         self.constellations = config.constellations
-        self.frame_store_fname = f"{config.frame_store_fname}/tx.dat"
+        self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
         self.stop_no_input = config.stop_no_input
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
@@ -132,22 +130,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
-
-        if self.debug_log:
-            self.connect(header_gen, blocks.file_sink(
-                1, f"{self.debug_folder}/tx-hdr.dat"))
-            self.connect(header_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-pre-mux.dat"))
-            self.connect(payload_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-payload-pre-mux.dat"))
-            self.connect(header_payload_mux, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-payload-mux.dat"))
-            self.connect(allocator, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/tx-post-allocator.dat"))
-            self.connect(cyclic_prefixer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-signal.dat"))
-            self.connect((self, 1), blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/rx-feedback-signal.dat"))
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
