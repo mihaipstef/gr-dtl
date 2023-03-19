@@ -89,6 +89,8 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.connect(rx_src, channel, rx)
         self.tb.connect((rx, 0), rx_sink)
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
+        self.tb.connect((rx, 3), blocks.null_sink(gr.sizeof_gr_complex))
+
         self.tb.run()
         rx_data = rx_sink.data()
         packet_success = test_data == rx_data[:buffer_size]
@@ -118,6 +120,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         self.tb.connect(rx_src, rx)
         self.tb.connect((rx, 0), blocks.null_sink(gr.sizeof_char))
+        self.tb.connect((rx, 3), blocks.null_sink(gr.sizeof_gr_complex))
         self.tb.connect((rx, 1), feedback_sink)
 
         for msg in msgs:

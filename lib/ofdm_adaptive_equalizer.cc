@@ -62,6 +62,24 @@ ofdm_adaptive_equalizer_base::ofdm_adaptive_equalizer_base(
                                symbols_skipped,
                                input_is_shifted)
 {
+    // Load all available pilot symbol sets.
+    // ofdm_equalizer_1d_pilots loads only one pilot symbol set / pilot carrier set though the allocator
+    // use all available pilot sets.
+    int fft_shift_width = 0;
+    if (input_is_shifted) {
+        fft_shift_width = fft_len / 2;
+    }
+    for (unsigned i = 0; i < pilot_symbols.size(); i++) {
+        int pilot_car_set = i % pilot_carriers.size();
+        for (unsigned k = 0; k < pilot_carriers[pilot_car_set].size(); k++) {
+            int carr_index = pilot_carriers[pilot_car_set][k];
+            if (pilot_carriers[pilot_car_set][k] < 0) {
+                carr_index += fft_len;
+            }
+            d_pilot_symbols[i][(carr_index + fft_shift_width) % fft_len] =
+                pilot_symbols[i][k];
+        }
+    }
 }
 
 
@@ -126,7 +144,9 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
 
     // Reset SNR estimator each frame
     d_snr_estimator->reset();
+    int pilot_symbols_set = 0;
     for (int i = 0; i < n_sym; i++) {
+        pilot_symbols_set = (d_symbols_skipped + i) % d_pilot_symbols.size();
         for (int k = 0; k < d_fft_len; k++) {
             bool is_pilot_carreier =
                 !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];
@@ -140,8 +160,8 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
                 // Update channel state
                 d_channel_state[k] = d_alpha * d_channel_state[k] +
                                      (1 - d_alpha) * frame[i * d_fft_len + k] /
-                                         d_pilot_symbols[d_pilot_carr_set][k];
-                frame[i * d_fft_len + k] = d_pilot_symbols[d_pilot_carr_set][k];
+                                         d_pilot_symbols[pilot_symbols_set][k];
+                frame[i * d_fft_len + k] = d_pilot_symbols[pilot_symbols_set][k];
             } else {
                 sym_eq = frame[i * d_fft_len + k] / d_channel_state[k];
                 // NOTE: The `map_to_points` function will treat `sym_est` as an array
