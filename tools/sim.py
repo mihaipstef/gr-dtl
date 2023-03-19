@@ -20,7 +20,7 @@ class ofdm_adaptive_sim(gr.top_block):
         gr.top_block.__init__(self, "OFDM Adaptive Simulator", catch_exceptions=True)
         self.samp_rate = samp_rate = 200000
         self.n_bytes = n_bytes = 100
-        self.direct_channel_noise_level = direct_channel_noise_level = 0.1
+        self.direct_channel_noise_level = direct_channel_noise_level = 0.0001
         self.direct_channel_freq_offset = direct_channel_freq_offset = 0.01
         self.fft_len = 64
         self.config_file = config_file
@@ -34,14 +34,12 @@ class ofdm_adaptive_sim(gr.top_block):
             fft_len=self.fft_len,
             cp_len=16,
             rolloff=0,
-            debug=False,
             scramble_bits=False
         )
         self.rx = dtl.ofdm_adaptive_rx.from_parameters(
             fft_len=self.fft_len,
             cp_len=16,
             rolloff=0,
-            debug=False,
             scramble_bits=False
         )
         self.fadding_channel = channels.selective_fading_model( 8, (0/samp_rate), False, 4.0, 0, [(0)], [(1)], 8 )
