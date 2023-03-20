@@ -33,18 +33,20 @@ options:
     state: enabled
 
 blocks:
-- name: amp
-  id: variable
+- name: json_config
+  id: json_config
   parameters:
+    alias: ''
     comment: ''
-    value: '0.1'
+    config_file: /home/ubuntu-lab/dtl-flows/gr-dtl/examples/ofdm_adaptive_pluto.run.json
+    schema_file: ''
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [384, 4.0]
+    coordinate: [0, 76.0]
     rotation: 0
-    state: enabled
+    state: true
 - name: resampling
   id: variable
   parameters:
@@ -61,7 +63,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '700000'
+    value: json_config["sample_rate"]
   states:
     bus_sink: false
     bus_source: false
@@ -92,7 +94,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    const: amp
+    const: json_config["feedback_anticlipping"]
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -157,7 +159,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '850000000'
+    frequency: json_config["feedback_carrier"]
     fstop: '0'
     len_tag_key: ''
     samplerate: samp_rate
@@ -167,7 +169,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1352, 84.0]
+    coordinate: [1360, 180.0]
     rotation: 0
     state: enabled
 - name: iio_pluto_source_0
@@ -182,7 +184,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: '2400000000'
+    frequency: json_config["direct_carrier"]
     fstop: '0'
     gain1: '''slow_attack'''
     len_tag_key: packet_len
@@ -199,6 +201,26 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [0, 252.0]
+    rotation: 0
+    state: true
+- name: network_udp_sink_0
+  id: network_udp_sink
+  parameters:
+    addr: 192.168.0.102
+    affinity: ''
+    alias: ''
+    comment: ''
+    header: '0'
+    payloadsize: '1316'
+    port: '9001'
+    send_eof: 'False'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1080, 100.0]
     rotation: 0
     state: true
 - name: qtgui_const_sink_x_0
@@ -452,7 +474,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1352, 252.0]
+    coordinate: [1360, 356.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -686,7 +708,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1120, 156.0]
+    coordinate: [1128, 228.0]
     rotation: 0
     state: enabled
 - name: virtual_sink_0
@@ -723,6 +745,7 @@ connections:
 - [blocks_char_to_float_0, '0', qtgui_time_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', rational_resampler_xxx_0_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '0', blocks_char_to_float_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '0', network_udp_sink_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '1', blocks_multiply_const_vxx_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '2', blocks_null_sink_0_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '3', virtual_sink_0, '0']

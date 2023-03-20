@@ -6,6 +6,7 @@ from gnuradio import (
     dtl,
     filter,
 )
+import pmt
 
 
 class ofdm_adaptive_tx(gr.hier_block2):
@@ -22,7 +23,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                                     2, 2, [gr.sizeof_char, gr.sizeof_gr_complex]),
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex))
 
-        self.message_port_register_hier_out("feedback_rcvd")
+        self.message_port_register_hier_out("monitor")
 
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
@@ -34,11 +35,11 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.pilot_symbols = config.pilot_symbols
         self.scramble_bits = config.scramble_bits
         self.rolloff = config.rolloff
-        self.debug_log = config.debug
-        self.debug_folder = config.debug_folder
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
         self.constellations = config.constellations
+        self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
+        self.stop_no_input = config.stop_no_input
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -55,7 +56,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
     def _setup_direct_tx(self):
 
         self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length, len(self.occupied_carriers[0]))
+            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length,
+            len(self.occupied_carriers[0]), self.frame_store_fname, self.stop_no_input)
 
         # Header path blocks
         header_constellation = digital.constellation_bpsk()
@@ -125,24 +127,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.rolloff,
             self.packet_length_tag_key
         )
+
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
-
-        if self.debug_log:
-            self.connect(header_gen, blocks.file_sink(
-                1, f"{self.debug_folder}/tx-hdr.dat"))
-            self.connect(header_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-pre-mux.dat"))
-            self.connect(payload_mod, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-payload-pre-mux.dat"))
-            self.connect(header_payload_mux, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-header-payload-mux.dat"))
-            self.connect(allocator, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/tx-post-allocator.dat"))
-            self.connect(cyclic_prefixer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/tx-signal.dat"))
-            self.connect((self, 1), blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/rx-feedback-signal.dat"))
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
@@ -191,11 +178,12 @@ class ofdm_adaptive_tx(gr.hier_block2):
                      (self.feedback_constellation_decoder, 0))
         self.connect((self.feedback_constellation_decoder, 0),
                      (self.feedback_parser, 0))
-        self.msg_connect(self.feedback_parser, "info", self, "feedback_rcvd")
+
         self.msg_connect(self.feedback_parser, "info",
                          self.frame_unpack, "feedback")
-        # self.connect((self.feedback_sync_word_correlator, 0),
-        #              blocks.tag_debug(8, "time_est"))
+        self.msg_connect(self.feedback_parser, "info",
+                         self, "monitor")
+        self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
 
     def set_constellation(self, constellation):
         self.frame_unpack.set_constellation(constellation)

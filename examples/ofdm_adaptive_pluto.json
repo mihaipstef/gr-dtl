@@ -1,0 +1,8 @@
+{
+    "sample_rate": 900000,
+    "direct_carrier": 2300000000,
+    "direct_att": 18,
+    "direct_anticlipping": 0.02,
+    "feedback_carrier": 850000000,
+    "feedback_anticlipping": 0.1
+}

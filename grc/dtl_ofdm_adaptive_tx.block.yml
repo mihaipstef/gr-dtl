@@ -37,12 +37,7 @@ parameters:
     default: 'False'
     options: ['False', 'True']
     option_labels: ['No', 'Yes']
--   id: debug
-    label: Log Debug Info
-    dtype: enum
-    default: 'False'
-    options: ['False', 'True']
-    option_labels: ['No', 'Yes']
+
 
 asserts:
 - ${ fft_len > 0 }
@@ -60,7 +55,7 @@ outputs:
 -   domain: stream
     dtype: complex
 -   domain: message
-    id: feedback_rcvd
+    id: monitor
 
 templates:
     imports: from gnuradio import dtl
@@ -78,7 +73,6 @@ templates:
             pilot_symbols=${pilot_symbols},
             % endif
             rolloff=${rolloff}, 
-            debug=${debug},
             scramble_bits=${scramble_bits}
         )
 file_format: 1

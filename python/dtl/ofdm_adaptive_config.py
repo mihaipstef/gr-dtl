@@ -35,17 +35,16 @@ class ofdm_adaptive_config:
     sync_word2: list = digital.ofdm_txrx._make_sync_word2(
         fft_len, occupied_carriers, pilot_carriers)
     rolloff: int = 0
-    debug: bool = False
-    debug_folder: str = "/tmp/debug"
     scramble_bits: bool = False
     frame_length: int = 20
     constellations: t.Tuple[t.Tuple[float, dtl.constellation_type_t]] = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
         13, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8), (23, dtl.constellation_type_t.QAM16),)
+    frame_store_folder: str = "/tmp"
 
 
 @dc.dataclass
 class ofdm_adaptive_tx_config(ofdm_adaptive_config):
-    pass
+    stop_no_input: bool = False
 
 
 @dc.dataclass

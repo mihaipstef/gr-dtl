@@ -12,10 +12,33 @@ function handle_sigint() {
 }
 
 if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
+
+	# Overwrite config
+	cp "$1".json "$1".run.json
+	jq_args=""
+	for arg in "$@"
+	do
+		if [[ $arg == *"="* ]]; then
+			config_key=$(echo $arg | cut -f1 -d=)
+			config_val=$(echo $arg | cut -f2 -d=)
+			echo "$config_key: $config_val"
+			if [[ -z "$jq_args" ]]; then
+				jq_args="$jq_args .$config_key=$config_val"
+			else
+				jq_args="$jq_args | .$config_key=$config_val"
+			fi
+		fi
+	done
+	jq "$jq_args" "$1".run.json > /tmp/json_config && mv /tmp/json_config "$1".run.json
+	# Clean previous generated .py files
 	rm "$1"_tx.py
 	rm "$1"_rx.py
+
+	# Generate .py files for the flows
 	grcc "$1"_tx.grc
 	grcc "$1"_rx.grc
+
+	# Execute the flows
 	python3 "$1"_tx.py > $2/tx.log &
 	tx_pid=$!
 	echo "TX run with pid=$tx_pid"

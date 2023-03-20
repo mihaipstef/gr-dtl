@@ -14,18 +14,23 @@ namespace gr {
 namespace dtl {
 
 
-using namespace gr;
+using namespace std;
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_bb")
+
+static const pmt::pmt_t FRAME_COUNT_KEY = pmt::mp("frame_count_key");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 ofdm_adaptive_frame_bb::sptr
 ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
                              const std::vector<constellation_type_t>& constellations,
                              size_t frame_len,
-                             size_t n_payload_carriers)
+                             size_t n_payload_carriers,
+                             std::string frames_fname,
+                             bool stop_no_input)
 {
     return std::make_shared<ofdm_adaptive_frame_bb_impl>(
-        len_tag_key, constellations, frame_len, n_payload_carriers);
+        len_tag_key, constellations, frame_len, n_payload_carriers, frames_fname, stop_no_input);
 }
 
 
@@ -33,7 +38,9 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     const std::string& len_tag_key,
     const std::vector<constellation_type_t>& constellations,
     size_t frame_len,
-    size_t n_payload_carriers)
+    size_t n_payload_carriers,
+    string frames_fname,
+    bool stop_no_input)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
@@ -45,8 +52,9 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
-      d_stop_no_input(true),
-      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
+      d_stop_no_input(stop_no_input),
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
+      d_frame_count(0)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -57,6 +65,10 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     size_t frame_buffer_max_len =
         d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
     d_frame_buffer.resize(frame_buffer_max_len);
+    message_port_register_out(MONITOR_PORT);
+    if (!frames_fname.empty()) {
+        d_frame_store = frame_file_store(frames_fname);
+    }
 }
 
 
@@ -90,7 +102,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 void ofdm_adaptive_frame_bb_impl::forecast(int noutput_items,
                                            gr_vector_int& ninput_items_required)
 {
-    ninput_items_required[0] = 1;
+    ninput_items_required[0] = 0;
 }
 
 int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
@@ -108,6 +120,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     repack repacker;
     int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
+    std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
     DTL_LOG_DEBUG("work: d_frame_len={}, d_payload_carriers={}, "
                   "noutput_items={}, nitems_written={}, ninput_items={}",
@@ -121,13 +134,15 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         // keep constellation during one frame
         constellation_type_t cnst = d_constellation;
         unsigned char bps = get_bits_per_symbol(cnst);
+        std::uniform_int_distribution<> rnd_symbols_dist(0, pow(2, bps)-1);
 
         int frame_payload = 0;
 
         // Calculate input frame size.
         // Number of bytes to be picked from input - each frame is carrying an integer
         // number of bytes.
-        int frame_in_bytes = d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
+        int frame_in_bytes =
+            d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
         int frame_bits = frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
         // expected output symbols, including CRC
         expected_frame_symbols = frame_bits / bps;
@@ -170,21 +185,22 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                     // If we were waiting for new input in previous cycle...
                     if (d_waiting_full_frame) {
                         // ... copy frame input bytes, ...
-                        memcpy(&d_frame_buffer[0],
-                               &in[read_index],
-                               ninput_items[0] - read_index);
-                        // ... append CRC ...
-                        d_crc.append_crc(&d_frame_buffer[0],
-                                   ninput_items[0] - read_index);
-                        // ...repack what we have.
-                        frame_out_symbols =
-                            repacker.repack_lsb_first(const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                                                      ninput_items[0] - read_index + d_crc.get_crc_len(),
-                                                      &out[write_index],
-                                                      bps,
-                                                      true);
-                        // update indexes
                         frame_payload = ninput_items[0] - read_index;
+                        DTL_LOG_DEBUG("pad payload_len={}", frame_payload);
+                        memcpy(&d_frame_buffer[0], &in[read_index], frame_payload);
+                        // ... append CRC ...
+                        d_crc.append_crc(&d_frame_buffer[0], frame_payload);
+                        rand_pad(&d_frame_buffer[frame_payload + d_crc.get_crc_len()],
+                                 expected_frame_symbols - frame_payload -
+                                     d_crc.get_crc_len(), rnd_bytes_dist);
+                        // ...repack what we have.
+                        frame_out_symbols = repacker.repack_lsb_first(
+                            const_cast<const unsigned char*>(&d_frame_buffer[0]),
+                            expected_frame_symbols,
+                            &out[write_index],
+                            bps,
+                            true);
+                        // update indexes
                         read_index += frame_payload;
                         write_index += expected_frame_symbols;
                         // frame_out_symbols = expected_frame_symbols;
@@ -204,9 +220,11 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                     return WORK_DONE;
                 } else {
                     // Fill with empty frame
-                    memset(&out[write_index], 0, expected_frame_symbols);
+                    DTL_LOG_DEBUG("empty frame");
+                    rand_pad(&out[write_index], expected_frame_symbols, rnd_symbols_dist);
                     write_index += expected_frame_symbols;
                     frame_out_symbols = expected_frame_symbols;
+                    d_waiting_for_input = false;
                 }
             } else {
                 d_waiting_for_input = true;
@@ -219,20 +237,24 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
             DTL_LOG_DEBUG("add tags: offset={}, "
                           "frame_in_bytes={}, "
-                          "read_index={}, write_index={}, expected_frame={}, payload={}",
+                          "read_index={}, write_index={}, expected_frame={}, payload={}, "
+                          "frame_count={}, constelation={}",
                           d_tag_offset,
                           frame_in_bytes,
                           read_index,
                           write_index,
                           expected_frame_symbols,
-                          frame_payload);
+                          frame_payload,
+                          d_frame_count,
+                          static_cast<int>(cnst));
 
             // Add TSB length tag - frame payload length in symbols
             add_item_tag(0,
                          d_tag_offset,
                          d_packet_len_tag,
                          pmt::from_long(expected_frame_symbols));
-            // Add transported payload tag - number of payload bytes carried by the frame (including CRC)
+            // Add transported payload tag - number of payload bytes carried by the frame
+            // (including CRC)
             add_item_tag(0,
                          d_tag_offset,
                          payload_length_key(),
@@ -243,15 +265,29 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
             d_tag_offset += expected_frame_symbols;
+            d_frame_store.store(frame_payload,
+                                d_frame_count & 0xFFF,
+                                reinterpret_cast<char*>(&d_frame_buffer[0]));
+            ++d_frame_count;
+            pmt::pmt_t monitor_msg = pmt::make_dict();
+            monitor_msg = pmt::dict_add(
+                monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
+            message_port_pub(MONITOR_PORT, monitor_msg);
         }
     }
-
 
     DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
     consume_each(read_index);
     return write_index;
 }
 
+void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist)
+{
+    std::mt19937 gen(std::random_device{}());
+    for (unsigned int i=0; i<len; ++i) {
+        buf[i] = dist(gen);
+    }
+}
 
 bool ofdm_adaptive_frame_bb_impl::start()
 {

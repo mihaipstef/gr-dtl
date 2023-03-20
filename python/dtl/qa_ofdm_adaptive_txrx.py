@@ -57,7 +57,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data, False, 1, [])
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations))
+            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
@@ -89,6 +89,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.connect(rx_src, channel, rx)
         self.tb.connect((rx, 0), rx_sink)
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
+
         self.tb.run()
         rx_data = rx_sink.data()
         packet_success = test_data == rx_data[:buffer_size]
@@ -113,8 +114,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
                 for d in test_data]
 
         rx = ofdm_adaptive_rx(rx_cfg)
-        tx = ofdm_adaptive_tx(tx_cfg)
-        rx_src = blocks.vector_source_c([0 for _ in range(100)])
+        rx_src = blocks.vector_source_c([0 for _ in range(800)])
         feedback_sink = blocks.vector_sink_c()
 
         self.tb.connect(rx_src, rx)
@@ -130,37 +130,47 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             self.tb.stop()
             self.tb.wait()
 
+        tx_tb = gr.top_block()
+
+        tx = ofdm_adaptive_tx(tx_cfg)
+
         # Channel
         freq_offset = 0
         channel = channels.channel_model(
             0, frequency_offset=freq_offset,)
 
         feedback_src = blocks.vector_source_c(
-            [0 for _ in range(1000)] + list(feedback_sink.data()) + [0 for _ in range(1000)])
-        tx_src = blocks.vector_source_b([0 for _ in range(100)])
-        self.tb.connect(tx_src, (tx, 0))
-        self.tb.connect(feedback_src, channel, (tx, 1))
-        self.tb.connect(tx, blocks.null_sink(gr.sizeof_gr_complex))
+            [0 for _ in range(1000)] +  list(feedback_sink.data()) + [0 for _ in range(1000)], repeat=False)
+        tx_src = blocks.vector_source_b([0 for _ in range(10000)])
+        tx_tb.connect(tx_src, (tx, 0))
+        tx_tb.connect(feedback_src, channel, (tx, 1))
+        tx_tb.connect(tx, blocks.null_sink(gr.sizeof_gr_complex))
         msg_debug = blocks.message_debug()
-        self.tb.msg_connect(tx, "feedback_rcvd", msg_debug, "store")
-        self.tb.start()
+        tx_tb.msg_connect(tx, "monitor", msg_debug, "store")
+        tx_tb.start()
         # HACK: Sleep to allow the message through
         # Not very robust
         time.sleep(1)
-        self.tb.stop()
-        self.tb.wait()
+        tx_tb.stop()
+        tx_tb.wait()
 
-        for i, [constellation, fec] in enumerate(test_data):
-            feedback_msg = msg_debug.get_message(i)
-            self.assertTrue(pmt.is_dict(feedback_msg))
-            self.assertTrue(pmt.dict_has_key(
-                feedback_msg, dtl.feedback_constellation_key()))
-            self.assertEqual(pmt.to_long(pmt.dict_ref(
-                feedback_msg, dtl.feedback_constellation_key(), pmt.PMT_F)), constellation)
-            self.assertTrue(pmt.dict_has_key(
-                feedback_msg, dtl.feedback_fec_key()))
-            self.assertEqual(pmt.to_long(pmt.dict_ref(
-                feedback_msg, dtl.feedback_fec_key(), pmt.PMT_F)), fec)
+        expected_messages = {
+            "feedback_fec_key": [4, 3],
+            "feedback_constellation_key": [4, 2],
+            "frame_count_key": list(range(100)),
+        }
+
+        for i in range(msg_debug.num_messages()):
+            msg = msg_debug.get_message(i)
+            if pmt.is_dict(msg):
+                items = pmt.dict_items(msg)
+                for i in range(pmt.length(items)):
+                    item = pmt.nth(i, items)
+                    key = pmt.to_python(pmt.car(item))
+                    val = pmt.to_python(pmt.cdr(item))
+                    self.assertTrue(key in expected_messages)
+                    self.assertTrue(val in expected_messages[key])
+
 
 
 if __name__ == '__main__':

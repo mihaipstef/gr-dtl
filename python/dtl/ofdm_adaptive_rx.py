@@ -35,11 +35,10 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.pilot_symbols = config.pilot_symbols
         self.scramble_bits = config.scramble_bits
         self.rolloff = config.rolloff
-        self.debug_log = config.debug
-        self.debug_folder = config.debug_folder
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
         self.constellations = config.constellations
+        self.frame_store_fname = f"{config.frame_store_folder}/rx.dat"
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -166,7 +165,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             reset_tag_key=self.packet_length_tag_key
         )
         payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
-            self.packet_length_tag_key)
+            self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
         self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
         self.connect(
             (hpd, 1),
@@ -176,7 +175,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
             payload_demod,
             payload_pack,
             # self.payload_descrambler,
-            # self.crc,
             (self, 0)
         )
 
@@ -184,43 +182,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self.payload_eq, 0), (self, 3))
         self.connect((self.payload_eq, 1), (self, 4))
         self.connect((self.sync_detect, 0), (self, 5))
-
-        self.msg_connect(self.payload_eq, "monitor_port", self, "monitor")
-        self.msg_connect(payload_pack, "monitor_port", self, "monitor")
-
-        if self.debug_log:
-            self.connect((self.sync_detect, 1), blocks.file_sink(
-                gr.sizeof_char, f"{self.debug_folder}/sync-detect.dat"))
-            self.connect((hpd, 0), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-header.dat"))
-            self.connect((hpd, 1), blocks.file_sinself.k(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/rx-payload.dat"))
-            self.connect((chanest, 1), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/channel-estimate.dat"))
-            self.connect((chanest, 0), blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-chanest.dat"))
-            self.connect((chanest, 0), blocks.tag_debug(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-chanest.dat"))
-            self.connect(header_eq, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hdr-eq.dat"))
-            self.connect(header_serializer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/post-hdr-serializer.dat"))
-            self.connect(self, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/pre-hpd-mixer.dat"))
-            self.connect((hpd, 1), blocks.tag_debug(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-hpd.dat"))
-            self.connect(payload_fft, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-payload-fft.dat"))
-            self.connect(self.payload_eq, blocks.file_sink(
-                gr.sizeof_gr_complex * self.fft_len, f"{self.debug_folder}/post-payload-eq.dat"))
-            self.connect(payload_serializer, blocks.file_sink(
-                gr.sizeof_gr_complex, f"{self.debug_folder}/post-payload-serializer.dat"))
-            self.connect(payload_demod, blocks.file_sink(
-                1, f"{self.debug_folder}/post-payload-demod.dat"))
-            self.connect(payload_pack, blocks.file_sink(
-                1, f"{self.debug_folder}/post-payload-pack.dat"))
-            self.connect(self.crc, blocks.file_sink(
-                1, f"{self.debug_folder}/post-payload-crc.dat"))
 
     def _setup_feedback_tx(self):
         self.feedback_sps = 2

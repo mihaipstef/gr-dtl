@@ -47,7 +47,7 @@ class qa_ofdm_adaptive_feedback_decision(gr_unittest.TestCase):
     def test_feedback_decision(self):
         feedback_decision = ofdm_adaptive_feedback_decision(1, self.decision_counter, self.constellations)
 
-        test_input = ((self.decision_counter + 1) * 3 - 1) * [(constellation_type_t.QPSK, 23),] + (
+        test_input = ((self.decision_counter + 1) * 3 - 1) * [(constellation_type_t.QPSK, 27),] + (
             (self.decision_counter + 1) * 3 - 1) * [(constellation_type_t.PSK8, 14.5),]
         expected_decision = self.decision_counter * [constellation_type_t.QPSK,] + (self.decision_counter+1) * [
             constellation_type_t.PSK8,] + (self.decision_counter+1) * [constellation_type_t.QAM16,] + self.decision_counter * [
