@@ -77,7 +77,6 @@ class ofdm_adaptive_sim(gr.top_block):
 
         self.connect((self.rx, 0), blocks.null_sink(gr.sizeof_char))
         self.connect((self.rx, 2), blocks.null_sink(gr.sizeof_char))
-        self.connect((self.rx, 3), blocks.null_sink(gr.sizeof_gr_complex))
         self.connect((self.rx, 4), blocks.null_sink(gr.sizeof_gr_complex))
         self.msg_connect((self.rx, "monitor"), (self.zeromq_pub, "in"))
         self.msg_connect((self.tx, "monitor"), (self.msg_debug, "store"))

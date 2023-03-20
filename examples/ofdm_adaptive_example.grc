@@ -44,10 +44,10 @@ blocks:
     outputmsgname: value
     rangeType: float
     showports: 'False'
-    start: '0.001'
+    start: '0'
     step: '0.001'
     stop: '0.25'
-    value: '0.01'
+    value: '0'
     widget: counter_slider
   states:
     bus_sink: false
@@ -70,7 +70,7 @@ blocks:
     start: '0'
     step: '0.0001'
     stop: '3.7'
-    value: '0.1'
+    value: '0'
     widget: counter_slider
   states:
     bus_sink: false

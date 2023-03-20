@@ -37,12 +37,7 @@ parameters:
     default: 'False'
     options: ['False', 'True']
     option_labels: ['No', 'Yes']
--   id: debug
-    label: Log Debug Info
-    dtype: enum
-    default: 'False'
-    options: ['False', 'True']
-    option_labels: ['No', 'Yes']
+
 
 asserts:
 - ${ fft_len > 0 }
@@ -86,7 +81,6 @@ templates:
             pilot_symbols=${pilot_symbols},
             % endif
             rolloff=${rolloff}, 
-            debug=${debug},
             scramble_bits=${scramble_bits}
         )
 
