@@ -179,7 +179,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
 
         self.connect(sync_correct, (self, 2))
-        self.connect((self.payload_eq, 0), blocks.vector_to_stream(gr.sizeof_gr_complex, self.fft_len), (self, 3))
+        self.connect((self.payload_eq, 0), (self, 3))
         self.connect((self.payload_eq, 1), (self, 4))
         self.connect((self.sync_detect, 0), (self, 5))
 
