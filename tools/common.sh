@@ -6,7 +6,6 @@ function to_jq_args() {
 		if [[ $arg == *"="* ]]; then
 			config_key=$(echo $arg | cut -f1 -d=)
 			config_val=$(echo $arg | cut -f2 -d=)
-			echo "$config_key: $config_val"
 			if [[ -z "$jq_args" ]]; then
 				jq_args="$jq_args .$config_key=$config_val"
 			else

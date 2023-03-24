@@ -22,6 +22,8 @@ if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
 
 	jq_args=$(to_jq_args "$@")
 
+	echo "$jq_args"
+
 	jq "$jq_args" "$1".run.json > /tmp/json_config && mv /tmp/json_config "$1".run.json
 
 	# Clean previous generated .py files

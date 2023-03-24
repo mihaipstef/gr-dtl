@@ -9,8 +9,8 @@ received=$(cat $rx_log | grep "header_parser" | wc -l)
 sent=$(cat $tx_log | grep header_formatter | wc -l)
 crc_fail=$(cat $rx_log | grep "header_parser" | grep "crc=failed" | wc -l)
 missed_frames=$((sent - received))
-payload_crc_fail=$(cat $rx_log | grep "ofdm_adaptive_frame_pack" | grep "crc_ok: false" | wc -l)
-payload_crc_success=$(cat $rx_log | grep "ofdm_adaptive_frame_pack" | grep "crc_ok: true" | wc -l)
+payload_crc_fail=$(cat $rx_log | grep "ofdm_adaptive_frame_pack" | grep "crc_ok=false" | wc -l)
+payload_crc_success=$(cat $rx_log | grep "ofdm_adaptive_frame_pack" | grep "crc_ok=true" | wc -l)
 snr_stats=$(cat $rx_log | grep SNRest | awk -F ', ' '{print $2}' | awk -F ':' '{print $2}' | $script_dir/stats.r)
 
 

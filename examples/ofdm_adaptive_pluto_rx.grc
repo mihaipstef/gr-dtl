@@ -106,23 +106,6 @@ blocks:
     coordinate: [944, 212.0]
     rotation: 0
     state: true
-- name: blocks_null_sink_0_0
-  id: blocks_null_sink
-  parameters:
-    affinity: ''
-    alias: ''
-    bus_structure_sink: '[[0,],]'
-    comment: ''
-    num_inputs: '1'
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [944, 264.0]
-    rotation: 0
-    state: enabled
 - name: dtl_ofdm_adaptive_rx_0
   id: dtl_ofdm_adaptive_rx
   parameters:
@@ -138,6 +121,7 @@ blocks:
     pilot_symbols: ''
     rolloff: '0'
     scramble_bits: 'False'
+    use_sync_correct: 'False'
   states:
     bus_sink: false
     bus_source: false
@@ -219,7 +203,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1056, 108.0]
+    coordinate: [888, 84.0]
     rotation: 0
     state: disabled
 - name: qtgui_const_sink_x_0
@@ -311,7 +295,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 388.0]
+    coordinate: [920, 428.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -667,7 +651,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 484.0]
+    coordinate: [928, 532.0]
     rotation: 0
     state: enabled
 - name: rational_resampler_xxx_0
@@ -715,12 +699,38 @@ blocks:
   parameters:
     alias: ''
     comment: ''
-    stream_id: dummy
+    stream_id: sync_detect
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 324.0]
+    coordinate: [936, 268.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_0_0
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: decided_cnst
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [928, 372.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_0_1
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: sync_correct
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 316.0]
     rotation: 0
     state: true
 - name: zeromq_pub_msg_sink_0
@@ -736,7 +746,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [936, 604.0]
+    coordinate: [928, 636.0]
     rotation: 0
     state: true
 
@@ -746,10 +756,11 @@ connections:
 - [dtl_ofdm_adaptive_rx_0, '0', blocks_char_to_float_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '0', network_udp_sink_0, '0']
 - [dtl_ofdm_adaptive_rx_0, '1', blocks_multiply_const_vxx_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '2', blocks_null_sink_0_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '3', virtual_sink_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '4', qtgui_const_sink_x_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '5', qtgui_time_sink_x_0_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '2', virtual_sink_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '3', virtual_sink_0_1, '0']
+- [dtl_ofdm_adaptive_rx_0, '4', virtual_sink_0_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '5', qtgui_const_sink_x_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '6', qtgui_time_sink_x_0_0, '0']
 - [dtl_ofdm_adaptive_rx_0, monitor, zeromq_pub_msg_sink_0, in]
 - [iio_pluto_source_0, '0', qtgui_freq_sink_x_0, '0']
 - [iio_pluto_source_0, '0', rational_resampler_xxx_0, '0']
