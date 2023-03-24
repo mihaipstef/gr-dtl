@@ -1,3 +1,7 @@
+script_dir="$(dirname $0)"
+
+source $script_dir/common.sh
+
 function handle_sigint_txrx() {
 	echo "Killing TX and RX"
 	kill "$rx_pid"
@@ -15,21 +19,13 @@ if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
 
 	# Overwrite config
 	cp "$1".json "$1".run.json
-	jq_args=""
-	for arg in "$@"
-	do
-		if [[ $arg == *"="* ]]; then
-			config_key=$(echo $arg | cut -f1 -d=)
-			config_val=$(echo $arg | cut -f2 -d=)
-			echo "$config_key: $config_val"
-			if [[ -z "$jq_args" ]]; then
-				jq_args="$jq_args .$config_key=$config_val"
-			else
-				jq_args="$jq_args | .$config_key=$config_val"
-			fi
-		fi
-	done
+
+	jq_args=$(to_jq_args "$@")
+
+	echo "$jq_args"
+
 	jq "$jq_args" "$1".run.json > /tmp/json_config && mv /tmp/json_config "$1".run.json
+
 	# Clean previous generated .py files
 	rm "$1"_tx.py
 	rm "$1"_rx.py
@@ -47,9 +43,23 @@ if [ -f "$1"_tx.grc ] && [ -f "$1"_rx.grc ]; then
 	echo "TX run with pid=$rx_pid"
 	trap 'handle_sigint_txrx' 2
 else
-	grcc "$1".grc
-	python3 "$1".py > "$2/$1".log &
+
+	if [ -f "$1" ]; then
+		grc_fname="$1"
+	else
+		grc_fname="$1".grc
+	fi
+
+	grc_dir="$(dirname $grc_fname)"
+
+	grc_basename="$(basename -- $grc_fname)"
+	grc_basename="${grc_basename%.*}"
+
+	grcc -o "$grc_dir" "$grc_fname"
+
+	python3 "$grc_dir/$grc_basename".py > "$2/$grc_basename".log &
 	pid=$!
+
 	echo "Run with pid=$pid"
 	trap 'handle_sigint' 2
 fi

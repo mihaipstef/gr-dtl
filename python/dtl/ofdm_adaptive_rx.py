@@ -22,7 +22,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(6, 6, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_gr_complex, gr.sizeof_float]))
+                                gr.io_signature.makev(7, 7, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_gr_complex, gr.sizeof_float]))
         self.message_port_register_hier_out("monitor")
 
         self.fft_len = config.fft_len
@@ -39,6 +39,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.frame_length = config.frame_length
         self.constellations = config.constellations
         self.frame_store_fname = f"{config.frame_store_folder}/rx.dat"
+        self.use_sync_correct = config.use_sync_correct
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -76,7 +77,15 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self, 0), self.sync_detect)
         self.connect((self, 0), self.delay, (self.mixer, 0), (hpd, 0))
         self.connect((self.sync_detect, 0), self.oscillator, (self.mixer, 1))
-        self.connect((self.sync_detect, 1), sync_correct, (hpd, 1))
+        if self.use_sync_correct:
+            self.connect((self.sync_detect, 1), sync_correct, (hpd, 1))
+            self.connect((self.sync_detect, 1), (self, 2))
+            self.connect(sync_correct, (self, 3))
+        else:
+            self.connect((self.sync_detect, 1), (hpd, 1))
+            self.connect((self.sync_detect, 1), (self, 2))
+            self.connect((self.sync_detect, 1), (self, 3))
+
 
         # Header path
         header_fft = fft.fft_vcc(self.fft_len, True, (), True)
@@ -178,10 +187,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
             (self, 0)
         )
 
-        self.connect(sync_correct, (self, 2))
-        self.connect((self.payload_eq, 0), (self, 3))
-        self.connect((self.payload_eq, 1), (self, 4))
-        self.connect((self.sync_detect, 0), (self, 5))
+        self.connect((self.payload_eq, 0), (self, 4))
+        self.connect((self.payload_eq, 1), (self, 5))
+        self.connect((self.sync_detect, 0), (self, 6))
 
     def _setup_feedback_tx(self):
         self.feedback_sps = 2

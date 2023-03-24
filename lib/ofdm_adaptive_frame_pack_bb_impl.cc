@@ -87,8 +87,8 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
         monitor_msg, PAYLOAD_CRC_FAILED_KEY, pmt::from_float(d_crc.get_failed()));
     message_port_pub(MONITOR_PORT, monitor_msg);
 
-    DTL_LOG_DEBUG("d_bits_per_symbol: {}, n_written: {}, "
-                  "ninput_items: {}, crc_ok: {}",
+    DTL_LOG_DEBUG("d_bits_per_symbol={}, n_written={}, "
+                  "ninput_items={}, crc_ok={}",
                   d_bits_per_symbol,
                   n_written,
                   ninput_items[0],

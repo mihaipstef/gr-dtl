@@ -45,7 +45,7 @@ blocks:
     rangeType: float
     showports: 'False'
     start: '0'
-    step: '0.001'
+    step: '0.000001'
     stop: '0.25'
     value: '0'
     widget: counter_slider
@@ -53,7 +53,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [952, 4.0]
+    coordinate: [944, 4.0]
     rotation: 0
     state: true
 - name: direct_channel_noise_level
@@ -70,7 +70,7 @@ blocks:
     start: '0'
     step: '0.0001'
     stop: '3.7'
-    value: '0'
+    value: '0.1'
     widget: counter_slider
   states:
     bus_sink: false
@@ -176,6 +176,60 @@ blocks:
     coordinate: [296, 732.0]
     rotation: 0
     state: true
+- name: blocks_file_sink_0
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    comment: ''
+    file: /tmp/freq_offset.dat
+    type: float
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [368, 1100.0]
+    rotation: 0
+    state: true
+- name: blocks_file_sink_1
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    comment: ''
+    file: /tmp/sync_detect.dat
+    type: byte
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [312, 796.0]
+    rotation: 0
+    state: true
+- name: blocks_file_sink_1_0
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    comment: ''
+    file: /tmp/sync_correct.dat
+    type: byte
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [352, 892.0]
+    rotation: 0
+    state: true
 - name: blocks_message_debug_0
   id: blocks_message_debug
   parameters:
@@ -187,7 +241,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 368.0]
+    coordinate: [1736, 480.0]
     rotation: 0
     state: true
 - name: blocks_throttle_0
@@ -248,11 +302,11 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [320, 308.0]
+    coordinate: [472, 308.0]
     rotation: 180
     state: true
-- name: channels_selective_fading_model_0
-  id: channels_selective_fading_model
+- name: channels_selective_fading_model2_0
+  id: channels_selective_fading_model2
   parameters:
     K: '4.0'
     LOS: 'False'
@@ -260,9 +314,11 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    delays: (0)
+    delay_maxdev: (0.5,0.9)
+    delay_std: (1e-4,1e-4)
+    delays: (1.0,2.7)
     fDTs: 0/samp_rate
-    mags: (1)
+    mags: (1,0.8)
     maxoutbuf: '0'
     minoutbuf: '0'
     ntaps: '8'
@@ -271,9 +327,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1048, 148.0]
+    coordinate: [1024, 124.0]
     rotation: 0
-    state: enabled
+    state: true
 - name: dtl_ofdm_adaptive_rx_0
   id: dtl_ofdm_adaptive_rx
   parameters:
@@ -281,7 +337,6 @@ blocks:
     alias: ''
     comment: ''
     cp_len: '16'
-    debug: 'False'
     fft_len: '64'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -290,11 +345,12 @@ blocks:
     pilot_symbols: ''
     rolloff: '0'
     scramble_bits: 'False'
+    use_sync_correct: 'True'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1344, 104.0]
+    coordinate: [1456, 56.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_tx_0
@@ -304,7 +360,6 @@ blocks:
     alias: ''
     comment: ''
     cp_len: '16'
-    debug: 'False'
     fft_len: '64'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -317,7 +372,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [336, 180.0]
+    coordinate: [368, 188.0]
     rotation: 0
     state: true
 - name: qtgui_const_sink_x_0
@@ -734,7 +789,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 716.0]
+    coordinate: [536, 716.0]
     rotation: 0
     state: true
 - name: qtgui_time_sink_x_0_0_0_0
@@ -831,9 +886,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [360, 836.0]
+    coordinate: [360, 1004.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: virtual_sink_1
   id: virtual_sink
   parameters:
@@ -844,7 +899,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1656, 100.0]
+    coordinate: [1792, 92.0]
     rotation: 0
     state: true
 - name: virtual_sink_1_0
@@ -857,7 +912,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1672, 244.0]
+    coordinate: [1792, 300.0]
     rotation: 0
     state: true
 - name: virtual_sink_1_0_0
@@ -870,7 +925,20 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1680, 308.0]
+    coordinate: [1744, 356.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_1_0_1
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: payload_cnst_det
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1808, 252.0]
     rotation: 0
     state: true
 - name: virtual_sink_2
@@ -883,20 +951,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1656, 52.0]
-    rotation: 0
-    state: true
-- name: virtual_sink_2_0
-  id: virtual_sink
-  parameters:
-    alias: ''
-    comment: ''
-    stream_id: payload_cnst_decided
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1656, 196.0]
+    coordinate: [1768, 28.0]
     rotation: 0
     state: true
 - name: virtual_sink_2_0_0
@@ -904,12 +959,25 @@ blocks:
   parameters:
     alias: ''
     comment: ''
-    stream_id: frame_trigger
+    stream_id: frame_detect
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1656, 148.0]
+    coordinate: [1800, 140.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_2_0_0_0
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: trigger_correct
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1816, 196.0]
     rotation: 0
     state: true
 - name: virtual_source_0
@@ -922,7 +990,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [520, 340.0]
+    coordinate: [704, 340.0]
     rotation: 180
     state: true
 - name: virtual_source_0_0
@@ -943,7 +1011,7 @@ blocks:
   parameters:
     alias: ''
     comment: ''
-    stream_id: frame_trigger
+    stream_id: frame_detect
   states:
     bus_sink: false
     bus_source: false
@@ -961,7 +1029,20 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 852.0]
+    coordinate: [72, 1020.0]
+    rotation: 0
+    state: true
+- name: virtual_source_0_0_0_1
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: trigger_correct
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [64, 908.0]
     rotation: 0
     state: true
 - name: virtual_source_1
@@ -977,22 +1058,6 @@ blocks:
     coordinate: [72, 540.0]
     rotation: 0
     state: true
-- name: zeromq_pub_msg_sink_0
-  id: zeromq_pub_msg_sink
-  parameters:
-    address: tcp://0.0.0.0:5552
-    affinity: ''
-    alias: ''
-    bind: 'True'
-    comment: ''
-    timeout: '100'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1608, 516.0]
-    rotation: 0
-    state: true
 
 connections:
 - [analog_sig_source_x_0, '0', blocks_char_to_float_0, '0']
@@ -1001,22 +1066,27 @@ connections:
 - [blocks_char_to_float_0_0, '0', qtgui_time_sink_x_0_0, '0']
 - [blocks_char_to_float_0_1, '0', qtgui_time_sink_x_0_0_0, '0']
 - [blocks_throttle_0, '0', channels_channel_model_0, '0']
-- [channels_channel_model_0, '0', channels_selective_fading_model_0, '0']
+- [channels_channel_model_0, '0', channels_selective_fading_model2_0, '0']
 - [channels_channel_model_0_0, '0', dtl_ofdm_adaptive_tx_0, '1']
-- [channels_selective_fading_model_0, '0', dtl_ofdm_adaptive_rx_0, '0']
+- [channels_selective_fading_model2_0, '0', dtl_ofdm_adaptive_rx_0, '0']
+- [channels_selective_fading_model2_0, taps, blocks_message_debug_0, store]
 - [dtl_ofdm_adaptive_rx_0, '0', virtual_sink_2, '0']
 - [dtl_ofdm_adaptive_rx_0, '1', virtual_sink_1, '0']
 - [dtl_ofdm_adaptive_rx_0, '2', virtual_sink_2_0_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '3', virtual_sink_2_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '4', virtual_sink_1_0, '0']
-- [dtl_ofdm_adaptive_rx_0, '5', virtual_sink_1_0_0, '0']
-- [dtl_ofdm_adaptive_rx_0, monitor, zeromq_pub_msg_sink_0, in]
+- [dtl_ofdm_adaptive_rx_0, '3', virtual_sink_2_0_0_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '4', virtual_sink_1_0_1, '0']
+- [dtl_ofdm_adaptive_rx_0, '5', virtual_sink_1_0, '0']
+- [dtl_ofdm_adaptive_rx_0, '6', virtual_sink_1_0_0, '0']
+- [dtl_ofdm_adaptive_rx_0, monitor, blocks_message_debug_0, store]
 - [dtl_ofdm_adaptive_tx_0, '0', blocks_throttle_0, '0']
 - [dtl_ofdm_adaptive_tx_0, monitor, blocks_message_debug_0, store]
 - [virtual_source_0, '0', channels_channel_model_0_0, '0']
 - [virtual_source_0_0, '0', qtgui_const_sink_x_0, '0']
 - [virtual_source_0_0_0, '0', blocks_char_to_float_0_1, '0']
+- [virtual_source_0_0_0, '0', blocks_file_sink_1, '0']
+- [virtual_source_0_0_0_0, '0', blocks_file_sink_0, '0']
 - [virtual_source_0_0_0_0, '0', qtgui_time_sink_x_0_0_0_0, '0']
+- [virtual_source_0_0_0_1, '0', blocks_file_sink_1_0, '0']
 - [virtual_source_1, '0', blocks_char_to_float_0_0, '0']
 
 metadata:
