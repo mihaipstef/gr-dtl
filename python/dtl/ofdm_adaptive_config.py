@@ -50,3 +50,4 @@ class ofdm_adaptive_tx_config(ofdm_adaptive_config):
 @dc.dataclass
 class ofdm_adaptive_rx_config(ofdm_adaptive_config):
     sync_threshold: float = 0.95
+    use_sync_correct: bool = True

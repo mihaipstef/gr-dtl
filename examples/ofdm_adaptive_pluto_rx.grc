@@ -103,7 +103,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 180.0]
+    coordinate: [944, 212.0]
     rotation: 0
     state: true
 - name: blocks_null_sink_0_0
@@ -130,7 +130,6 @@ blocks:
     alias: ''
     comment: ''
     cp_len: '16'
-    debug: 'False'
     fft_len: '64'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -220,9 +219,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 100.0]
+    coordinate: [1056, 108.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: qtgui_const_sink_x_0
   id: qtgui_const_sink_x
   parameters:

@@ -37,7 +37,12 @@ parameters:
     default: 'False'
     options: ['False', 'True']
     option_labels: ['No', 'Yes']
-
+-   id: use_sync_correct
+    label: Use sync correction
+    dtype: enum
+    default: 'True'
+    options: ['False', 'True']
+    option_labels: ['No', 'Yes']
 
 asserts:
 - ${ fft_len > 0 }
@@ -54,6 +59,8 @@ outputs:
     dtype: byte
 -   domain: stream
     dtype: complex
+-   domain: stream
+    dtype: byte
 -   domain: stream
     dtype: byte
 -   domain: stream
@@ -81,7 +88,8 @@ templates:
             pilot_symbols=${pilot_symbols},
             % endif
             rolloff=${rolloff}, 
-            scramble_bits=${scramble_bits}
+            scramble_bits=${scramble_bits},
+            use_sync_correct=${use_sync_correct}
         )
 
 file_format: 1
