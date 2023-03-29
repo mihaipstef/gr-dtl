@@ -261,7 +261,7 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     notify_missed: 'False'
-    payloadsize: '1316'
+    payloadsize: '10'
     port: '9000'
     src_zeros: 'False'
     type: byte

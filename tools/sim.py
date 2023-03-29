@@ -16,7 +16,7 @@ import signal
 
 class ofdm_adaptive_sim(gr.top_block):
 
-    def __init__(self, config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True):
+    def __init__(self, config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20):
         gr.top_block.__init__(self, "OFDM Adaptive Simulator", catch_exceptions=True)
         self.samp_rate = samp_rate = 200000
         self.n_bytes = n_bytes = 100
@@ -28,7 +28,7 @@ class ofdm_adaptive_sim(gr.top_block):
         self.use_sync_correct = use_sync_correct
         self.max_doppler = 0
         self.propagation_paths = propagation_paths
-        self.frame_length = 20
+        self.frame_length = frame_length
         self.frame_samples = (self.frame_length + 3) * (self.fft_len + self.cp_len)
 
         ##################################################
@@ -42,14 +42,15 @@ class ofdm_adaptive_sim(gr.top_block):
             rolloff=0,
             scramble_bits=False,
             stop_no_input=False,
-            frame_length=self.frame_length
+            frame_length=self.frame_length,
         )
         self.rx = dtl.ofdm_adaptive_rx.from_parameters(
             fft_len=self.fft_len,
             cp_len=self.cp_len,
             rolloff=0,
             scramble_bits=False,
-            use_sync_correct=self.use_sync_correct
+            use_sync_correct=self.use_sync_correct,
+            frame_length=self.frame_length,
         )
         delays, delays_std, delays_maxdev, mags = zip(*self.propagation_paths)
         self.fadding_channel = channels.selective_fading_model2(8, self.max_doppler, False, 4.0, 0, delays, delays_std, delays_maxdev, mags, 8)
@@ -89,7 +90,7 @@ class ofdm_adaptive_sim(gr.top_block):
 
         self.connect((self.rx, 0), blocks.null_sink(gr.sizeof_char))
         self.connect((self.rx, 2), blocks.null_sink(gr.sizeof_char))
-        self.connect((self.rx, 4), blocks.null_sink(gr.sizeof_gr_complex))
+        self.connect((self.rx, 5), blocks.null_sink(gr.sizeof_gr_complex))
         self.msg_connect((self.rx, "monitor"), (blocks.message_debug(True), "store"))
         self.msg_connect((self.tx, "monitor"), (self.msg_debug, "store"))
 
@@ -126,10 +127,15 @@ def main(
     config_file="sim.run.json",
     sent_frames=None,
     propagation_paths = [()],
-    use_sync_correct = True):
+    use_sync_correct = True,
+    frame_length = 20):
 
     tb = top_block_cls(
-        config_file=config_file, sent_frames=sent_frames, propagation_paths=propagation_paths, use_sync_correct=use_sync_correct)
+        config_file=config_file,
+        sent_frames=sent_frames,
+        propagation_paths=propagation_paths,
+        use_sync_correct=use_sync_correct,
+        frame_length=frame_length)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()

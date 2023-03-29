@@ -77,6 +77,10 @@ for i, e in enumerate(experiments):
         if "use_sync_correct" in e:
             use_sync_correct = e["use_sync_correct"]
 
+        frame_length = 20
+        if "frame_length" in e:
+            frame_length = e["frame_length"]
+
         with open(experiment_fname, "w") as f:
             f.write(json.dumps(e))
 
@@ -85,7 +89,12 @@ for i, e in enumerate(experiments):
                 f.write(json.dumps(e["config"]))
 
         with capture_stdout(log_store_fname) as _:
-            sim.main(config_file=config_fname, sent_frames=sent_frames, propagation_paths=propagation_paths, use_sync_correct=use_sync_correct)
+            sim.main(
+                config_file=config_fname,
+                sent_frames=sent_frames,
+                propagation_paths=propagation_paths,
+                use_sync_correct=use_sync_correct,
+                frame_length=frame_length)
             #pass
 
         result = subprocess.check_output([f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])
