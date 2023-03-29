@@ -121,7 +121,7 @@ blocks:
     pilot_symbols: ''
     rolloff: '0'
     scramble_bits: 'False'
-    use_sync_correct: 'False'
+    use_sync_correct: 'True'
   states:
     bus_sink: false
     bus_source: false
@@ -194,7 +194,7 @@ blocks:
     alias: ''
     comment: ''
     header: '0'
-    payloadsize: '1316'
+    payloadsize: '10'
     port: '9001'
     send_eof: 'False'
     type: byte
