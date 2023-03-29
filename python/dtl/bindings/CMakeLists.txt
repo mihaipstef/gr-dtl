@@ -42,7 +42,7 @@ list(APPEND dtl_python_files
     log_python.cc
     ofdm_adaptive_frame_detect_bb_python.cc
     zmq_msq_pub_python.cc
-    python_bindings.cc)
+    ofdm_adaptive_constellation_metric_vcvf_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..

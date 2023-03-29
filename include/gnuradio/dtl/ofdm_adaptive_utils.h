@@ -30,6 +30,8 @@ enum class constellation_type_t {
 typedef std::map<constellation_type_t, gr::digital::constellation_sptr>
     constellation_dictionary_t;
 
+gr::digital::constellation_sptr get_constellation(constellation_type_t constellation_type);
+
 std::size_t get_bits_per_symbol(constellation_type_t constellation);
 
 std::pair<constellation_type_t, std::size_t>
