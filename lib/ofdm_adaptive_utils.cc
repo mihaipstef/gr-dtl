@@ -61,6 +61,20 @@ std::map<constellation_type_t, std::size_t> _bits_per_symbol = {
 };
 
 
+gr::digital::constellation_sptr DTL_API get_constellation(constellation_type_t constellation_type)
+{
+    static constellation_dictionary_t all_constellations;
+    if (auto it = all_constellations.find(constellation_type);
+        it != all_constellations.end()) {
+            return it->second;
+    }
+    auto new_cnst = create_constellation(constellation_type);
+    if (new_cnst) {
+        all_constellations[constellation_type] = new_cnst;
+    }
+    return new_cnst;
+}
+
 std::size_t DTL_API get_bits_per_symbol(constellation_type_t constellation_type)
 {
     if (auto it = _bits_per_symbol.find(constellation_type);

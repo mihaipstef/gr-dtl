@@ -35,6 +35,7 @@ namespace py = pybind11;
     void bind_log(py::module& m);
     void bind_ofdm_adaptive_frame_detect_bb(py::module& m);
     void bind_zmq_msq_pub(py::module& m);
+    void bind_ofdm_adaptive_constellation_metric_vcvf(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -77,5 +78,6 @@ PYBIND11_MODULE(dtl_python, m)
     bind_log(m);
     bind_ofdm_adaptive_frame_detect_bb(m);
     bind_zmq_msq_pub(m);
+    bind_ofdm_adaptive_constellation_metric_vcvf(m);
     // ) END BINDING_FUNCTION_CALLS
 }

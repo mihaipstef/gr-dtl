@@ -15,6 +15,9 @@
  */
 
 
+static const char* __doc_gr_dtl_get_constellation = R"doc()doc";
+
+
 static const char* __doc_gr_dtl_get_bits_per_symbol = R"doc()doc";
 
 
