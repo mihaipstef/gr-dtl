@@ -1,7 +1,7 @@
 file_format: 1
 id: dtl_zmq_msq_pub
 label: zmq_msq_pub
-category: '[dtl]'
+category: '[DTL]'
 
 parameters:
 -   id: address
