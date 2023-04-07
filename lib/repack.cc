@@ -11,21 +11,33 @@
 namespace gr {
 namespace dtl {
 
-repack::repack(): d_out_index(0), d_in_index(0)
+repack::repack(unsigned char bits_in_byte, unsigned char bits_out_byte)
+    : d_out_index(0),
+      d_in_index(0),
+      d_bits_in_byte(bits_in_byte),
+      d_bits_out_byte(bits_out_byte)
 {
+    if (d_bits_out_byte < d_bits_in_byte) {
+        std::runtime_error("Set repack for pack operation");
+    }
+}
+
+void repack::set_bits_per_byte(unsigned char bits_in_byte, unsigned char bits_out_byte)
+{
+    d_bits_in_byte = bits_in_byte;
+    d_bits_out_byte = bits_out_byte;
 }
 
 int repack::repack_lsb_first(unsigned char const* in,
-                     size_t n_in,
-                     unsigned char* out,
-                     size_t bits_per_byte,
-                     bool unpack)
+                             size_t n_in,
+                             unsigned char* out,
+                             bool unpack)
 {
-    int bits_per_in_byte = bits_per_byte;
-    int bits_per_out_byte = 8;
+    int bits_per_in_byte = d_bits_in_byte;
+    int bits_per_out_byte = d_bits_out_byte;
     if (unpack) {
-        bits_per_in_byte = 8;
-        bits_per_out_byte = bits_per_byte;
+        bits_per_in_byte = d_bits_out_byte;
+        bits_per_out_byte = d_bits_in_byte;
     }
 
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;
@@ -62,17 +74,15 @@ int repack::repack_lsb_first(unsigned char const* in,
 
 
 int repack::repack_msb_first(unsigned char const* in,
-                     size_t n_in,
-                     unsigned char* out,
-                     size_t bits_per_byte,
-                     bool unpack)
+                             size_t n_in,
+                             unsigned char* out,
+                             bool unpack)
 {
-    int bits_per_in_byte = bits_per_byte;
-    int bits_per_out_byte = 8;
+    int bits_per_in_byte = d_bits_in_byte;
+    int bits_per_out_byte = d_bits_out_byte;
     if (unpack) {
-        bits_per_in_byte = 8;
-        bits_per_out_byte = bits_per_byte;
-    } else {
+        bits_per_in_byte = d_bits_out_byte;
+        bits_per_out_byte = d_bits_in_byte;
     }
 
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;

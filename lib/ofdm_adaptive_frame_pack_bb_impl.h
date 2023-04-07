@@ -22,7 +22,7 @@ class ofdm_adaptive_frame_pack_bb_impl : public ofdm_adaptive_frame_pack_bb
 private:
     unsigned char d_bits_per_symbol;
     std::string d_len_tag_key;
-    repack repacker;
+    repack d_repacker;
     crc_util d_crc;
     frame_file_store d_frame_store;
     pmt::pmt_t d_packet_number_key;

@@ -22,7 +22,6 @@ private:
     unsigned long d_count;
     unsigned long d_failed;
 
-
 public:
     crc_util(std::size_t len,
              unsigned long poly,

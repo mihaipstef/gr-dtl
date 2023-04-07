@@ -117,7 +117,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
-    repack repacker;
     int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
@@ -149,7 +148,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         if (frame_bits % bps) {
             ++expected_frame_symbols;
         }
-        repacker.set_indexes(0, 0);
+        repack repacker(bps, 8);
 
         // If there is something to consume...
         if (read_index < ninput_items[0]) {
@@ -170,7 +169,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                         const_cast<const unsigned char*>(&d_frame_buffer[0]),
                         frame_in_bytes + d_crc.get_crc_len(),
                         &out[write_index],
-                        bps,
                         true);
                     assert(frame_out_symbols == expected_frame_symbols);
                     d_waiting_full_frame = false;
@@ -198,7 +196,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                             const_cast<const unsigned char*>(&d_frame_buffer[0]),
                             expected_frame_symbols,
                             &out[write_index],
-                            bps,
                             true);
                         // update indexes
                         read_index += frame_payload;
