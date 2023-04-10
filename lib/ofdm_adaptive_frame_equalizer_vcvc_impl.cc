@@ -223,7 +223,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                      nitems_written(0),
                      feedback_constellation_key(),
                      pmt::from_long(static_cast<unsigned char>(feedback)));
-        add_item_tag(0, nitems_written(0), feedback_fec_key(), pmt::from_long(0));
+        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(0));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

@@ -104,7 +104,7 @@ bool ofdm_adaptive_feedback_format::parse_feedback(int nbits_in,
                 d_feedback_ok = true;
                 pmt::pmt_t parsed_feedback = pmt::make_dict();
                 parsed_feedback = pmt::dict_add(parsed_feedback, feedback_constellation_key(), pmt::from_long(constellation_type));
-                parsed_feedback = pmt::dict_add(parsed_feedback, feedback_fec_key(), pmt::from_long(fec_scheme));
+                parsed_feedback = pmt::dict_add(parsed_feedback, fec_feedback_key(), pmt::from_long(fec_scheme));
                 info.push_back(parsed_feedback);
             }
             DTL_LOG_DEBUG("Parsed feedback: {} ({})", d_feedback_ok, nbits_in);

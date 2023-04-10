@@ -48,7 +48,19 @@ static const char* __doc_gr_dtl_estimated_snr_tag_key = R"doc()doc";
 static const char* __doc_gr_dtl_feedback_constellation_key = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_feedback_fec_key = R"doc()doc";
-
-
 static const char* __doc_gr_dtl_payload_length_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_fec_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_fec_feedback_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_fec_codeword_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_fec_offset_key = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_fec_padding_key = R"doc()doc";

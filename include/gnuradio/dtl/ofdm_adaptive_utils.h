@@ -54,9 +54,18 @@ pmt::pmt_t estimated_snr_tag_key();
 
 pmt::pmt_t feedback_constellation_key();
 
-pmt::pmt_t feedback_fec_key();
-
 pmt::pmt_t payload_length_key();
+
+pmt::pmt_t fec_key();
+
+pmt::pmt_t fec_feedback_key();
+
+pmt::pmt_t fec_codeword_key();
+
+pmt::pmt_t fec_offset_key();
+
+pmt::pmt_t fec_padding_key();
+
 
 } // namespace dtl
 } // namespace gr

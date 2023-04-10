@@ -68,15 +68,20 @@ struct dtl_logger_wrapper {
         }                                                                   \
     }
 
-#define DTL_LOG_BYTES(msg, buffer, length)                             \
-    {                                                                  \
-        std::stringstream ss;                                          \
-        for (int i = 0; i < length; ++i) {                             \
-            ss << "," << std::setfill('0') << std::setw(2) << std::hex \
-               << (int)buffer[i];                                      \
-        }                                                              \
-        _logger.logger->debug("{}: {}", msg, ss.str());                \
+inline void _append_buf_to_stream(std::stringstream& ss, unsigned char* buf, int len)
+{
+    for (int i = 0; i < len; ++i) {
+        ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buf[i];
     }
+}
+
+#define DTL_LOG_BYTES(msg, buffer, length)              \
+    {                                                   \
+        std::stringstream ss;                           \
+        _append_buf_to_stream(ss, buffer, length);      \
+        _logger.logger->debug("{}: {}", msg, ss.str()); \
+    }
+
 
 } // namespace dtl
 } // namespace gr

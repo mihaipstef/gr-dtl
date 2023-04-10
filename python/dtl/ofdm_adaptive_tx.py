@@ -40,6 +40,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.constellations = config.constellations
         self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
         self.stop_no_input = config.stop_no_input
+        self.fec = config.fec
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -51,7 +52,12 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
 
         self._setup_direct_tx()
+        if self.fec:
+            self._setup_fec()
         self._setup_feedback_rx()
+
+    def _setup_fec(self):
+        pass
 
     def _setup_direct_tx(self):
 
@@ -63,8 +69,13 @@ class ofdm_adaptive_tx(gr.hier_block2):
         header_constellation = digital.constellation_bpsk()
         header_mod = digital.chunks_to_symbols_bc(
             header_constellation.points())
-        formatter_object = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, 1, self.frame_length,
+
+        header_len = 1
+        if self.fec:
+            header_len = 2
+
+        header = dtl.ofdm_adaptive_packet_header(
+            self.occupied_carriers, header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,
@@ -72,7 +83,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
             scramble_header=self.scramble_bits
         )
         header_gen = digital.packet_headergenerator_bb(
-            formatter_object.base(), self.packet_length_tag_key)
+            header.base(), self.packet_length_tag_key)
         header_payload_mux = blocks.tagged_stream_mux(
             itemsize=gr.sizeof_gr_complex * 1,
             lengthtagname=self.packet_length_tag_key,
