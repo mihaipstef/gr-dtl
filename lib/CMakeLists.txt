@@ -28,7 +28,7 @@ list(APPEND dtl_sources
     crc_util.cc
     zmq_msq_pub_impl.cc
     frame_file_store.cc
-    )
+    ofdm_adaptive_constellation_metric_vcvf_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
