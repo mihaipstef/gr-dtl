@@ -43,7 +43,7 @@ int repack::repack_lsb_first(unsigned char const* in,
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;
 
     if (((n_in * bits_per_in_byte) % bits_per_out_byte) != 0) {
-        bytes_to_write += static_cast<int>(unpack);
+        bytes_to_write += 1;//static_cast<int>(unpack);
     }
 
     size_t n_read = 0;

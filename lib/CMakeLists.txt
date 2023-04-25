@@ -29,7 +29,12 @@ list(APPEND dtl_sources
     zmq_msq_pub_impl.cc
     frame_file_store.cc
     ofdm_adaptive_constellation_metric_vcvf_impl.cc
-    )
+    ofdm_adaptive_fec_frame_bvb_impl.cc
+    ofdm_adaptive_fec_decoder_impl.cc
+    ldpc_enc.cc
+    ldpc_dec.cc
+    tb_encoder.cc
+    ofdm_adaptive_frame_to_stream_vbb_impl.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -43,6 +48,7 @@ add_library(gnuradio-dtl SHARED ${dtl_sources})
 target_link_libraries(gnuradio-dtl gnuradio::gnuradio-runtime)
 target_link_libraries(gnuradio-dtl gnuradio-digital)
 target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
+target_link_libraries(gnuradio-dtl gnuradio-fec)
 
 target_include_directories(gnuradio-dtl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>

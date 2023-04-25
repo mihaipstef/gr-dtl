@@ -56,8 +56,10 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self._setup_fec()
         self._setup_feedback_rx()
 
+
     def _setup_fec(self):
         pass
+
 
     def _setup_direct_tx(self):
 
@@ -141,6 +143,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
+
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol

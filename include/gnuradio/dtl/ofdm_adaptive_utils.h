@@ -60,11 +60,15 @@ pmt::pmt_t fec_key();
 
 pmt::pmt_t fec_feedback_key();
 
-pmt::pmt_t fec_codeword_key();
+pmt::pmt_t fec_tb_key();
 
 pmt::pmt_t fec_offset_key();
 
-pmt::pmt_t fec_padding_key();
+pmt::pmt_t fec_tb_payload_key();
+
+pmt::pmt_t fec_tb_len_key();
+
+pmt::pmt_t fec_tb_index_key();
 
 
 } // namespace dtl

@@ -96,12 +96,14 @@ int ofdm_adaptive_packet_header::add_fec_header(const std::vector<tag_t>& tags,
 {
 
     static std::map<pmt::pmt_t, tuple<int, int>> _fec_tags_to_header = {
-        { fec_codeword_key(),
-          make_tuple(0, 16) }, // add codeword numbers (bit 32-47: 16 bits)
+        { fec_tb_key(),
+          make_tuple(0, 16) },                          // TB id numbers (bit 32-47: 16 bits)
         { fec_offset_key(),
-          make_tuple(16, 16) },           // add first codeword index (bit 48-63: 16 bits)
-        { fec_key(), make_tuple(32, 8) }, // add FEC scheme (bit 64-71: 8 bits)
-        { fec_padding_key(), make_tuple(40, 16) }, // add FEC transport block padding(bit 72-87: 16 bits)
+          make_tuple(16, 12) },                         // TB offset (bit 48-59: 12 bits)
+        { fec_tb_index_key(),
+          make_tuple(28, 4) },                          // TB index (bit 60-63: 4 bits)
+        { fec_key(), make_tuple(32, 8) },               // FEC scheme (bit 64-71: 8 bits)
+        { fec_tb_payload_key(), make_tuple(40, 16) },   // FEC transport block padding(bit 72-87: 16 bits)
 
     };
 
@@ -190,10 +192,11 @@ int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
                                                   vector<unsigned char>& crc_buf)
 {
     static vector<tuple<int, int, pmt::pmt_t>> fec_header_to_tags = {
-        make_tuple(0, 16, fec_codeword_key()),
-        make_tuple(16, 16, fec_offset_key()),
+        make_tuple(0, 16, fec_tb_key()),
+        make_tuple(16, 12, fec_offset_key()),
+        make_tuple(28, 4, fec_tb_index_key()),
         make_tuple(32, 8, fec_key()),
-        make_tuple(40, 16, fec_padding_key()),
+        make_tuple(40, 16, fec_tb_payload_key()),
     };
     int fec_header_start = crc_buf.size();
     crc_buf.resize(fec_header_start + FEC_HEADER_LEN);

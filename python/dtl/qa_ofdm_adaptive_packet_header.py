@@ -29,7 +29,7 @@ try:
         fec_key,
         fec_codeword_key,
         fec_offset_key,
-        fec_padding_key,
+        fec_shortening_key,
     )
 except ImportError:
     import os
@@ -43,7 +43,7 @@ except ImportError:
         fec_key,
         fec_codeword_key,
         fec_offset_key,
-        fec_padding_key,
+        fec_shortening_key,
     )
 
 
@@ -175,7 +175,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = fec_padding_key()
+            tag.key = fec_shortening_key()
             tag.value = pmt.from_long(f[3])
             tags.append(tag)
             offset = offset + len(p)
@@ -228,7 +228,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     pmt.symbol_to_string(fec_codeword_key()): fec[i][0],
                     pmt.symbol_to_string(fec_offset_key()): fec[i][1],
                     pmt.symbol_to_string(fec_key()): fec[i][2],
-                    pmt.symbol_to_string(fec_padding_key()): fec[i][3],
+                    pmt.symbol_to_string(fec_shortening_key()): fec[i][3],
                 }
             )
 

@@ -9,3 +9,11 @@
 ./include/gnuradio/dtl/ofdm_adaptive_frame_snr.hError occurred while running CASTXML xml file does not exist
 ./include/gnuradio/dtl/ofdm_adaptive_frame_bb.hError occurred while running CASTXML xml file does not exist
 ./include/gnuradio/dtl/ofdm_adaptive_constellation_metric_vcvf.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_fec_decoder.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_fec_frame_bb.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_fec_frame_bb.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_fec_frame_bb.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_fec_frame_bb.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/fec.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/fec.hUnable to find declaration. Matcher: [(decl type==namespace_t) and (name==gr)]
+./include/gnuradio/dtl/ofdm_adaptive_fec_frame_bb.hError occurred while running CASTXML xml file does not exist

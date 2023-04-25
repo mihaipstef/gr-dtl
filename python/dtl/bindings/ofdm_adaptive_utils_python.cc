@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(83741df3dbadefd6f455033bc62355ba)                     */
+/* BINDTOOL_HEADER_FILE_HASH(b584ca22b3be5ff25269b4022ba7fdef)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -108,11 +108,17 @@ void bind_ofdm_adaptive_utils(py::module& m)
     m.def("fec_feedback_key", &::gr::dtl::fec_feedback_key, D(fec_feedback_key));
 
 
-    m.def("fec_codeword_key", &::gr::dtl::fec_codeword_key, D(fec_codeword_key));
+    m.def("fec_tb_key", &::gr::dtl::fec_tb_key, D(fec_tb_key));
 
 
     m.def("fec_offset_key", &::gr::dtl::fec_offset_key, D(fec_offset_key));
 
 
-    m.def("fec_padding_key", &::gr::dtl::fec_padding_key, D(fec_padding_key));
+    m.def("fec_tb_payload_key", &::gr::dtl::fec_tb_payload_key, D(fec_tb_payload_key));
+
+
+    m.def("fec_tb_len_key", &::gr::dtl::fec_tb_len_key, D(fec_tb_len_key));
+
+
+    m.def("fec_tb_index_key", &::gr::dtl::fec_tb_index_key, D(fec_tb_index_key));
 }

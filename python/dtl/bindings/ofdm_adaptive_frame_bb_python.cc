@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(2cbe945194a30f45e2bc5371c2928b2c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(e8939ca1e1b4caee88ee433218f21c19)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -45,7 +45,7 @@ void bind_ofdm_adaptive_frame_bb(py::module& m)
              py::arg("frame_len"),
              py::arg("n_payload_carriers"),
              py::arg("frames_fname") = "",
-             py::arg("stop_no_input") = false,
+             py::arg("max_empty_frames") = -1,
              D(ofdm_adaptive_frame_bb, make))
 
 
