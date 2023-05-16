@@ -23,6 +23,7 @@ try:
     get_bits_per_symbol,
     ofdm_adaptive_fec_frame_bvb,
     ofdm_adaptive_frame_to_stream_vbb,
+    ofdm_adaptive_stream_to_frame_fvf,
     make_ldpc_encoders,
   )
 except ImportError:
@@ -36,6 +37,7 @@ except ImportError:
         get_bits_per_symbol,
         ofdm_adaptive_fec_frame_bvb,
         ofdm_adaptive_frame_to_stream_vbb,
+        ofdm_adaptive_stream_to_frame_fvf,
         make_ldpc_encoders,
   )
 
@@ -78,12 +80,22 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         )
         enc.process_feedback(feedback)
 
-        to_stream = ofdm_adaptive_frame_to_stream_vbb(self.frame_len * self.ofdm_sym_capacity, "")
+        to_stream = ofdm_adaptive_frame_to_stream_vbb(self.frame_len * self.ofdm_sym_capacity, self.len_key)
+        to_frame = ofdm_adaptive_stream_to_frame_fvf(self.frame_len * self.ofdm_sym_capacity, self.len_key)
 
-        sink = blocks.vector_sink_b()
+        sink = blocks.vector_sink_f(self.frame_len * self.ofdm_sym_capacity)
 
-        self.tb.connect(to_stream, blocks.tag_debug(1, "tags"))
-        self.tb.connect(src, enc, to_stream, sink)
+        self.tb.connect(to_stream, blocks.tag_debug(1, "tags1"))
+        self.tb.connect(to_frame, blocks.tag_debug(self.frame_len * self.ofdm_sym_capacity * gr.sizeof_float, "tags2"))
+
+        self.tb.connect(
+            src,
+            enc,
+            to_stream,
+            blocks.char_to_float(1, 1),
+            to_frame,
+            sink
+        )
 
         # set up fg
         self.tb.run()

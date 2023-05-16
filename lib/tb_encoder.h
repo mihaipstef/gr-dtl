@@ -44,4 +44,4 @@ public:
 } // namespace dtl
 } // namespace gr
 
-#endif /*INCLUDED_DTL_LDPC_ENC_H*/
+#endif /*INCLUDED_DTL_TB_ENCODER_H*/

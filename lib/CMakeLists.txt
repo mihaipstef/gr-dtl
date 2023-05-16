@@ -34,7 +34,9 @@ list(APPEND dtl_sources
     ldpc_enc.cc
     ldpc_dec.cc
     tb_encoder.cc
-    ofdm_adaptive_frame_to_stream_vbb_impl.cc)
+    tb_decoder.cc
+    ofdm_adaptive_frame_to_stream_vbb_impl.cc
+    ofdm_adaptive_stream_to_frame_fvf_impl.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

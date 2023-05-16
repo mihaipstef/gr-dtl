@@ -26,5 +26,6 @@ install(FILES
     ofdm_adaptive_fec_frame_bvb.h
     ofdm_adaptive_fec_decoder.h
     fec.h
-    ofdm_adaptive_frame_to_stream_vbb.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_frame_to_stream_vbb.h
+    ofdm_adaptive_stream_to_frame_fvf.h DESTINATION include/gnuradio/dtl
 )

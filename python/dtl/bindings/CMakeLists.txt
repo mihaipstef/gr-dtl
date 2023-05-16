@@ -46,7 +46,8 @@ list(APPEND dtl_python_files
     ofdm_adaptive_fec_frame_bvb_python.cc
     ofdm_adaptive_fec_decoder_python.cc
     fec_python.cc
-    ofdm_adaptive_frame_to_stream_vbb_python.cc python_bindings.cc)
+    ofdm_adaptive_frame_to_stream_vbb_python.cc
+    ofdm_adaptive_stream_to_frame_fvf_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..

@@ -40,6 +40,7 @@ namespace py = pybind11;
     void bind_ofdm_adaptive_fec_decoder(py::module& m);
     void bind_fec(py::module& m);
     void bind_ofdm_adaptive_frame_to_stream_vbb(py::module& m);
+    void bind_ofdm_adaptive_stream_to_frame_fvf(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -87,5 +88,6 @@ PYBIND11_MODULE(dtl_python, m)
     bind_ofdm_adaptive_fec_decoder(m);
     bind_fec(m);
     bind_ofdm_adaptive_frame_to_stream_vbb(m);
+    bind_ofdm_adaptive_stream_to_frame_fvf(m);
     // ) END BINDING_FUNCTION_CALLS
 }
