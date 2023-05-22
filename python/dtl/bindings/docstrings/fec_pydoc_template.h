@@ -52,3 +52,6 @@ static const char* __doc_gr_dtl_fec_dec_get_n = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_make_ldpc_encoders = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_make_ldpc_decoders = R"doc()doc";

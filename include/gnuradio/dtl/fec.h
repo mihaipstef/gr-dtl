@@ -32,6 +32,9 @@ public:
 
 std::vector<fec_enc::sptr> make_ldpc_encoders(const std::vector<std::string>& alist_fnames);
 
+std::vector<fec_dec::sptr> make_ldpc_decoders(const std::vector<std::string>& alist_fnames);
+
+
 } // namespace dtl
 } // namespace gr
 

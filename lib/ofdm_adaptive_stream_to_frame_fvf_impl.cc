@@ -6,10 +6,14 @@
  */
 
 #include "ofdm_adaptive_stream_to_frame_fvf_impl.h"
+#include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
+#include "logger.h"
 
 namespace gr {
 namespace dtl {
+
+INIT_DTL_LOGGER("ofdm_adaptive_stream_to_frame_fvf");
 
 using namespace std;
 
@@ -52,7 +56,7 @@ int ofdm_adaptive_stream_to_frame_fvf_impl::general_work(int noutput_items,
     vector<tag_t> tags;
     get_tags_in_range(tags, 0, nitems_read(0), nitems_read(0) + 1);
     for (auto& tag: tags) {
-        if (tag.key == d_len_key) {
+        if (tag.key == get_constellation_tag_key()) {
             assert(pmt::to_long(tag.value) == d_frame_capacity);
             break;
         }
@@ -63,9 +67,10 @@ int ofdm_adaptive_stream_to_frame_fvf_impl::general_work(int noutput_items,
     }
 
     int nframes = min(ninput_items[0] / d_frame_capacity, noutput_items);
+    DTL_LOG_DEBUG("nframes={}, frame_capacity={}", nframes, d_frame_capacity);
 
     for (int i=0; i<nframes; ++i) {
-        memcpy(&out[i], &in[i*d_frame_capacity], d_frame_capacity);
+        memcpy(&out[i], &in[i*d_frame_capacity], d_frame_capacity * sizeof(float));
         for (auto& tag: tags) {
             add_item_tag(0, nitems_written(0) + i, tag.key, tag.value);
         }

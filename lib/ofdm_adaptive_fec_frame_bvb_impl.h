@@ -24,8 +24,6 @@ private:
 
     enum class Action {PROCESS_INPUT, OUTPUT_BUFFER, FINALIZE_FRAME};
 
-
-    int compute_tb_len(int cw_len, int bps);
     void add_frame_tags(int frame_payload);
     void padded_frame_out(int frame_payload);
     int tb_offset_to_bytes();

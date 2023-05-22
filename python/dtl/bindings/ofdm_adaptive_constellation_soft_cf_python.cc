@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(ofdm_adaptive_fec_decoder.h) */
-/* BINDTOOL_HEADER_FILE_HASH(434dbe95a9568944f51197efacb46ca9)                     */
+/* BINDTOOL_HEADER_FILE(ofdm_adaptive_constellation_soft_cf.h) */
+/* BINDTOOL_HEADER_FILE_HASH(956b698056cde3df741e606a646fa3d0)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,28 +23,27 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
+#include <gnuradio/dtl/ofdm_adaptive_constellation_soft_cf.h>
 // pydoc.h is automatically generated in the build directory
-#include <ofdm_adaptive_fec_decoder_pydoc.h>
+#include <ofdm_adaptive_constellation_soft_cf_pydoc.h>
 
-void bind_ofdm_adaptive_fec_decoder(py::module& m)
+void bind_ofdm_adaptive_constellation_soft_cf(py::module& m)
 {
 
-    using ofdm_adaptive_fec_decoder = ::gr::dtl::ofdm_adaptive_fec_decoder;
+    using ofdm_adaptive_constellation_soft_cf =
+        ::gr::dtl::ofdm_adaptive_constellation_soft_cf;
 
 
-    py::class_<ofdm_adaptive_fec_decoder,
+    py::class_<ofdm_adaptive_constellation_soft_cf,
                gr::block,
                gr::basic_block,
-               std::shared_ptr<ofdm_adaptive_fec_decoder>>(
-        m, "ofdm_adaptive_fec_decoder", D(ofdm_adaptive_fec_decoder))
+               std::shared_ptr<ofdm_adaptive_constellation_soft_cf>>(
+        m, "ofdm_adaptive_constellation_soft_cf", D(ofdm_adaptive_constellation_soft_cf))
 
-        .def(py::init(&ofdm_adaptive_fec_decoder::make),
-             py::arg("decoders"),
-             py::arg("frame_capacity"),
-             py::arg("max_bps"),
+        .def(py::init(&ofdm_adaptive_constellation_soft_cf::make),
+             py::arg("constellations"),
              py::arg("len_key"),
-             D(ofdm_adaptive_fec_decoder, make))
+             D(ofdm_adaptive_constellation_soft_cf, make))
 
 
         ;

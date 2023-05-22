@@ -8,6 +8,7 @@
 #ifndef INCLUDED_DTL_TB_DECODER_H
 #define INCLUDED_DTL_TB_DECODER_H
 
+#include "fec_utils.h"
 #include <gnuradio/dtl/fec.h>
 
 
@@ -16,19 +17,34 @@ namespace dtl {
 
 class tb_decoder
 {
+
 private:
-    std::vector<std::vector<unsigned char>> d_cw_buffers;
-    std::vector<std::vector<unsigned char>> d_tb_buffers;
+
+    enum buffers_id_t {
+        RCV_BUF = 0,
+        FULL_BUF,
+    };
+
+    std::vector<std::vector<float>> d_tb_buffers;
+    std::vector<unsigned char> d_data_buffer;
+
     int d_payload;
-    int d_buf_idx;
+    int d_tb_payload_len;
     int d_tb_number;
+    int d_buf_idx;
+    fec_info_t::sptr d_fec_info;
+
+    void decode();
+
 public:
 
     typedef std::shared_ptr<tb_decoder> sptr;
 
-    void frame_in(const char* in, int len);
+    bool process_frame(const float* in, int payload_len, fec_info_t::sptr fec_info);
 
-    tb_decoder(int max_tb_len, int max_cw_len);
+    const std::vector<unsigned char>& data() const;
+ 
+    tb_decoder(int max_tb_len);
 
 
 };

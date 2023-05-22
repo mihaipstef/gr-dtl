@@ -9,7 +9,8 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FEC_DECODER_H
 
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/tagged_stream_block.h>
+#include <gnuradio/dtl/fec.h>
+#include <gnuradio/block.h>
 
 namespace gr {
 namespace dtl {
@@ -19,11 +20,11 @@ namespace dtl {
  * \ingroup dtl
  *
  */
-class DTL_API ofdm_adaptive_fec_decoder : virtual public gr::tagged_stream_block
+class DTL_API ofdm_adaptive_fec_decoder : virtual public gr::block
 {
 public:
     typedef std::shared_ptr<ofdm_adaptive_fec_decoder> sptr;
-    static sptr make(const std::string& len_key);
+    static sptr make(const std::vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const std::string& len_key);
 };
 
 } // namespace dtl

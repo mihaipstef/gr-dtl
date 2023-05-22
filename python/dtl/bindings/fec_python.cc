@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(fec.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(fd46a3f53ff3934a7ba649ae9e0a577c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(98cc92635ceba81ef38016d58fbd1b36)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -82,4 +82,10 @@ void bind_fec(py::module& m)
           &::gr::dtl::make_ldpc_encoders,
           py::arg("alist_fnames"),
           D(make_ldpc_encoders));
+
+
+    m.def("make_ldpc_decoders",
+          &::gr::dtl::make_ldpc_decoders,
+          py::arg("alist_fnames"),
+          D(make_ldpc_decoders));
 }

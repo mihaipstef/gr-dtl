@@ -23,8 +23,11 @@ try:
     get_bits_per_symbol,
     ofdm_adaptive_fec_frame_bvb,
     ofdm_adaptive_frame_to_stream_vbb,
-    ofdm_adaptive_stream_to_frame_fvf,
+    ofdm_adaptive_constellation_soft_cf,
+    ofdm_adaptive_chunks_to_symbols_bc,
+    ofdm_adaptive_fec_decoder,
     make_ldpc_encoders,
+    make_ldpc_decoders,
   )
 except ImportError:
     import sys
@@ -37,15 +40,18 @@ except ImportError:
         get_bits_per_symbol,
         ofdm_adaptive_fec_frame_bvb,
         ofdm_adaptive_frame_to_stream_vbb,
-        ofdm_adaptive_stream_to_frame_fvf,
+        ofdm_adaptive_constellation_soft_cf,
+        ofdm_adaptive_chunks_to_symbols_bc,
+        ofdm_adaptive_fec_decoder,
         make_ldpc_encoders,
+        make_ldpc_decoders,
   )
 
 
 class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
 
     def setUp(self):
-        self.tb = gr.top_block()
+        self.tb = gr.top_block(catch_exceptions=True)
         self.test_codes_dir = os.path.dirname(__file__)
         self.len_key = "len_key"
         self.frame_len = 3
@@ -61,6 +67,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         cnst = constellation_type_t.QPSK
         bps = get_bits_per_symbol(cnst)
         ldpc_encs = make_ldpc_encoders([f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"])
+        ldpc_decs = make_ldpc_decoders([f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"])
+
         enc = ldpc_encs[self.fec_idx]
         data = [random.getrandbits(1) for _ in range(int(enc.get_k() * 5.5))]
         print(enc.get_k() * 3.5, len(data))
@@ -72,6 +80,7 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         feedback = pmt.dict_add(feedback, fec_feedback_key(), pmt.from_long(1))
         feedback = pmt.dict_add(feedback, feedback_constellation_key(), pmt.from_long(int(cnst)))
 
+
         enc = ofdm_adaptive_fec_frame_bvb(
             ldpc_encs,
             self.frame_len * self.ofdm_sym_capacity,
@@ -81,27 +90,50 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         enc.process_feedback(feedback)
 
         to_stream = ofdm_adaptive_frame_to_stream_vbb(self.frame_len * self.ofdm_sym_capacity, self.len_key)
-        to_frame = ofdm_adaptive_stream_to_frame_fvf(self.frame_len * self.ofdm_sym_capacity, self.len_key)
+        mod = ofdm_adaptive_chunks_to_symbols_bc(self.constellations, self.len_key)
 
-        sink = blocks.vector_sink_f(self.frame_len * self.ofdm_sym_capacity)
+        cnst_dec = ofdm_adaptive_constellation_soft_cf(self.constellations, self.len_key)
 
-        self.tb.connect(to_stream, blocks.tag_debug(1, "tags1"))
-        self.tb.connect(to_frame, blocks.tag_debug(self.frame_len * self.ofdm_sym_capacity * gr.sizeof_float, "tags2"))
+        dec = ofdm_adaptive_fec_decoder(
+            ldpc_decs,
+            self.frame_len * self.ofdm_sym_capacity,
+            3,
+            self.len_key
+        )
+
+        sink_b = blocks.vector_sink_b()
+
+        sink_f = blocks.vector_sink_f()
+        sink_c = blocks.vector_sink_c()
+        sink_b_dec = blocks.vector_sink_b()
+
+        # self.tb.connect(to_stream, blocks.tag_debug(1, "tags1"))
+        # self.tb.connect(to_frame, blocks.tag_debug(self.frame_len * self.ofdm_sym_capacity * gr.sizeof_float, "tags2"))
+        self.tb.connect(to_stream, sink_b)
+        self.tb.connect(mod, sink_c)
+        self.tb.connect(cnst_dec, sink_f)
+
 
         self.tb.connect(
             src,
             enc,
             to_stream,
-            blocks.char_to_float(1, 1),
-            to_frame,
-            sink
+            mod,
+            cnst_dec,
+            dec,
+            sink_b_dec
         )
 
         # set up fg
         self.tb.run()
         # check data
         print(data[:23])
-        print(sink.data()[:50])
+        print(sink_b.data()[:50])
+        print(sink_c.data()[:50])
+
+        print(sink_f.data()[:100])
+        print(sink_b_dec.data()[:23])
+
 
 
 if __name__ == '__main__':

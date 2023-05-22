@@ -20,6 +20,7 @@ INIT_DTL_LOGGER("tb_encoder");
 
 tb_encoder::tb_encoder(int max_tb_len, int max_cw_len): d_cw_buffers(2), d_payload(0)
 {
+    DTL_LOG_DEBUG("constructor");
     int max_len_bytes = max_tb_len / 8;   
     if (max_tb_len % 8) {
         ++max_len_bytes;
@@ -28,7 +29,9 @@ tb_encoder::tb_encoder(int max_tb_len, int max_cw_len): d_cw_buffers(2), d_paylo
     d_cw_buffers[1].resize(max_cw_len);
     d_tb_buffers.resize(2);
     d_tb_buffers[0].reserve(max_tb_len);
-    d_tb_buffers[1].reserve(max_len_bytes);
+    d_tb_buffers[1].reserve(max_tb_len);
+    DTL_LOG_DEBUG("constructor done");
+
 }
 
 
