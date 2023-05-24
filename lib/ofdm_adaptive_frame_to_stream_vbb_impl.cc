@@ -70,18 +70,19 @@ int ofdm_adaptive_frame_to_stream_vbb_impl::general_work(
     gr_vector_const_void_star& input_items,
     gr_vector_void_star& output_items)
 {
-    auto in = static_cast<const char*>(input_items[0]);
-    auto out = static_cast<char*>(output_items[0]);
+    auto in = static_cast<const unsigned char*>(input_items[0]);
+    auto out = static_cast<unsigned char*>(output_items[0]);
 
     int nframes = min(ninput_items[0], noutput_items / d_frame_capacity);
 
     DTL_LOG_DEBUG("noutput={}, frames={}", noutput_items, nframes);
+    DTL_LOG_BUFFER("to_stream_in", in, d_frame_capacity * nframes);
 //    vector<tag_t> tags;
     for (int i=0; i<nframes; ++i) {
         // // get tags
         // get_tags_in_window(tags, 0, i, i+1);
         // copy input frame to output
-        memcpy(&out[i*d_frame_capacity], &in[i], d_frame_capacity);
+        memcpy(&out[i*d_frame_capacity], &in[i*d_frame_capacity], d_frame_capacity);
 
         // set new tag offset
         // for (auto& tag: tags) {
@@ -89,6 +90,7 @@ int ofdm_adaptive_frame_to_stream_vbb_impl::general_work(
         // }
     }
 
+    DTL_LOG_BUFFER("to_stream_out", out, d_frame_capacity * nframes);
     consume_each(nframes);
 
     return nframes * d_frame_capacity;

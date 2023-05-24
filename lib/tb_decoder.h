@@ -32,9 +32,10 @@ private:
     int d_tb_payload_len;
     int d_tb_number;
     int d_buf_idx;
+    int d_tb_len;
     fec_info_t::sptr d_fec_info;
 
-    void decode();
+    void decode(int tb_len);
 
 public:
 

@@ -70,7 +70,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         ldpc_decs = make_ldpc_decoders([f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"])
 
         enc = ldpc_encs[self.fec_idx]
-        data = [random.getrandbits(1) for _ in range(int(enc.get_k() * 5.5))]
+        # data = [random.getrandbits(1) for _ in range(int(enc.get_k() * 5.5))]
+        data = [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1]
         print(enc.get_k() * 3.5, len(data))
 
         src = blocks.vector_source_b(
@@ -102,6 +103,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         )
 
         sink_b = blocks.vector_sink_b()
+        sink_vb = blocks.vector_sink_b(self.frame_len * self.ofdm_sym_capacity)
+
 
         sink_f = blocks.vector_sink_f()
         sink_c = blocks.vector_sink_c()
@@ -112,6 +115,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         self.tb.connect(to_stream, sink_b)
         self.tb.connect(mod, sink_c)
         self.tb.connect(cnst_dec, sink_f)
+        self.tb.connect(enc, sink_vb)
+
 
 
         self.tb.connect(
@@ -127,12 +132,21 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         # set up fg
         self.tb.run()
         # check data
-        print(data[:23])
-        print(sink_b.data()[:50])
-        print(sink_c.data()[:50])
+        #print(data[:23])
 
-        print(sink_f.data()[:100])
-        print(sink_b_dec.data()[:23])
+        print(sink_vb.data())
+        print(sink_b.data())
+
+
+        print(sink_b.data()[:50])
+        print(data[23:46])
+        print(sink_b.data()[50:100])
+        #print(sink_c.data())
+
+        print(sink_f.data()[100:200])
+        print(sink_b_dec.data())
+        print(data)
+        print(len(sink_b_dec.data()))
 
 
 

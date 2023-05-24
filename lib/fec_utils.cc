@@ -86,7 +86,7 @@ fec_info_t::sptr make_fec_info(const std::vector<tag_t> tags, const std::vector<
         } else if (tag.key == fec_offset_key()) {
             tags_check |= 4;
             fec_info->d_tb_offset = pmt::to_long(tag.value);
-        // } else if (tag.key == fec_tb_index_key()) {
+        // } else if (tag.key == get_constellation_tag_key()) {
         //     tags_check &= 8;
         //     fec_info->d_tb_frame_idx = pmt::to_long(tag.value);
         } else if (tag.key == fec_tb_payload_key()) {

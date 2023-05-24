@@ -69,7 +69,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
     int read_index = 0;
     int write_index = 0;
     int frame_len = 0;
-
+    DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
     while (read_index < ninput_items[0]) {
         vector<tag_t> tags;
         get_tags_in_range(tags, 0, nitems_read(0) + read_index, nitems_read(0) + read_index + 1);
@@ -102,10 +102,16 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         fec_info_t::sptr fec_info = make_fec_info(tags, {}, d_decoders);
-        read_index += frame_len;
+    
+        if (!fec_info) {
+            throw runtime_error("FEC tags missing");
+        }
+
+        fec_info->d_tb_offset *= bps;
 
         if (!d_data_ready) {
             d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, fec_info);
+            read_index += frame_len;
         }
 
         if (d_data_ready) {

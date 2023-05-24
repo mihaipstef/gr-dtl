@@ -26,7 +26,6 @@ private:
     int d_k;
     int d_n;
     std::vector<float> d_cw_buf;
-    int d_max_it;
 
 
 public:

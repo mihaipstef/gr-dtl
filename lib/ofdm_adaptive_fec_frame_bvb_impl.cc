@@ -133,9 +133,9 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
     // add_item_tag(
     //     0, d_tag_offset, fec_tb_index_key(), pmt::from_long(d_used_frames_count && 0xf));
     add_item_tag(
-        0, d_tag_offset, fec_offset_key(), pmt::from_long(d_current_frame_offset && 0xfff));
+        0, d_tag_offset, fec_offset_key(), pmt::from_long(d_current_frame_offset & 0xfff));
 
-    add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count && 0xff));
+    add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
     d_tag_offset += 1;
 }
 
@@ -230,109 +230,110 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
         switch (d_action) {
 
-        case Action::PROCESS_INPUT: {
-            // Update constellation and FEC
-            d_current_fec_idx = d_feedback_fec_idx;
-            d_current_enc = d_encoders[d_current_fec_idx];
-            d_current_cnst = d_feedback_cnst;
-            d_current_bps = get_bits_per_symbol(d_current_cnst);
-            d_tb_len = compute_tb_len(d_current_enc->get_n(), d_current_bps);
+            case Action::PROCESS_INPUT: {
+                // Update constellation and FEC
+                d_current_fec_idx = d_feedback_fec_idx;
+                d_current_enc = d_encoders[d_current_fec_idx];
+                d_current_cnst = d_feedback_cnst;
+                d_current_bps = get_bits_per_symbol(d_current_cnst);
 
-            // Frame carries an integer number of bytes
-            d_current_frame_len = d_frame_capacity * d_current_bps / 8;
-            // d_current_frame_len *= 8;
+                // Frame carries an integer number of bytes
+                d_current_frame_len = d_frame_capacity * d_current_bps / 8;
+                d_tb_len = compute_tb_len(d_current_enc->get_n(), d_current_frame_len * 8);
 
-            int tb_required_nin = d_tb_len * d_current_enc->get_k();
+                // d_current_frame_len *= 8;
 
-            int available_in = ninput_items[0] - read_index;
+                int tb_required_nin = d_tb_len * d_current_enc->get_k();
 
-            int to_read = min(available_in, tb_required_nin);
+                int available_in = ninput_items[0] - read_index;
 
-            // encode
-            d_tb_enc->encode(&in[read_index], to_read, d_current_enc, d_tb_len);
+                int to_read = min(available_in, tb_required_nin);
 
-            read_index += to_read;
+                // encode
+                d_tb_enc->encode(&in[read_index], to_read, d_current_enc, d_tb_len);
 
-            d_action = Action::OUTPUT_BUFFER;
-            d_used_frames_count = 0;
-            ++d_tb_count;
-            DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}",
-                          d_tb_enc->size(),
-                          d_tb_enc->buf_payload(),
-                          read_index);
+                read_index += to_read;
 
-        } break;
+                d_action = Action::OUTPUT_BUFFER;
+                d_used_frames_count = 0;
+                ++d_tb_count;
+                DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}",
+                            d_tb_enc->size(),
+                            d_tb_enc->buf_payload(),
+                            read_index);
 
-        // Empty TB buffer in output buffer
-        case Action::OUTPUT_BUFFER: {
+            } break;
 
-            if (noutput_items == 0) {
-                wait_next_work = true;
-            } else {
+            // Empty TB buffer in output buffer
+            case Action::OUTPUT_BUFFER: {
 
-                // Output the TB frame by frame
-                while (!d_tb_enc->ready() && produced_frames < noutput_items) {
-
-                    int bytes_needed = n_bits_to_bytes(d_tb_enc->remaining_buf_size());
-                    int out_frame_bytes =
-                        min(bytes_needed, current_frame_available_bytes());
-
-                    DTL_LOG_DEBUG("output_buffer: bytes={}, syms={}, offset={}",
-                                  out_frame_bytes,
-                                  n_bytes_to_syms(out_frame_bytes, d_current_bps),
-                                  d_current_frame_offset);
-
-                    d_tb_enc->buf_out(
-                        &out[write_index],
-                        min(out_frame_bytes * 8, d_tb_enc->remaining_buf_size()),
-                        d_current_bps);
-
-                    if (out_frame_bytes == current_frame_available_bytes()) {
-                        // add tags
-                        add_frame_tags(d_frame_capacity * d_current_bps / 8);
-                        d_current_frame_offset = 0;
-                        ++produced_frames;
-                    } else {
-                        d_current_frame_offset +=
-                            n_bytes_to_syms(out_frame_bytes, d_current_bps);
-                    }
-                    ++d_used_frames_count;
-                    write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
-                }
-
-                // If TB buffer empty check if we can start another TB in current frame
-                if (d_tb_enc->ready()) {
-
-                    if (d_used_frames_count == 1) {
-                        d_action = Action::FINALIZE_FRAME;
-                    } else {
-                        d_action = Action::PROCESS_INPUT;
-                    }
-
-                    consumed_input += d_tb_enc->buf_payload();
-                } else {
-                    // Did not output the entire buffer, wait for next scheduler
-                    // allocation
+                if (noutput_items == 0) {
                     wait_next_work = true;
+                } else {
+
+                    // Output the TB frame by frame
+                    while (!d_tb_enc->ready() && produced_frames < noutput_items) {
+
+                        int bytes_needed = n_bits_to_bytes(d_tb_enc->remaining_buf_size());
+                        int out_frame_bytes =
+                            min(bytes_needed, current_frame_available_bytes());
+
+                        DTL_LOG_DEBUG("output_buffer: bytes={}, syms={}, offset={}",
+                                    out_frame_bytes,
+                                    n_bytes_to_syms(out_frame_bytes, d_current_bps),
+                                    d_current_frame_offset);
+
+                        d_tb_enc->buf_out(
+                            &out[write_index],
+                            min(out_frame_bytes * 8, d_tb_enc->remaining_buf_size()),
+                            d_current_bps);
+
+                        if (out_frame_bytes == current_frame_available_bytes()) {
+                            // add tags
+                            add_frame_tags(d_frame_capacity * d_current_bps / 8);
+                            d_current_frame_offset = 0;
+                            ++produced_frames;
+                        } else {
+                            d_current_frame_offset +=
+                                n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                        }
+                        ++d_used_frames_count;
+                        write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                    }
+
+                    // If TB buffer empty check if we can start another TB in current frame
+                    if (d_tb_enc->ready()) {
+
+                        if (d_used_frames_count == 1) {
+                            d_action = Action::FINALIZE_FRAME;
+                        } else {
+                            d_action = Action::PROCESS_INPUT;
+                        }
+
+                        consumed_input += d_tb_enc->buf_payload();
+                    } else {
+                        // Did not output the entire buffer, wait for next scheduler
+                        // allocation
+                        wait_next_work = true;
+                    }
                 }
-            }
-            DTL_LOG_DEBUG("output buffer: next={}, consumed={}, offset={}",
-                          (int)d_action,
-                          consumed_input,
-                          d_current_frame_offset);
-        } break;
-        case Action::FINALIZE_FRAME: {
-            // pad rest  of the frame (frame_len - frame_offset)
-            int frame_payload = d_current_frame_offset * d_current_bps / 8;
-            if (d_current_frame_offset * d_current_bps % 8) {
-                ++frame_payload;
-            }
-            padded_frame_out(frame_payload);
-            d_current_frame_offset = 0;
-            d_action = Action::PROCESS_INPUT;
-            ++produced_frames;
-            DTL_LOG_DEBUG("finalize frame: payload={}", frame_payload);
-        } break;
+                DTL_LOG_DEBUG("output buffer: next={}, consumed={}, offset={}",
+                            (int)d_action,
+                            consumed_input,
+                            d_current_frame_offset);
+            } break;
+            case Action::FINALIZE_FRAME: {
+                // pad rest  of the frame (frame_len - frame_offset)
+                int frame_payload = d_current_frame_offset * d_current_bps / 8;
+                if (d_current_frame_offset * d_current_bps % 8) {
+                    ++frame_payload;
+                }
+                padded_frame_out(frame_payload);
+                d_current_frame_offset = 0;
+                d_action = Action::PROCESS_INPUT;
+                ++produced_frames;
+                DTL_LOG_DEBUG("finalize frame: payload={}", frame_payload);
+            } break;
         } // action switch
     }     // input loop
 
@@ -347,6 +348,9 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         d_tb_len,
         d_current_frame_offset,
         produced_frames);
+
+    DTL_LOG_BUFFER("fec frame", out, write_index);
+
 
     consume_each(consumed_input);
     return produced_frames;

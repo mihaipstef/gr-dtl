@@ -90,7 +90,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 this->nitems_read(0) + read_index + 1);
         for (auto& tag: tags)
         {
-            DTL_LOG_DEBUG("o={}, key: {}",tag.offset, pmt::symbol_to_string(tag.key));
+            DTL_LOG_DEBUG("o={}, key={}, val={}",tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
         }
         int test = 0;
         for (auto& tag : tags) {
@@ -131,6 +131,10 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
 
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
             std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 1));
+            std::reverse(llrs.begin(), llrs.end());
+            for (int i=0; i<llrs.size();++i){
+                llrs[i] *= -1;
+            }
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());
         }
 
