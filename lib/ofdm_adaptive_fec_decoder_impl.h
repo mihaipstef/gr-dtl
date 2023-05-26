@@ -23,8 +23,7 @@ private:
     int d_frame_capacity;
     tb_decoder::sptr d_tb_dec;
     bool d_data_ready;
-
-protected:
+    bool d_processed_input;
 
 public:
     ofdm_adaptive_fec_decoder_impl(const std::vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const std::string& len_key);

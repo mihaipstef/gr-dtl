@@ -37,7 +37,8 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_
       d_len_key(pmt::string_to_symbol(len_key)),
       d_decoders(decoders),
       d_frame_capacity(frame_capacity),
-      d_data_ready(false)
+      d_data_ready(false),
+      d_processed_input(0)
 {
     DTL_LOG_DEBUG("constructor");
     auto it = max_element(d_decoders.begin() + 1,
@@ -69,7 +70,10 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
     int read_index = 0;
     int write_index = 0;
     int frame_len = 0;
+    int processed_input = 0;
+
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
+
     while (read_index < ninput_items[0]) {
         vector<tag_t> tags;
         get_tags_in_range(tags, 0, nitems_read(0) + read_index, nitems_read(0) + read_index + 1);
@@ -77,6 +81,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         int test = 0;
         int bps = 0;
         int len = 0;
+        int frame_payload_len = 0;
         for (auto& tag : tags) {
             if (tag.key == get_constellation_tag_key()) {
                 bps = get_bits_per_symbol(static_cast<constellation_type_t>(pmt::to_long(tag.value)));
@@ -85,21 +90,29 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 len = pmt::to_long(tag.value);
                 test |= 2;
                 //remove_item_tag(0, tag);
+            } else if (tag.key == payload_length_key()) {
+                frame_payload_len = pmt::to_long(tag.value);
+                test |= 4;
             }
-            if (test == 3) {
+            if (test == 7) {
                 break;
             }
         }
+
+        if (test != 7) {
+            throw runtime_error("Tags missing");
+        }
+
         frame_len = len * bps;
 
         if (read_index + frame_len > ninput_items[0]) {
             break;
         }
 
-        for (auto& tag: tags)
-        {
-            DTL_LOG_DEBUG("o={}, key={}, val={}",tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
-        }
+        // for (auto& tag: tags)
+        // {
+        //     DTL_LOG_DEBUG("o={}, key={}, val={}",tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
+        // }
 
         fec_info_t::sptr fec_info = make_fec_info(tags, {}, d_decoders);
     
@@ -109,21 +122,24 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
         fec_info->d_tb_offset *= bps;
 
+        // Make sure we consume input only if we'll be able to produce the output
+        if (noutput_items < fec_info->d_tb_payload_len) {
+            break;
+        }
+
         if (!d_data_ready) {
-            d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, fec_info);
+            d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, frame_payload_len, fec_info);
             read_index += frame_len;
         }
 
         if (d_data_ready) {
-            if (noutput_items < fec_info->d_tb_payload_len) {
-                break;
-            }
-            const vector<unsigned char>& data = d_tb_dec->data();
-            memcpy(&out[write_index], &data[0], data.size());
-            write_index += data.size();
+            auto r = d_tb_dec->buf_out(&out[write_index]);
+            write_index += r.first;
+            processed_input = read_index;
             d_data_ready = false;
         }
     }
+    DTL_LOG_DEBUG("work: consumed={}, produced={}", processed_input, write_index);
     consume_each(read_index);
     return write_index;
 }

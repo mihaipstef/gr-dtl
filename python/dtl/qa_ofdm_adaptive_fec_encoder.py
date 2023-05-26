@@ -134,19 +134,21 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         # check data
         #print(data[:23])
 
-        print(sink_vb.data())
-        print(sink_b.data())
+        # print(sink_vb.data())
+        # print(sink_b.data())
 
 
-        print(sink_b.data()[:50])
-        print(data[23:46])
-        print(sink_b.data()[50:100])
-        #print(sink_c.data())
+        # print(sink_b.data()[:50])
+        # print(data[23:46])
+        print(sink_b.data()[100:200])
+        # #print(sink_c.data())
 
-        print(sink_f.data()[100:200])
+        estimated = [1 if d<0 else 0 for d in sink_f.data()] 
+        print(estimated[400:600])
         print(sink_b_dec.data())
         print(data)
-        print(len(sink_b_dec.data()))
+        #print(len(sink_b_dec.data()))
+        assert data == sink_b_dec.data()
 
 
 

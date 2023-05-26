@@ -40,11 +40,11 @@ int tb_encoder::encode(const unsigned char* in, int len, fec_enc::sptr enc, int 
 
     int read_index = 0;
 
-    memset(&d_cw_buffers[0][0], 0, enc->get_n());
     d_tb_buffers[0].clear();
     d_tb_buffers[1].clear();
     d_payload = 0;
     d_buf_idx = 0;
+    int ncheck = enc->get_n() - enc->get_k();
 
     for (int i = 0; i < current_tb_len; ++i) {
         int k_new = (len - d_payload) / (current_tb_len-i);
@@ -52,20 +52,20 @@ int tb_encoder::encode(const unsigned char* in, int len, fec_enc::sptr enc, int 
             ++k_new;
         }
         d_payload += k_new;
-        //d_tb_systematic_bits += k_new;
+
         // copy K' bits from input into the buffer
+        memset(&d_cw_buffers[0][0], 0, enc->get_n());
         memcpy(&d_cw_buffers[0][0], &in[read_index], k_new);
         //DTL_LOG_BYTES("cw buffer 0", &d_cw_buffers[0][0], k_new);
         // calculate the codeword
         enc->encode(&d_cw_buffers[0][0], enc->get_k(), &d_cw_buffers[1][0]);
         //DTL_LOG_BYTES("cw buffer 1", &d_cw_buffers[1][0],  enc->get_n());
-        DTL_LOG_BUFFER("encoded", &d_cw_buffers[1][0], enc->get_n());
+        //DTL_LOG_BUFFER("encoded", &d_cw_buffers[1][0], enc->get_n());
         read_index += k_new;
         //++d_cw_count;
         // Move cw to the TB buffer
-        copy(&d_cw_buffers[1][0], &d_cw_buffers[1][k_new], back_inserter(d_tb_buffers[0]));
-        copy(&d_cw_buffers[1][enc->get_k()], &d_cw_buffers[1][enc->get_n()], back_inserter(d_tb_buffers[0]));
-
+        copy(&d_cw_buffers[1][0], &d_cw_buffers[1][ncheck], back_inserter(d_tb_buffers[0]));
+        copy(&d_cw_buffers[1][ncheck], &d_cw_buffers[1][ncheck+k_new], back_inserter(d_tb_buffers[0]));
     }
     DTL_LOG_VEC("tb", d_tb_buffers[0]);
     return d_tb_buffers[0].size();
@@ -89,11 +89,11 @@ int tb_encoder::size()
 int tb_encoder::buf_out(unsigned char* out, int len, int bps)
 {
     repack repacker(1, bps);
-    DTL_LOG_BUFFER("buf_out", &d_tb_buffers[0][d_buf_idx], len);
+    //DTL_LOG_BUFFER("buf_out", &d_tb_buffers[0][d_buf_idx], len);
     int syms = repacker.repack_lsb_first(&d_tb_buffers[0][d_buf_idx], len, out, false);
     d_buf_idx += len;
     DTL_LOG_DEBUG("buf_out: idx={}, size={}", d_buf_idx, d_tb_buffers[0].size());
-    DTL_LOG_BUFFER("buf_out syms", out, syms);
+    //DTL_LOG_BUFFER("buf_out syms", out, syms);
     return syms;
 }
 

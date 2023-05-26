@@ -34,16 +34,17 @@ private:
     int d_buf_idx;
     int d_tb_len;
     fec_info_t::sptr d_fec_info;
+    int d_processed;
 
-    void decode(int tb_len);
+    int decode(int tb_len);
 
 public:
 
     typedef std::shared_ptr<tb_decoder> sptr;
 
-    bool process_frame(const float* in, int payload_len, fec_info_t::sptr fec_info);
+    bool process_frame(const float* in, int frame_len, int frame_payload_len, fec_info_t::sptr fec_info);
 
-    const std::vector<unsigned char>& data() const;
+    std::pair<int, int> buf_out(unsigned char* out);
  
     tb_decoder(int max_tb_len);
 

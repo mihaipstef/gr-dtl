@@ -8,6 +8,7 @@
 #include "ldpc_dec.h"
 #include <cstring>
 #include <gnuradio/dtl/api.h>
+#include <iostream>
 #include "logger.h"
 
 
@@ -37,6 +38,21 @@ ldpc_dec::ldpc_dec(const std::string& alist_fname, float sigma, int max_it)
 
     d_list.read(alist_fname.c_str());
     d_code.set_alist(d_list);
+    //HACK: Get internal permute
+    {
+        stringstream new_buf;
+        auto orig_buf = cout.rdbuf();
+        cout.rdbuf(new_buf.rdbuf());
+        d_code.print_permute();
+
+        for (int i; new_buf >> i;) {
+            d_permute.push_back(i);
+            if (new_buf.peek() == ',') {
+                new_buf.ignore();
+            }
+        }
+        cout.rdbuf(orig_buf);
+    }
     d_bp.set_alist_sigma(d_list, sigma);
     d_bp.set_max_iterations(max_it);
     d_bp.set_K(d_code.dimension());
@@ -46,13 +62,17 @@ ldpc_dec::ldpc_dec(const std::string& alist_fname, float sigma, int max_it)
 
 int ldpc_dec::decode(const float* in_data, int* nit, unsigned char* out_data)
 {
-    memcpy(&d_cw_buf[0], in_data, sizeof(float) * d_code.get_N());
-    DTL_LOG_VEC("decode in", d_cw_buf);
+    for (int i=0; i<d_code.get_N(); ++i) {
+        d_cw_buf[d_permute[i]] = in_data[i];
+    }
+    //memcpy(&d_cw_buf[0], in_data, sizeof(float) * d_code.get_N());
+    //DTL_LOG_VEC("decode in", d_cw_buf);
     std::vector<uint8_t> estimated(d_bp.decode(d_cw_buf, nit));
-    DTL_LOG_DEBUG("aici {}", estimated.size());
-    DTL_LOG_VEC("estimated", estimated);
+    //DTL_LOG_DEBUG("aici {}", estimated.size());
+    //DTL_LOG_VEC("estimated", estimated);
     std::vector<uint8_t> data(d_code.get_systematic_bits(estimated));
     memcpy(out_data, &data[0], d_code.dimension());
+
     return d_code.dimension();
 }
 

@@ -21,6 +21,7 @@ private:
     alist d_list;
     cldpc d_code;
     std::vector<char> d_in_buf;
+    std::vector<int> d_permute;
 
 public:
     ldpc_enc(const std::string& alist_fname);

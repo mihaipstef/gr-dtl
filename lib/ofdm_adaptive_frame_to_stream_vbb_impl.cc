@@ -75,22 +75,12 @@ int ofdm_adaptive_frame_to_stream_vbb_impl::general_work(
 
     int nframes = min(ninput_items[0], noutput_items / d_frame_capacity);
 
-    DTL_LOG_DEBUG("noutput={}, frames={}", noutput_items, nframes);
-    DTL_LOG_BUFFER("to_stream_in", in, d_frame_capacity * nframes);
-//    vector<tag_t> tags;
+    DTL_LOG_DEBUG("general_work: frames={}", noutput_items, nframes);
     for (int i=0; i<nframes; ++i) {
-        // // get tags
-        // get_tags_in_window(tags, 0, i, i+1);
         // copy input frame to output
         memcpy(&out[i*d_frame_capacity], &in[i*d_frame_capacity], d_frame_capacity);
-
-        // set new tag offset
-        // for (auto& tag: tags) {
-        //     add_item_tag(0, nitems_written(0) + i * d_frame_capacity, tag.key, tag.value);
-        // }
     }
 
-    DTL_LOG_BUFFER("to_stream_out", out, d_frame_capacity * nframes);
     consume_each(nframes);
 
     return nframes * d_frame_capacity;

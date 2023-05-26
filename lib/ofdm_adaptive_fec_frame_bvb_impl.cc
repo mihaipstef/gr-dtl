@@ -62,7 +62,6 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_used_frames_count(0)
 
 {
-    DTL_LOG_DEBUG("constructor {}", d_encoders.size());
     // Find longest code
     auto it = max_element(d_encoders.begin() + 1,
                           d_encoders.end(),
@@ -70,7 +69,6 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
                              const decltype(d_encoders)::value_type& r) {
                               return l->get_n() < r->get_n();
                           });
-    DTL_LOG_DEBUG("constructor {}", d_encoders.size());
 
     if (it == d_encoders.end()) {
         throw(std::runtime_error("No encoder found!"));
@@ -80,7 +78,6 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
     d_tb_enc = make_shared<tb_encoder>((*it)->get_n() * ncws, (*it)->get_n());
 
     set_min_noutput_items(d_frame_capacity);
-    DTL_LOG_DEBUG("constructor done");
 }
 
 /*
@@ -223,14 +220,14 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
     bool wait_next_work = false;
 
-
-    while (read_index < ninput_items[0] && !wait_next_work) {
+    while ((read_index < ninput_items[0] || d_action != Action::PROCESS_INPUT) && !wait_next_work) {
 
         assert(d_action == Action::PROCESS_INPUT && d_tb_enc->ready());
 
         switch (d_action) {
 
             case Action::PROCESS_INPUT: {
+
                 // Update constellation and FEC
                 d_current_fec_idx = d_feedback_fec_idx;
                 d_current_enc = d_encoders[d_current_fec_idx];
@@ -257,6 +254,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 d_action = Action::OUTPUT_BUFFER;
                 d_used_frames_count = 0;
                 ++d_tb_count;
+
                 DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}",
                             d_tb_enc->size(),
                             d_tb_enc->buf_payload(),
@@ -288,6 +286,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                             min(out_frame_bytes * 8, d_tb_enc->remaining_buf_size()),
                             d_current_bps);
 
+
                         if (out_frame_bytes == current_frame_available_bytes()) {
                             // add tags
                             add_frame_tags(d_frame_capacity * d_current_bps / 8);
@@ -307,7 +306,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                         if (d_used_frames_count == 1) {
                             d_action = Action::FINALIZE_FRAME;
                         } else {
-                            d_action = Action::PROCESS_INPUT;
+                            // If no data left in the input buffer...
+                            if (read_index == ninput_items[0]) {
+                                // ...go ahead and finalize the frame.
+                                d_action = Action::FINALIZE_FRAME;
+                            // Otherwise...
+                            } else {
+                                // ...continue with input processing.
+                                d_action = Action::PROCESS_INPUT;
+                            }
                         }
 
                         consumed_input += d_tb_enc->buf_payload();
@@ -348,9 +355,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         d_tb_len,
         d_current_frame_offset,
         produced_frames);
-
-    DTL_LOG_BUFFER("fec frame", out, write_index);
-
 
     consume_each(consumed_input);
     return produced_frames;
