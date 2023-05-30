@@ -48,6 +48,7 @@ private:
     uint64_t d_tag_offset;
     Action d_action;
     int d_used_frames_count;
+    int d_frame_padding_syms;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr> encoders, int frame_capacity, int max_bps, const std::string& len_key);

@@ -27,7 +27,6 @@ vector<fec_dec::sptr> DTL_API make_ldpc_decoders(const vector<string>& alist_fna
         ldpc_dec::sptr dec(new ldpc_dec(fname, 0, 30));
         decoders.push_back(dec);
     }
-    DTL_LOG_DEBUG("done");
     return decoders;
 }
 
@@ -65,14 +64,9 @@ int ldpc_dec::decode(const float* in_data, int* nit, unsigned char* out_data)
     for (int i=0; i<d_code.get_N(); ++i) {
         d_cw_buf[d_permute[i]] = in_data[i];
     }
-    //memcpy(&d_cw_buf[0], in_data, sizeof(float) * d_code.get_N());
-    //DTL_LOG_VEC("decode in", d_cw_buf);
     std::vector<uint8_t> estimated(d_bp.decode(d_cw_buf, nit));
-    //DTL_LOG_DEBUG("aici {}", estimated.size());
-    //DTL_LOG_VEC("estimated", estimated);
     std::vector<uint8_t> data(d_code.get_systematic_bits(estimated));
     memcpy(out_data, &data[0], d_code.dimension());
-
     return d_code.dimension();
 }
 

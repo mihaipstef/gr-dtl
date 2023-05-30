@@ -91,7 +91,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 test |= 2;
                 //remove_item_tag(0, tag);
             } else if (tag.key == payload_length_key()) {
-                frame_payload_len = pmt::to_long(tag.value);
+                frame_payload_len = 8 * pmt::to_long(tag.value);
                 test |= 4;
             }
             if (test == 7) {

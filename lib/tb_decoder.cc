@@ -42,21 +42,22 @@ bool tb_decoder::process_frame(const float* in,
     }
 
     // If frame is part of the current TB
-    DTL_LOG_DEBUG("process_frame: current_no={}, no={}, offset={}, frame_len={}",
+    DTL_LOG_DEBUG("process_frame: current_no={}, no={}, offset={}, frame_len={}, frame_payload={}",
                   d_tb_number,
                   fec_info->d_tb_number,
                   fec_info->d_tb_offset,
-                  frame_len);
+                  frame_len,
+                  frame_payload_len);
 
     //DTL_LOG_BUFFER("process frame input", in, payload_len);
     if (fec_info->d_tb_number == d_tb_number) {
-        if (d_buf_idx + frame_payload_len * 8 > d_tb_buffers[RCV_BUF].capacity()) {
+        if (d_buf_idx + frame_payload_len > d_tb_buffers[RCV_BUF].capacity()) {
             throw runtime_error("rcv buffer does not have enough capacity!");
         }
-        copy(in, in + frame_payload_len * 8, back_inserter(d_tb_buffers[RCV_BUF]));
-        d_buf_idx += frame_payload_len * 8;
+        copy(in, in + frame_payload_len, back_inserter(d_tb_buffers[RCV_BUF]));
+        d_buf_idx += frame_payload_len;
 
-        if (frame_payload_len * 8 == fec_info->d_tb_offset) {
+        if (frame_payload_len == fec_info->d_tb_offset) {
             DTL_LOG_DEBUG("aici");
             int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
             decode(tb_len);
@@ -83,12 +84,12 @@ bool tb_decoder::process_frame(const float* in,
         d_tb_buffers[RCV_BUF].clear();
 
         copy(
-            in + fec_info->d_tb_offset, in + frame_len, back_inserter(d_tb_buffers[RCV_BUF]));
-        d_buf_idx += frame_len - fec_info->d_tb_offset;
+            in + fec_info->d_tb_offset, in + frame_payload_len, back_inserter(d_tb_buffers[RCV_BUF]));
+        d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
         data_ready = true;
     }
 
-    d_processed += frame_len;
+    d_processed += frame_payload_len;
 
     return data_ready;
 }
@@ -118,7 +119,8 @@ int tb_decoder::decode(int tb_len)
 
         // copy check bits
         copy(&d_tb_buffers[RCV_BUF][j], &d_tb_buffers[RCV_BUF][j+ncheck], d_tb_buffers[FULL_BUF].begin()+i*n);
-        j += ncheck;        
+        j += ncheck;
+        // copy systematic bits     
         copy(&d_tb_buffers[RCV_BUF][j], &d_tb_buffers[RCV_BUF][j+k_], d_tb_buffers[FULL_BUF].begin()+i * n + ncheck);
         j += k_;
 

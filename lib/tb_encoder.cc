@@ -89,11 +89,11 @@ int tb_encoder::size()
 int tb_encoder::buf_out(unsigned char* out, int len, int bps)
 {
     repack repacker(1, bps);
-    //DTL_LOG_BUFFER("buf_out", &d_tb_buffers[0][d_buf_idx], len);
+    DTL_LOG_BUFFER("buf_out", &d_tb_buffers[0][d_buf_idx], len);
     int syms = repacker.repack_lsb_first(&d_tb_buffers[0][d_buf_idx], len, out, false);
     d_buf_idx += len;
-    DTL_LOG_DEBUG("buf_out: idx={}, size={}", d_buf_idx, d_tb_buffers[0].size());
-    //DTL_LOG_BUFFER("buf_out syms", out, syms);
+    DTL_LOG_DEBUG("buf_out: idx={}, size={}, n_syms={}", d_buf_idx, d_tb_buffers[0].size(), syms);
+    DTL_LOG_BUFFER("buf_out syms", out, syms);
     return syms;
 }
 

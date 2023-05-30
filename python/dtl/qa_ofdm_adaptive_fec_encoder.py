@@ -55,7 +55,7 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         self.test_codes_dir = os.path.dirname(__file__)
         self.len_key = "len_key"
         self.frame_len = 3
-        self.ofdm_sym_capacity = 20
+        self.ofdm_sym_capacity = 10
         self.fec_idx = 1
         self.constellations = [constellation_type_t.QPSK, constellation_type_t.PSK8]
 
@@ -64,13 +64,13 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
 
     def test_001_encode(self):
 
-        cnst = constellation_type_t.QPSK
+        cnst = constellation_type_t.PSK8
         bps = get_bits_per_symbol(cnst)
         ldpc_encs = make_ldpc_encoders([f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"])
         ldpc_decs = make_ldpc_decoders([f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"])
 
         enc = ldpc_encs[self.fec_idx]
-        # data = [random.getrandbits(1) for _ in range(int(enc.get_k() * 5.5))]
+        #data = [random.getrandbits(1) for _ in range(int(enc.get_k() * 4.1))]
         data = [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1]
         print(enc.get_k() * 3.5, len(data))
 

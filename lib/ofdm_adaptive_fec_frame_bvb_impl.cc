@@ -237,6 +237,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 // Frame carries an integer number of bytes
                 d_current_frame_len = d_frame_capacity * d_current_bps / 8;
                 d_tb_len = compute_tb_len(d_current_enc->get_n(), d_current_frame_len * 8);
+                d_frame_padding_syms = (d_frame_capacity * d_current_bps - d_current_frame_len * 8) / d_current_bps;
 
                 // d_current_frame_len *= 8;
 
@@ -255,10 +256,11 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 d_used_frames_count = 0;
                 ++d_tb_count;
 
-                DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}",
+                DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}, padding_syms={}",
                             d_tb_enc->size(),
                             d_tb_enc->buf_payload(),
-                            read_index);
+                            read_index,
+                            d_frame_padding_syms);
 
             } break;
 
@@ -272,9 +274,9 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                     // Output the TB frame by frame
                     while (!d_tb_enc->ready() && produced_frames < noutput_items) {
 
-                        int bytes_needed = n_bits_to_bytes(d_tb_enc->remaining_buf_size());
+                        int bytes_left_in_tb = n_bits_to_bytes(d_tb_enc->remaining_buf_size());
                         int out_frame_bytes =
-                            min(bytes_needed, current_frame_available_bytes());
+                            min(bytes_left_in_tb, current_frame_available_bytes());
 
                         DTL_LOG_DEBUG("output_buffer: bytes={}, syms={}, offset={}",
                                     out_frame_bytes,
@@ -292,12 +294,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                             add_frame_tags(d_frame_capacity * d_current_bps / 8);
                             d_current_frame_offset = 0;
                             ++produced_frames;
+                            write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                            write_index += d_frame_padding_syms;
                         } else {
                             d_current_frame_offset +=
                                 n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                            write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
                         }
                         ++d_used_frames_count;
-                        write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                        //write_index += d_frame_capacity; //n_bytes_to_syms(out_frame_bytes, d_current_bps);
                     }
 
                     // If TB buffer empty check if we can start another TB in current frame
