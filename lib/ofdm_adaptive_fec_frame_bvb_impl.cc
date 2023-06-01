@@ -59,8 +59,8 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_len_key(pmt::intern(len_key)),
       d_tag_offset(0),
       d_action(Action::PROCESS_INPUT),
-      d_used_frames_count(0)
-
+      d_used_frames_count(0),
+      d_frame_used_capacity(0)
 {
     // Find longest code
     auto it = max_element(d_encoders.begin() + 1,
@@ -140,10 +140,10 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
 void ofdm_adaptive_fec_frame_bvb_impl::padded_frame_out(int frame_payload)
 {
 
-    add_frame_tags(tb_offset_to_bytes());
+    add_frame_tags(frame_payload);
 }
 
-int n_bits_to_bytes(int nbits)
+int align_bits_to_bytes(int nbits)
 {
     int nbytes = nbits / 8;
     if (nbits % 8) {
@@ -152,10 +152,10 @@ int n_bits_to_bytes(int nbits)
     return nbytes;
 }
 
-int n_bytes_to_syms(int nbytes, int bps)
+int ofdm_adaptive_fec_frame_bvb_impl::align_bytes_to_syms(int nbytes)
 {
-    int nsyms = nbytes * 8 / bps;
-    if (nbytes * 8 % bps) {
+    int nsyms = nbytes * 8 / d_current_bps;
+    if (nbytes * 8 % d_current_bps) {
         ++nsyms;
     }
     return nsyms;
@@ -182,7 +182,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::tb_offset_to_bytes()
 
 int ofdm_adaptive_fec_frame_bvb_impl::current_frame_available_bytes()
 {
-    int available_bytes = (d_frame_capacity - d_current_frame_offset) * d_current_bps / 8;
+    int available_bytes = (d_frame_capacity - d_frame_used_capacity) * d_current_bps / 8;
     return available_bytes;
 }
 
@@ -274,13 +274,13 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                     // Output the TB frame by frame
                     while (!d_tb_enc->ready() && produced_frames < noutput_items) {
 
-                        int bytes_left_in_tb = n_bits_to_bytes(d_tb_enc->remaining_buf_size());
+                        int bytes_left_in_tb = align_bits_to_bytes(d_tb_enc->remaining_buf_size());
                         int out_frame_bytes =
                             min(bytes_left_in_tb, current_frame_available_bytes());
 
                         DTL_LOG_DEBUG("output_buffer: bytes={}, syms={}, offset={}",
                                     out_frame_bytes,
-                                    n_bytes_to_syms(out_frame_bytes, d_current_bps),
+                                    align_bytes_to_syms(out_frame_bytes),
                                     d_current_frame_offset);
 
                         d_tb_enc->buf_out(
@@ -294,12 +294,13 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                             add_frame_tags(d_frame_capacity * d_current_bps / 8);
                             d_current_frame_offset = 0;
                             ++produced_frames;
-                            write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
-                            write_index += d_frame_padding_syms;
+                            write_index += (d_frame_capacity - d_frame_used_capacity);
+                            d_frame_used_capacity = 0;
                         } else {
-                            d_current_frame_offset +=
-                                n_bytes_to_syms(out_frame_bytes, d_current_bps);
-                            write_index += n_bytes_to_syms(out_frame_bytes, d_current_bps);
+                            d_current_frame_offset += out_frame_bytes;
+                                //align_bytes_to_syms(out_frame_bytes, d_current_bps);
+                            d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
+                            write_index += d_frame_used_capacity;
                         }
                         ++d_used_frames_count;
                         //write_index += d_frame_capacity; //n_bytes_to_syms(out_frame_bytes, d_current_bps);
@@ -336,15 +337,16 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
             } break;
             case Action::FINALIZE_FRAME: {
                 // pad rest  of the frame (frame_len - frame_offset)
-                int frame_payload = d_current_frame_offset * d_current_bps / 8;
-                if (d_current_frame_offset * d_current_bps % 8) {
-                    ++frame_payload;
-                }
-                padded_frame_out(frame_payload);
+                // int frame_payload = d_current_frame_offset * d_current_bps / 8;
+                // if (d_current_frame_offset * d_current_bps % 8) {
+                //     ++frame_payload;
+                // }
+                padded_frame_out(d_current_frame_offset);
+                d_frame_used_capacity = align_bytes_to_syms(d_current_frame_offset);
+                DTL_LOG_DEBUG("finalize frame: payload={}", d_current_frame_offset);
                 d_current_frame_offset = 0;
                 d_action = Action::PROCESS_INPUT;
                 ++produced_frames;
-                DTL_LOG_DEBUG("finalize frame: payload={}", frame_payload);
             } break;
         } // action switch
     }     // input loop

@@ -32,6 +32,7 @@ tb_decoder::tb_decoder(int max_tb_len)
 bool tb_decoder::process_frame(const float* in,
                                int frame_len,
                                int frame_payload_len,
+                               int bps,
                                fec_info_t::sptr fec_info)
 {
     bool data_ready = false;
@@ -42,12 +43,9 @@ bool tb_decoder::process_frame(const float* in,
     }
 
     // If frame is part of the current TB
-    DTL_LOG_DEBUG("process_frame: current_no={}, no={}, offset={}, frame_len={}, frame_payload={}",
+    DTL_LOG_DEBUG("process_frame: current_no={}, no={}",
                   d_tb_number,
-                  fec_info->d_tb_number,
-                  fec_info->d_tb_offset,
-                  frame_len,
-                  frame_payload_len);
+                  fec_info->d_tb_number);
 
     //DTL_LOG_BUFFER("process frame input", in, payload_len);
     if (fec_info->d_tb_number == d_tb_number) {
@@ -83,13 +81,28 @@ bool tb_decoder::process_frame(const float* in,
         d_buf_idx = 0;
         d_tb_buffers[RCV_BUF].clear();
 
+        // align offset to symbols
+        int extra_bits = 0;
+        if(fec_info->d_tb_offset % bps) {
+            extra_bits = bps - fec_info->d_tb_offset % bps;
+        }
+        int new_tb_offset = 0;
+        if (fec_info->d_tb_offset) {
+            new_tb_offset = fec_info->d_tb_offset + extra_bits;
+        }
         copy(
-            in + fec_info->d_tb_offset, in + frame_payload_len, back_inserter(d_tb_buffers[RCV_BUF]));
+            in + new_tb_offset, in + frame_payload_len + extra_bits, back_inserter(d_tb_buffers[RCV_BUF]));
         d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
         data_ready = true;
     }
 
     d_processed += frame_payload_len;
+
+    DTL_LOG_DEBUG("process_frame: buf size={},offset={}, frame_len={}, frame_payload={}",
+                  d_tb_buffers[RCV_BUF].size(),
+                  fec_info->d_tb_offset,
+                  frame_len,
+                  frame_payload_len);
 
     return data_ready;
 }

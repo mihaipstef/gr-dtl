@@ -129,14 +129,19 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         }
         set_min_noutput_items(1);
 
+        std::stringstream ss;
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
+            ss << "," << d_constellation->decision_maker(&in[read_index]);
             std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 1));
             std::reverse(llrs.begin(), llrs.end());
-            for (int i=0; i<llrs.size();++i){
-                llrs[i] *= -1;
+            for (int j=0; j<llrs.size();++j){
+                llrs[j] *= -1;
             }
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());
         }
+
+
+        DTL_LOG_DEBUG("rcvd frame {}", ss.str());
 
         // for (auto& tag : tags) {
         //     add_item_tag(0, d_tag_offset, tag.key, tag.value);

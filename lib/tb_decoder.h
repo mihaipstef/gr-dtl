@@ -42,7 +42,7 @@ public:
 
     typedef std::shared_ptr<tb_decoder> sptr;
 
-    bool process_frame(const float* in, int frame_len, int frame_payload_len, fec_info_t::sptr fec_info);
+    bool process_frame(const float* in, int frame_len, int frame_payload_len, int bps, fec_info_t::sptr fec_info);
 
     std::pair<int, int> buf_out(unsigned char* out);
  

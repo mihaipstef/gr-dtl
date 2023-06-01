@@ -28,6 +28,7 @@ private:
     void padded_frame_out(int frame_payload);
     int tb_offset_to_bytes();
     int current_frame_available_bytes();
+    int align_bytes_to_syms(int nbytes);
 
     std::vector<fec_enc::sptr> d_encoders;
     int d_frame_capacity;
@@ -49,6 +50,7 @@ private:
     Action d_action;
     int d_used_frames_count;
     int d_frame_padding_syms;
+    int d_frame_used_capacity;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr> encoders, int frame_capacity, int max_bps, const std::string& len_key);

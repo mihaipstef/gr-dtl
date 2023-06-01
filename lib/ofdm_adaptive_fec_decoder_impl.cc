@@ -120,7 +120,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             throw runtime_error("FEC tags missing");
         }
 
-        fec_info->d_tb_offset *= bps;
+        fec_info->d_tb_offset *= 8;
 
         // Make sure we consume input only if we'll be able to produce the output
         if (noutput_items < fec_info->d_tb_payload_len) {
@@ -128,7 +128,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         if (!d_data_ready) {
-            d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, frame_payload_len, fec_info);
+            d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, frame_payload_len, bps, fec_info);
             read_index += frame_len;
         }
 
