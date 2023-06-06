@@ -55,16 +55,6 @@ int fec_info_t::get_k()
     return 0;
 }
 
-int fec_info_t::no_of_cws()
-{
-    int n = get_n();
-    int ncws = 1;
-    if (d_frame_len >= n) {
-        ncws = 1 + d_frame_len / n;
-    }
-    return ncws;
-}
-
 
 fec_info_t::sptr make_fec_info(const std::vector<tag_t> tags, const std::vector<fec_enc::sptr> encoders, const std::vector<fec_dec::sptr> decoders)
 {

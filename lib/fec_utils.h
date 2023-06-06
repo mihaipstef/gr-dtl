@@ -43,8 +43,6 @@ struct fec_info_t {
     int get_n();
 
     int get_k();
-
-    int no_of_cws();
 };
 
 

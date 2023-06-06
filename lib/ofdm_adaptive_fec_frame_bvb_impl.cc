@@ -201,7 +201,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     int produced_frames = 0;
     int output_available = noutput_items * d_frame_capacity;
 
-
     DTL_LOG_DEBUG(
         "general_work start: d_frame_capacity={}, noutput={}, ninput={}, action={}",
         d_frame_capacity,
@@ -288,7 +287,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                             min(out_frame_bytes * 8, d_tb_enc->remaining_buf_size()),
                             d_current_bps);
 
-
+                        // If we fill out the current frame ...
                         if (out_frame_bytes == current_frame_available_bytes()) {
                             // add tags
                             add_frame_tags(d_frame_capacity * d_current_bps / 8);

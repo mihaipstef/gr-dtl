@@ -38,6 +38,8 @@ private:
 
     int decode(int tb_len);
 
+    int expected_tb_len(fec_info_t::sptr fec_info, int ncws);
+
 public:
 
     typedef std::shared_ptr<tb_decoder> sptr;
