@@ -180,6 +180,7 @@ void ofdm_adaptive_equalizer::equalize(gr_complex* frame,
             d_pilot_carr_set = (d_pilot_carr_set + 1) % d_pilot_carriers.size();
         }
     }
+
     DTL_LOG_DEBUG("n_sym:{}, SNRest:{}, Constellation:{}, d_pilot_carr_set:{}",
                   n_sym,
                   get_snr(),

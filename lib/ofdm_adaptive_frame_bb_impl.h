@@ -41,8 +41,6 @@ public:
     bool start() override;
     void set_constellation(constellation_type_t constellation) override;
 
-    std::pair<int, int>
-    find_fec_tags(uint64_t start_idx, uint64_t end_idx, std::vector<tag_t>& tags);
 
 
 protected:
@@ -56,14 +54,11 @@ private:
 
     void rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist);
 
-    void frame_out(const unsigned char* in,
+    int frame_out(const unsigned char* in,
                    int nbytes_in,
                    unsigned char* out,
                    int nsyms_out,
-                   repack& repacker,
-                   bool crc,
-                   int& read_index,
-                   int& write_index);
+                   repack& repacker);
 
     constellation_type_t d_constellation;
     unsigned char d_fec_scheme;
@@ -80,14 +75,8 @@ private:
     std::vector<unsigned char> d_frame_buffer;
     unsigned long d_frame_count;
     frame_file_store d_frame_store;
-    bool d_has_fec;
-    bool d_reset_tb_offset;
-    int d_frame_in_bytes; // Input frame size in bytes (each frame carries an
-                          // integer number of bytes)
+    int d_frame_in_bytes;
     int d_consecutive_empty_frames;
-    std::vector<tag_t> d_fec_tags;
-    int d_tb_offset;
-    int d_tb_len;
 };
 
 } // namespace dtl

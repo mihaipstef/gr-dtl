@@ -58,10 +58,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_max_empty_frames(max_empty_frames),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_frame_count(0),
-      d_has_fec(true),
-      d_consecutive_empty_frames(0),
-      d_tb_offset(0),
-      d_tb_len(0)
+      d_frame_in_bytes(0),
+      d_consecutive_empty_frames(0)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -79,13 +77,6 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
 
 void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 {
-
-    // If there is FEC, constellation is passed with the transport block
-    // to keep code rate and constellation in sync
-    if (d_has_fec) {
-        return;
-    }
-
     if (pmt::is_dict(feedback)) {
         if (pmt::dict_has_key(feedback, feedback_constellation_key())) {
             constellation_type_t constellation =
@@ -117,65 +108,25 @@ void ofdm_adaptive_frame_bb_impl::forecast(int noutput_items,
     ninput_items_required[0] = 0;
 }
 
-std::pair<int, int> ofdm_adaptive_frame_bb_impl::find_fec_tags(uint64_t start_idx,
-                                                               uint64_t end_idx,
-                                                               vector<tag_t>& tags)
-{
-    vector<tag_t> all_tags_in_range;
-    get_tags_in_window(all_tags_in_range, 0, start_idx, end_idx);
-
-    int64_t offset = -1;
-    int len = -1;
-    unsigned int check = 0;
-
-    for (auto& tag : tags) {
-        if (tag.key == fec_key()) {
-            offset = tag.offset - nitems_read(0) - start_idx;
-            assert(offset >= 0);
-            tags.push_back(tag);
-            check |= 1;
-        } else if (tag.key == fec_tb_payload_key()) {
-            tags.push_back(tag);
-            len = pmt::to_long(tag.value);
-            check |= 2;
-        }
-        if (check == 3) {
-            break;
-        }
-    }
-    if (check == 3) {
-        return make_pair(static_cast<int>(offset), len);
-    }
-    return make_pair(-1, -1);
-}
-
-
-void ofdm_adaptive_frame_bb_impl::frame_out(const unsigned char* in,
+int ofdm_adaptive_frame_bb_impl::frame_out(const unsigned char* in,
                                             int nbytes_in,
                                             unsigned char* out,
                                             int nsyms_out,
-                                            repack& repacker,
-                                            bool crc,
-                                            int& read_index,
-                                            int& write_index)
+                                            repack& repacker)
 {
-    DTL_LOG_DEBUG("frame_out payload_len={}", nbytes_in);
 
     assert(nbytes_in <= d_frame_in_bytes);
 
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
     // Copy frame input bytes, ...
-    memcpy(&d_frame_buffer[0], &in[read_index], nbytes_in);
+    memcpy(&d_frame_buffer[0], in, nbytes_in);
 
     int bytes_read = nbytes_in;
 
-    // If CRC...
-    if (crc) {
-        // ... append CRC ...
-        d_crc.append_crc(&d_frame_buffer[0], nbytes_in);
-        bytes_read += d_crc.get_crc_len();
-    }
+    // Append CRC ...
+    d_crc.append_crc(&d_frame_buffer[0], nbytes_in);
+    bytes_read += d_crc.get_crc_len();
 
     // If frame not full...
     if (bytes_read < d_frame_in_bytes) {
@@ -186,14 +137,13 @@ void ofdm_adaptive_frame_bb_impl::frame_out(const unsigned char* in,
     // Repack frame buffer and output
     int frame_out_symbols =
         repacker.repack_lsb_first(const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                                  nsyms_out,
-                                  &out[write_index],
-                                  true);
-    assert(frame_out_symbols == nsyms_out);
-    d_consecutive_empty_frames = 0;
+                                  d_frame_in_bytes + d_crc.get_crc_len(),
+                                  out);
+    //assert(frame_out_symbols == d_frame_in_bytes);
     // update indexes
-    read_index += nsyms_out;
-    write_index += frame_out_symbols;
+    d_consecutive_empty_frames = 0;
+    DTL_LOG_DEBUG("frame_out payload_len={}, d_frame_in_bytes={}, frame_out_symbols={}", nbytes_in, d_frame_in_bytes, frame_out_symbols);
+    return frame_out_symbols;
 }
 
 
@@ -221,7 +171,9 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                   nitems_written(0),
                   ninput_items[0]);
 
-    while (write_index < noutput_items) {
+    bool wait_next_work = false;
+
+    while (write_index < noutput_items && !wait_next_work) {
 
         int frame_payload = -1;
 
@@ -233,25 +185,10 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         constellation_type_t cnst = d_constellation;
         unsigned char bps = get_bits_per_symbol(cnst);
 
-        if (d_has_fec) {
-            // Calculate input frame size.
-            // Number of bytes to be picked from input - each frame is carrying an integer
-            // number of bytes.
-            d_frame_in_bytes = d_frame_len * d_payload_carriers * bps / 8;
-            frame_bits = d_frame_in_bytes * 8;
-            // Looking for FEC tags - mark the begining of a TB
-            pair<int, int> tb =
-                find_fec_tags(read_index, read_index + d_frame_in_bytes, fec_tags);
-            if (tb.first >= 0) {
-                d_tb_offset = tb.first;
-                d_tb_len = tb.second;
-            }
-        } else {
-            // Leave room for CRC
-            d_frame_in_bytes =
-                d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
-            frame_bits = d_frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
-        }
+        // Leave room for CRC
+        d_frame_in_bytes =
+            d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
+        frame_bits = d_frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
 
         if (cnst == constellation_type_t::UNKNOWN) {
             throw runtime_error("constellation was not set correctly");
@@ -271,61 +208,41 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             break;
         }
 
-        repack repacker(bps, 8);
+        repack repacker(8, bps);
 
-        // If frame payload already set - we have to enforce the rest of the TB
-        // in current frame with padding because constellation changed
-        if (frame_payload >= 0) {
-            frame_out(&in[read_index],
-                      frame_payload,
-                      &out[write_index],
-                      expected_frame_symbols,
-                      repacker,
-                      !d_has_fec,
-                      read_index,
-                      write_index);
-            // Overwrite the constellation for next frame
-            d_constellation = cnst;
+        // If there is something to consume...
+        if (read_index < ninput_items[0]) {
+
+            d_waiting_for_input = false;
+
+            int next_frame_nbytes =
+                min({ d_frame_in_bytes, ninput_items[0] - read_index });
+            // ... output a frame.
+            int frame_out_symbols = frame_out(&in[read_index],
+                        next_frame_nbytes,
+                        &out[write_index],
+                        expected_frame_symbols,
+                        repacker);
+            d_waiting_full_frame = false;
+            frame_payload = next_frame_nbytes;
+            read_index += next_frame_nbytes;
+            write_index += frame_out_symbols;
+        // If there is nothing to consume
         } else {
-            // If there is something to consume...
-            if (read_index < ninput_items[0]) {
-
-                d_waiting_for_input = false;
-
-                int next_frame_nbytes =
-                    min({ d_frame_in_bytes, ninput_items[0] - read_index });
-                // ... output a frame.
-                frame_out(&in[read_index],
-                            next_frame_nbytes,
-                            &out[write_index],
-                            expected_frame_symbols,
-                            repacker,
-                            !d_has_fec,
-                            read_index,
-                            write_index);
-                d_waiting_full_frame = false;
-                frame_payload = next_frame_nbytes;
-            // If there is nothing to consume
+            frame_payload = 0;
+            if (d_max_empty_frames >= 0 && d_consecutive_empty_frames == d_max_empty_frames) {
+                DTL_LOG_DEBUG("work done");
+                consume_each(read_index);
+                return WORK_DONE;
             } else {
-                frame_payload = 0;
-                if (d_waiting_for_input) {
-                    if (d_max_empty_frames >= 0 && d_consecutive_empty_frames == d_max_empty_frames) {
-                        return WORK_DONE;
-                    } else {
-                        // Fill with empty frame
-                        DTL_LOG_DEBUG("empty frame");
-                        rand_pad(
-                            &out[write_index], expected_frame_symbols, rnd_symbols_dist);
-                        write_index += expected_frame_symbols;
-                        frame_out_symbols = expected_frame_symbols;
-                        d_waiting_for_input = false;
-                        ++d_consecutive_empty_frames;
-                        break;
-                    }
-                } else {
-                    d_waiting_for_input = true;
-                    break;
-                }
+                // Fill with empty frame
+                DTL_LOG_DEBUG("empty frame");
+                rand_pad(
+                    &out[write_index], expected_frame_symbols, rnd_symbols_dist);
+                write_index += expected_frame_symbols;
+                frame_out_symbols = expected_frame_symbols;
+                ++d_consecutive_empty_frames;
+                wait_next_work = true;
             }
         }
 
@@ -356,22 +273,12 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          d_tag_offset,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
-            // Add FEC tags
-            if (d_has_fec) {
-                for (auto& tag : fec_tags) {
-                    add_item_tag(0, d_tag_offset, tag.key, tag.value);
-                }
-                add_item_tag(
-                    0, d_tag_offset, payload_length_key(), pmt::from_long(frame_payload));
-            } else {
-                // TODO: make frame payload wo CRC
-                // Add transported payload tag - number of payload bytes carried by the
-                // frame (including CRC)
-                add_item_tag(0,
-                             d_tag_offset,
-                             payload_length_key(),
-                             pmt::from_long(frame_payload + d_crc.get_crc_len()));
-            }
+            // Add transported payload tag - number of payload bytes carried by the
+            // frame (including CRC)
+            add_item_tag(0,
+                            d_tag_offset,
+                            payload_length_key(),
+                            pmt::from_long(frame_payload + d_crc.get_crc_len()));
             d_tag_offset += expected_frame_symbols;
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,

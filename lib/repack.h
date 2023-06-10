@@ -23,8 +23,7 @@ public:
 
     int repack_lsb_first(unsigned char const* in,
                          size_t n_in,
-                         unsigned char* out,
-                         bool unpack);
+                         unsigned char* out);
 
     int repack_msb_first(unsigned char const* in,
                          size_t n_in,

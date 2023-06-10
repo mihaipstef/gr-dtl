@@ -30,15 +30,10 @@ void repack::set_bits_per_byte(unsigned char bits_in_byte, unsigned char bits_ou
 
 int repack::repack_lsb_first(unsigned char const* in,
                              size_t n_in,
-                             unsigned char* out,
-                             bool unpack)
+                             unsigned char* out)
 {
     int bits_per_in_byte = d_bits_in_byte;
     int bits_per_out_byte = d_bits_out_byte;
-    if (unpack) {
-        bits_per_in_byte = d_bits_out_byte;
-        bits_per_out_byte = d_bits_in_byte;
-    }
 
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;
 

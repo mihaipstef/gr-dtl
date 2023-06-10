@@ -38,8 +38,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
         self.constellations = config.constellations
-        self.frame_store_fname = f"{config.frame_store_folder}/rx.dat"
+        self.frame_store_fname = "/tmp/rx.dat" #f"{config.frame_store_folder}/rx.dat"
         self.use_sync_correct = config.use_sync_correct
+        self.fec = config.fec
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -119,7 +120,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.frame_length_tag_key,
             self.packet_num_tag_key,
             1,  # BPSK
-            scramble_header=self.scramble_bits
+            scramble_header=self.scramble_bits,
+            has_fec = self.fec
         )
 
         header_parser = digital.packet_headerparser_b(
@@ -137,6 +139,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
+
+        self.connect(payload_fft, blocks.tag_debug(64 * gr.sizeof_gr_complex, "ofdm_sync_chan_taps"))
+
+        self.connect(payload_fft, blocks.file_sink(
+            64 * gr.sizeof_gr_complex, "/tmp/rx_fft_frames.dat"))
+
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
             list(zip(*self.constellations))[1],
@@ -155,12 +163,19 @@ class ofdm_adaptive_rx(gr.hier_block2):
             False,
             0,
         )
+
+        self.connect(self.payload_eq, blocks.file_sink(
+            64 * gr.sizeof_gr_complex, "/tmp/rx_frames.dat"))
+
         payload_serializer = digital.ofdm_serializer_vcc(
             self.fft_len, self.occupied_carriers,
             self.frame_length_tag_key,
             self.packet_length_tag_key,
             1  # Skip 1 symbol (that was already in the header)
         )
+
+        self.connect(sync_correct, blocks.file_sink(
+            gr.sizeof_char, "/tmp/sync.dat"))
         payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
             list(zip(*self.constellations))[1],
             self.packet_length_tag_key,
@@ -175,7 +190,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
             self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
-        self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
+        self.connect(payload_demod, blocks.file_sink(gr.sizeof_char, "/tmp/rx_demod_frames.dat"))
+        self.connect(payload_demod, blocks.tag_debug(gr.sizeof_char, "demod"))
+        #self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
         self.connect(
             (hpd, 1),
             payload_fft,

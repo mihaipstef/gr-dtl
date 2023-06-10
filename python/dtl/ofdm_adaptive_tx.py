@@ -65,7 +65,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
             self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length,
-            len(self.occupied_carriers[0]), self.frame_store_fname, self.stop_no_input)
+            len(self.occupied_carriers[0]), self.frame_store_fname, 3)
 
         # Header path blocks
         header_constellation = digital.constellation_bpsk()
@@ -82,7 +82,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.frame_length_tag_key,
             self.packet_num_tag_key,
             bits_per_header_sym=1,  # BPSK
-            scramble_header=self.scramble_bits
+            scramble_header=self.scramble_bits,
+            has_fec=self.fec
         )
         header_gen = digital.packet_headergenerator_bb(
             header.base(), self.packet_length_tag_key)
@@ -102,6 +103,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
             list(zip(*self.constellations))[1],
             self.packet_length_tag_key
         )
+
+        self.connect(header_payload_mux, blocks.tag_debug(gr.sizeof_gr_complex, "mux"))
+
         # payload_scrambler = digital.additive_scrambler_bb(
         #     0x8a,
         #     self.scramble_seed,
@@ -118,6 +122,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             payload_mod,
             (header_payload_mux, 1)
         )
+        self.connect(payload_mod, blocks.file_sink(
+            gr.sizeof_gr_complex, "/tmp/frames.dat"))
 
         # OFDM blocks
         allocator = digital.ofdm_carrier_allocator_cvc(
@@ -140,7 +146,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.rolloff,
             self.packet_length_tag_key
         )
-
+        # self.connect(allocator, blocks.file_sink(
+        #     64*gr.sizeof_gr_complex, "/tmp/frames.dat"))
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
 

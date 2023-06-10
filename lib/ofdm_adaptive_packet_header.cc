@@ -182,6 +182,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     for (int i = 0; i < d_header_len; i++) {
         out[i] ^= d_scramble_mask[i];
     }
+     DTL_LOG_DEBUG("header_formatter: out");
     return true;
 }
 

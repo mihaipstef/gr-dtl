@@ -54,13 +54,16 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # Tx
         buffer_size = 32000
         test_data = [random.randint(0, 255) for x in range(buffer_size)]
-        src = blocks.vector_source_b(test_data, False, 1, [])
+        src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
             tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
+
+        # self.tb.connect((tx,0), blocks.file_sink(
+        #     gr.sizeof_char, "/tmp/tx.dat"))
 
         cnst = dtl.constellation_type_t.QPSK
         tx.set_constellation(cnst)
@@ -70,6 +73,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb.run()
 
         tx_samples = sink.data()
+
         print(f"tx samples={len(tx_samples)}")
         tx_samples = [0 for _ in range(100)] + \
             tx_samples + [0 for x in range(2000)]
@@ -86,7 +90,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 
-        self.tb.connect(rx_src, channel, rx)
+        self.tb.connect(rx_src, rx)
         self.tb.connect((rx, 0), rx_sink)
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
 
@@ -158,6 +162,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             "feedback_fec_key": [4, 3],
             "feedback_constellation_key": [4, 2],
             "frame_count_key": list(range(100)),
+            "fec_feedback_key": list(range(10))
         }
 
         for i in range(msg_debug.num_messages()):

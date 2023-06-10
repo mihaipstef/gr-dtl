@@ -63,7 +63,6 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
 {
     auto in = static_cast<const input_type*>(input_items[0]);
     auto out = static_cast<output_type*>(output_items[0]);
-
     std::vector<tag_t> tags;
     this->get_tags_in_range(
         tags, 0, this->nitems_read(0), this->nitems_read(0) + 1);

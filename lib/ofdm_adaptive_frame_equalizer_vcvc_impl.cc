@@ -118,6 +118,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     get_tags_in_window(tags, 0, 0, 1);
     for (unsigned i = 0; i < tags.size(); i++) {
         if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_chan_taps") {
+            DTL_LOG_DEBUG("aici");
             d_channel_state = pmt::c32vector_elements(tags[i].value);
         } else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
             carrier_offset = pmt::to_long(tags[i].value);
