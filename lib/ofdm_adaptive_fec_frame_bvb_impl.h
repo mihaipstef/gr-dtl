@@ -51,6 +51,7 @@ private:
     int d_used_frames_count;
     int d_frame_padding_syms;
     int d_frame_used_capacity;
+    int d_consecutive_empty_frames;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr> encoders, int frame_capacity, int max_bps, const std::string& len_key);

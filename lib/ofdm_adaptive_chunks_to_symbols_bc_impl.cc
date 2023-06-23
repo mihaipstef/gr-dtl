@@ -70,13 +70,13 @@ int ofdm_adaptive_chunks_to_symbols_bc_impl::work(int noutput_items,
     if (constellation_type_t::UNKNOWN == constellation_type) {
         throw std::invalid_argument("Constellation not found");
     }
+    DTL_LOG_DEBUG("size:{}, constellation: {}, noutput_items: {}", ninput_items[0], (int)constellation_type, noutput_items);
     constellation_sptr constellation = d_constellations[constellation_type];
     for (int i = 0; i < ninput_items[0]; ++i) {
         constellation->map_to_points(*in, out);
         ++in;
         ++out;
     }
-    DTL_LOG_DEBUG("size:{}, constellation: {}, noutput_items: {}", ninput_items[0], (int)constellation_type, noutput_items);
     return ninput_items[0];
 }
 

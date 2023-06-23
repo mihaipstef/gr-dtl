@@ -41,6 +41,7 @@ class ofdm_adaptive_config:
         13, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8), (23, dtl.constellation_type_t.QAM16),)
     frame_store_folder: str = "/tmp"
     fec: bool = False
+    codes_alist: t.Tuple[str] = ()
 
 
 @dc.dataclass

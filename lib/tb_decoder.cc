@@ -61,8 +61,6 @@ bool tb_decoder::process_frame(const float* in,
         int ncws = compute_tb_len(d_fec_info->get_n(), frame_len);
 
         if (d_tb_buffers[RCV_BUF].size() >= expected_tb_len(fec_info, ncws)) {
-            DTL_LOG_DEBUG("aici");
-
             decode(ncws);
             d_buf_idx = 0;
             d_tb_buffers[RCV_BUF].clear();

@@ -23,6 +23,7 @@ GR_PYTHON_INSTALL(
     ofdm_adaptive_config.py
     ofdm_adaptive_rx.py
     ofdm_adaptive_tx.py
+    ofdm_adaptive.py
     DESTINATION ${GR_PYTHON_DIR}/gnuradio/dtl
 )
 

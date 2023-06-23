@@ -220,6 +220,7 @@ int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
         tag.key = get<2>(h);
         tag.value = pmt::from_long(val);
         tags.push_back(tag);
+        DTL_LOG_DEBUG("parser: tag={}, val={}", pmt::symbol_to_string(tag.key), val);
     }
     return k;
 }
@@ -248,6 +249,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
                                (unsigned char)(packet_number >> 8),
                                constellation_type };
 
+    DTL_LOG_DEBUG("aici {}", d_has_fec);
 
     if (d_has_fec) {
         k = parse_fec_header(in, k, tags, buffer);

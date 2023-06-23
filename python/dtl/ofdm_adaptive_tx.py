@@ -7,6 +7,7 @@ from gnuradio import (
     filter,
 )
 import pmt
+import ofdm_adaptive
 
 
 class ofdm_adaptive_tx(gr.hier_block2):
@@ -41,6 +42,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
         self.stop_no_input = config.stop_no_input
         self.fec = config.fec
+        self.codes_alist = config.codes_alist
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -51,21 +53,13 @@ class ofdm_adaptive_tx(gr.hier_block2):
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
 
+        self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
         self._setup_direct_tx()
-        if self.fec:
-            self._setup_fec()
+
         self._setup_feedback_rx()
 
 
-    def _setup_fec(self):
-        pass
-
-
     def _setup_direct_tx(self):
-
-        self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-            self.packet_length_tag_key, list(zip(*self.constellations))[1], self.frame_length,
-            len(self.occupied_carriers[0]), self.frame_store_fname, 3)
 
         # Header path blocks
         header_constellation = digital.constellation_bpsk()
@@ -77,7 +71,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
             header_len = 2
 
         header = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, header_len, self.frame_length,
+            [self.occupied_carriers[0] for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,
@@ -92,19 +86,15 @@ class ofdm_adaptive_tx(gr.hier_block2):
             lengthtagname=self.packet_length_tag_key,
             tag_preserve_head_pos=1  # Head tags on the payload stream stay on the head
         )
-        self.connect(
-            self.frame_unpack,
-            header_gen,
-            header_mod,
-            (header_payload_mux, 0)
-        )
+
         # Payload path blocks
         payload_mod = dtl.ofdm_adaptive_chunks_to_symbols_bc(
             list(zip(*self.constellations))[1],
             self.packet_length_tag_key
         )
 
-        self.connect(header_payload_mux, blocks.tag_debug(gr.sizeof_gr_complex, "mux"))
+        self.connect(header_payload_mux, blocks.tag_debug(
+            gr.sizeof_gr_complex, "mux"))
 
         # payload_scrambler = digital.additive_scrambler_bb(
         #     0x8a,
@@ -115,15 +105,54 @@ class ofdm_adaptive_tx(gr.hier_block2):
         #     reset_tag_key=self.packet_length_tag_key
         # )
 
-        self.connect(
-            (self, 0),
-            # payload_scrambler,
-            self.frame_unpack,
-            payload_mod,
-            (header_payload_mux, 1)
-        )
-        self.connect(payload_mod, blocks.file_sink(
-            gr.sizeof_gr_complex, "/tmp/frames.dat"))
+        if self.fec:
+            repack = blocks.repack_bits_bb(8, 1)
+            self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
+                                                            ofdm_adaptive.frame_capacity(
+                                                                self.frame_length, self.occupied_carriers),
+                                                            ofdm_adaptive.max_bps(
+                                                                list(zip(*self.constellations))[1]),
+                                                            self.packet_length_tag_key)
+
+            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(ofdm_adaptive.frame_capacity(
+                self.frame_length, self.occupied_carriers), self.packet_length_tag_key)
+
+            # self.connect(self.to_stream, blocks.file_sink(
+            #     gr.sizeof_char, "/tmp/tx.dat"))
+
+            self.connect(
+                (self, 0),
+                # payload_scrambler,
+                repack,
+                self.fec_frame,
+                self.to_stream,
+                payload_mod,
+                (header_payload_mux, 1)
+            )
+            self.connect(
+                self.to_stream,
+                header_gen,
+                header_mod,
+                (header_payload_mux, 0)
+            )
+        else:
+            self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
+                self.packet_length_tag_key, list(
+                    zip(*self.constellations))[1], self.frame_length,
+                len(self.occupied_carriers[0]), self.frame_store_fname, 3)
+            self.connect(
+                self.frame_unpack,
+                header_gen,
+                header_mod,
+                (header_payload_mux, 0)
+            )
+            self.connect(
+                (self, 0),
+                # payload_scrambler,
+                self.frame_unpack,
+                payload_mod,
+                (header_payload_mux, 1)
+            )
 
         # OFDM blocks
         allocator = digital.ofdm_carrier_allocator_cvc(
@@ -150,7 +179,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
         #     64*gr.sizeof_gr_complex, "/tmp/frames.dat"))
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
-
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
@@ -201,10 +229,18 @@ class ofdm_adaptive_tx(gr.hier_block2):
                      (self.feedback_parser, 0))
 
         self.msg_connect(self.feedback_parser, "info",
-                         self.frame_unpack, "feedback")
-        self.msg_connect(self.feedback_parser, "info",
                          self, "monitor")
-        self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
+
+        if self.fec:
+            self.msg_connect(self.feedback_parser, "info",
+                            self.fec_frame, "feedback")
+            self.msg_connect(self.fec_frame, "monitor", self, "monitor")
+
+        else:
+            self.msg_connect(self.feedback_parser, "info",
+                            self.frame_unpack, "feedback")
+            self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
 
     def set_constellation(self, constellation):
-        self.frame_unpack.set_constellation(constellation)
+        if not self.fec:
+            self.frame_unpack.set_constellation(constellation)

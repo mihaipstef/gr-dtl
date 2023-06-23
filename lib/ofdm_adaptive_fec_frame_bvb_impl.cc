@@ -60,9 +60,13 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_tag_offset(0),
       d_action(Action::PROCESS_INPUT),
       d_used_frames_count(0),
-      d_frame_used_capacity(0)
+      d_frame_used_capacity(0),
+      d_consecutive_empty_frames(0)
 {
     // Find longest code
+    if (d_encoders.size() <= 1) {
+        throw(std::runtime_error("No encoder found!"));
+    }
     auto it = max_element(d_encoders.begin() + 1,
                           d_encoders.end(),
                           [](const decltype(d_encoders)::value_type& l,
@@ -70,14 +74,16 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
                               return l->get_n() < r->get_n();
                           });
 
-    if (it == d_encoders.end()) {
-        throw(std::runtime_error("No encoder found!"));
-    }
 
     int ncws = compute_tb_len((*it)->get_n(), d_frame_capacity * max_bps);
     d_tb_enc = make_shared<tb_encoder>((*it)->get_n() * ncws, (*it)->get_n());
 
-    set_min_noutput_items(d_frame_capacity);
+    set_min_noutput_items(1);
+    this->message_port_register_in(pmt::mp("feedback"));
+    this->set_msg_handler(pmt::mp("feedback"),
+                          [this](pmt::pmt_t msg) { this->process_feedback(msg); });
+    message_port_register_out(pmt::mp("monitor"));
+    DTL_LOG_DEBUG("frame_capacity={}, max_bps={}", frame_capacity, max_bps);
 }
 
 /*
@@ -182,6 +188,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::tb_offset_to_bytes()
 
 int ofdm_adaptive_fec_frame_bvb_impl::current_frame_available_bytes()
 {
+    DTL_LOG_DEBUG("capacity={}, used_capacity={}", d_frame_capacity, d_frame_used_capacity);
     int available_bytes = (d_frame_capacity - d_frame_used_capacity) * d_current_bps / 8;
     return available_bytes;
 }
@@ -212,8 +219,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     if (ninput_items[0] == 0 && noutput_items > 0) {
         int frame_payload = tb_offset_to_bytes();
         if (output_available >= 1) {
-            padded_frame_out(frame_payload);
-            return 1;
+            if (++d_consecutive_empty_frames == 3) {
+                DTL_LOG_DEBUG("work done");
+                return WORK_DONE;
+            } else {
+                padded_frame_out(frame_payload);
+                return 1;
+            }
+        } else {
+            return 0;
         }
     }
 
@@ -254,6 +268,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 d_action = Action::OUTPUT_BUFFER;
                 d_used_frames_count = 0;
                 ++d_tb_count;
+                d_consecutive_empty_frames = 0;
 
                 DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}, padding_syms={}",
                             d_tb_enc->size(),
@@ -290,7 +305,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                         // If we fill out the current frame ...
                         if (out_frame_bytes == current_frame_available_bytes()) {
                             // add tags
-                            add_frame_tags(d_frame_capacity * d_current_bps / 8);
+                            add_frame_tags(d_frame_used_capacity * d_current_bps / 8 + out_frame_bytes);
                             d_current_frame_offset = 0;
                             ++produced_frames;
                             write_index += (d_frame_capacity - d_frame_used_capacity);

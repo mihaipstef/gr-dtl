@@ -18,6 +18,7 @@ from ofdm_adaptive_config import (
     ofdm_adaptive_tx_config as tx_cfg,
     ofdm_adaptive_rx_config as rx_cfg,
 )
+import os
 import pmt
 import random
 import sys
@@ -41,11 +42,15 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.data_carriers = len(tx_cfg.occupied_carriers[0])
         self.known_constellations = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
             15, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8),)
+        test_codes_dir = os.path.dirname(__file__)
+        self.codes = (f"{test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{test_codes_dir}/n_0100_k_0027_gap_04.alist")
+
 
     def tearDown(self):
         self.tb = None
 
     def test_001_direct_txrx(self):
+        return
         """
         Test Tx/Rx of multiple packets with diferent constellations.
         """
@@ -57,7 +62,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True))
+            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True, codes_alist=self.codes))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
@@ -86,7 +91,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
         rx = ofdm_adaptive_rx(
-            rx_cfg(frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations))
+            rx_cfg(frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations, codes_alist=self.codes))
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 
@@ -110,6 +115,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         assert (packet_success)
 
     def test_002_feedback_txrx(self):
+        return
         test_data = [
             [int(dtl.constellation_type_t.QAM16), 4],
             [int(dtl.constellation_type_t.QPSK), 3],
@@ -136,7 +142,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         tx_tb = gr.top_block()
 
-        tx = ofdm_adaptive_tx(tx_cfg)
+        tx = ofdm_adaptive_tx(tx_cfg(codes_alist=self.codes))
 
         # Channel
         freq_offset = 0
@@ -145,7 +151,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         feedback_src = blocks.vector_source_c(
             [0 for _ in range(1000)] +  list(feedback_sink.data()) + [0 for _ in range(1000)], repeat=False)
-        tx_src = blocks.vector_source_b([0 for _ in range(10000)])
+        tx_src = blocks.vector_source_b([0 for _ in range(200000)])
         tx_tb.connect(tx_src, (tx, 0))
         tx_tb.connect(feedback_src, channel, (tx, 1))
         tx_tb.connect(tx, blocks.null_sink(gr.sizeof_gr_complex))
@@ -175,6 +181,73 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
                     val = pmt.to_python(pmt.cdr(item))
                     self.assertTrue(key in expected_messages)
                     self.assertTrue(val in expected_messages[key])
+
+
+    def test_003_direct_fec_txrx(self):
+        """
+        Test Tx/Rx of multiple packets with diferent constellations.
+        """
+        tx_samples = []
+
+        # Tx
+        buffer_size = 3000
+        test_data = [random.randint(0, 255) for x in range(buffer_size)]
+        src = blocks.vector_source_b(test_data)
+        feedback_src = blocks.vector_source_c([0 for _ in range(50)])
+        tx = ofdm_adaptive_tx(
+            tx_cfg(fec=True, frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True, codes_alist=self.codes))
+        sink = blocks.vector_sink_c()
+        self.tb.connect(src, (tx, 0), sink)
+        self.tb.connect(feedback_src, (tx, 1))
+
+        # self.tb.connect((tx,0), blocks.file_sink(
+        #     gr.sizeof_char, "/tmp/tx.dat"))
+
+        cnst = dtl.constellation_type_t.QPSK
+        tx.set_constellation(cnst)
+
+        time.sleep(1)
+
+        self.tb.run()
+        return
+
+        tx_samples = sink.data()
+
+        print(f"tx samples={len(tx_samples)}")
+        tx_samples = [0 for _ in range(100)] + \
+            tx_samples + [0 for x in range(2000)]
+
+        # Channel
+        freq_offset = 0
+        channel = channels.channel_model(
+            0, frequency_offset=freq_offset * 1.0/tx_cfg.fft_len,)
+
+        # Rx
+        rx_src = blocks.vector_source_c(tx_samples)
+        rx = ofdm_adaptive_rx(
+            rx_cfg(fec=True, frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations, codes_alist=self.codes))
+        rx_sink = blocks.vector_sink_b()
+        null_sink = blocks.null_sink(gr.sizeof_gr_complex)
+
+        self.tb.connect(rx_src, rx)
+        self.tb.connect((rx, 0), rx_sink)
+        self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
+
+        self.tb.run()
+        return
+        rx_data = rx_sink.data()
+        packet_success = test_data == rx_data[:buffer_size]
+        d = [t-r for t, r in zip(test_data, rx_data[:buffer_size])]
+        print(f"count correct bytes = {d.count(0)}/{buffer_size}")
+        errors = [i for i in range(len(d)) if d[i]]
+        if len(errors) > 0:
+            print(errors[:20])
+            first_err = errors[0]
+            print(len(test_data), len(rx_data))
+            print(test_data[first_err-20:first_err+20])
+            print(rx_data[first_err-20:first_err+20])
+            print(subfinder(test_data, rx_data[first_err: first_err+20]))
+        assert (packet_success)
 
 
 

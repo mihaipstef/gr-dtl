@@ -51,7 +51,7 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_
         throw(std::runtime_error("No encoder found!"));
     }
     int frame_len = d_frame_capacity * max_bps;
-    d_tb_dec = make_shared<tb_decoder>(frame_len *
+    d_tb_dec = make_shared<tb_decoder>((*it)->get_n() *
                                            compute_tb_len((*it)->get_n(), frame_len));
 }
 
