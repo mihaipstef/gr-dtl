@@ -67,11 +67,15 @@ private:
                          int first_pos,
                          std::vector<tag_t>& tags,
                          std::vector<unsigned char>& crc_buf);
+
+    void pack_crc(const unsigned char* buf_bits, std::vector<unsigned char>& crc_buf);
+
     pmt::pmt_t d_constellation_tag_key;
     constellation_type_t d_constellation;
     int d_payload_syms;
     bool d_has_fec;
     gr::digital::crc d_crc;
+    int d_crc_len;
 };
 
 } // namespace dtl

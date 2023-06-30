@@ -40,7 +40,6 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_
       d_data_ready(false),
       d_processed_input(0)
 {
-    DTL_LOG_DEBUG("constructor");
     auto it = max_element(d_decoders.begin() + 1,
                           d_decoders.end(),
                           [](const decltype(d_decoders)::value_type& l,
@@ -83,6 +82,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         int len = 0;
         int frame_payload_len = 0;
         for (auto& tag : tags) {
+
             if (tag.key == get_constellation_tag_key()) {
                 bps = get_bits_per_symbol(static_cast<constellation_type_t>(pmt::to_long(tag.value)));
                 test |= 1;
@@ -94,6 +94,8 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 frame_payload_len = 8 * pmt::to_long(tag.value);
                 test |= 4;
             }
+            DTL_LOG_DEBUG("tag {}, {}, {}", pmt::symbol_to_string(tag.key), test, pmt::to_long(tag.value));
+
             if (test == 7) {
                 break;
             }
@@ -103,7 +105,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             throw runtime_error("Tags missing");
         }
 
-        frame_len = len * bps;
+        frame_len = len * bps; //align_bits_to_bytes(d_frame_capacity * bps);
 
         if (read_index + frame_len > ninput_items[0]) {
             break;
@@ -128,7 +130,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         if (!d_data_ready) {
-            d_data_ready = d_tb_dec->process_frame(&in[read_index], frame_len, frame_payload_len, bps, fec_info);
+            d_data_ready = d_tb_dec->process_frame(&in[read_index], 8 * align_bits_to_bytes(d_frame_capacity * bps), frame_payload_len, bps, fec_info);
             read_index += frame_len;
         }
 
@@ -139,7 +141,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             d_data_ready = false;
         }
     }
-    DTL_LOG_DEBUG("work: consumed={}, produced={}", processed_input, write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
     consume_each(read_index);
     return write_index;
 }

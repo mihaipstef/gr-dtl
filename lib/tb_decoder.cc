@@ -83,6 +83,7 @@ bool tb_decoder::process_frame(const float* in,
 
             int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
             decode(tb_len);
+            d_tb_buffers[RCV_BUF].clear();
             data_ready = true;
         } else {
 
@@ -114,9 +115,13 @@ bool tb_decoder::process_frame(const float* in,
             if (fec_info->d_tb_offset) {
                 new_tb_offset = fec_info->d_tb_offset + extra_bits;
             }
+            DTL_LOG_DEBUG("size={}, append={}", d_tb_buffers[RCV_BUF].size(), frame_payload_len + extra_bits - new_tb_offset);
             copy(
                 in + new_tb_offset, in + frame_payload_len + extra_bits, back_inserter(d_tb_buffers[RCV_BUF]));
             d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
+
+            //TODO: Decode here if we have full tb
+
         }
     }
 

@@ -100,5 +100,15 @@ int compute_tb_len(int cw_len, int frame_len)
     return ncws;
 }
 
+int align_bits_to_bytes(int nbits)
+{
+    int nbytes = nbits / 8;
+    if (nbits % 8) {
+        ++nbytes;
+    }
+    return nbytes;
+}
+
+
 } // namespace dtl
 } // namespace gr

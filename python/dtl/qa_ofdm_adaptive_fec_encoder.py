@@ -162,6 +162,7 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
     def test_004_encode_bpsk(self):
         #return
         self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=3, ofdm_sym_capacity=10)
+        #return
         self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=3, ofdm_sym_capacity=10)
         self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)

@@ -46,6 +46,8 @@ int tb_encoder::encode(const unsigned char* in, int len, fec_enc::sptr enc, int 
     d_buf_idx = 0;
     int ncheck = enc->get_n() - enc->get_k();
 
+    DTL_LOG_DEBUG("encode: ncws={}", current_tb_len);
+
     for (int i = 0; i < current_tb_len; ++i) {
         int k_new = (len - d_payload) / (current_tb_len-i);
         if ((len - d_payload) % (current_tb_len - i)) {
@@ -67,7 +69,7 @@ int tb_encoder::encode(const unsigned char* in, int len, fec_enc::sptr enc, int 
         copy(&d_cw_buffers[1][0], &d_cw_buffers[1][ncheck], back_inserter(d_tb_buffers[0]));
         copy(&d_cw_buffers[1][ncheck], &d_cw_buffers[1][ncheck+k_new], back_inserter(d_tb_buffers[0]));
     }
-    DTL_LOG_VEC("tb", d_tb_buffers[0]);
+    //DTL_LOG_VEC("tb", d_tb_buffers[0]);
     return d_tb_buffers[0].size();
 }
 

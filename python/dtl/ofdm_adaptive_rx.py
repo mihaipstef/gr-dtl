@@ -59,6 +59,10 @@ class ofdm_adaptive_rx(gr.hier_block2):
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
 
+        header_len = 1
+        if self.fec:
+            header_len = 2
+
         # Synchronization
         self.sync_detect = digital.ofdm_sync_sc_cfb(
             self.fft_len, self.cp_len, threshold=self.sync_threshold)
@@ -67,9 +71,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
         sync_correct = dtl.ofdm_adaptive_frame_detect_bb(
-            (self.frame_length + 3) * (self.fft_len + self.cp_len))
+            (self.frame_length +  len(self.sync_words) + header_len) * (self.fft_len + self.cp_len))
         hpd = digital.header_payload_demux(
-            len(self.sync_words) + 1,
+            len(self.sync_words) + header_len,
             self.fft_len, self.cp_len,
             self.frame_length_tag_key,
             "",
@@ -93,7 +97,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         # Header path
         header_fft = fft.fft_vcc(self.fft_len, True, (), True)
         chanest = digital.ofdm_chanest_vcvc(
-            self.sync_words[0], self.sync_words[1], 1)
+            self.sync_words[0], self.sync_words[1], header_len)
         header_constellation = digital.bpsk_constellation()
         header_equalizer = digital.ofdm_equalizer_simpledfe(
             self.fft_len,
@@ -108,7 +112,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.cp_len,
             self.frame_length_tag_key,
             True,
-            1  # Header is 1 symbol long
+            header_len
         )
         header_serializer = digital.ofdm_serializer_vcc(
             self.fft_len, self.occupied_carriers,
@@ -116,9 +120,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         header_demod = digital.constellation_decoder_cb(
             header_constellation.base())
-        header_len = 1
-        if self.fec:
-            header_len = 2
+
         header_formatter = dtl.ofdm_adaptive_packet_header(
             [self.occupied_carriers[0] for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
@@ -142,10 +144,11 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
 
+        self.connect(chanest, blocks.file_sink(
+            self.fft_len*gr.sizeof_gr_complex, "/tmp/headers.dat"))
+
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
-
-        self.connect(payload_fft, blocks.tag_debug(64 * gr.sizeof_gr_complex, "ofdm_sync_chan_taps"))
 
         self.connect(payload_fft, blocks.file_sink(
             64 * gr.sizeof_gr_complex, "/tmp/rx_fft_frames.dat"))
@@ -186,6 +189,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
             payload_serializer,
         )
 
+        self.connect(payload_serializer, blocks.tag_debug(gr.sizeof_gr_complex, "payload_serializer"))
+
         if self.fec:
             ldpc_decs = dtl.make_ldpc_decoders(self.codes_alist)
 
@@ -196,10 +201,13 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 ofdm_adaptive.max_bps(list(zip(*self.constellations))[1]),
                 self.packet_length_tag_key
             )
+            repack = blocks.repack_bits_bb(1, 8)
+
             self.connect(
                 payload_serializer,
                 payload_demod,
                 fec_dec,
+                repack,
                 # self.payload_descrambler,
                 (self, 0)
             )

@@ -38,7 +38,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block()
-        self.frame_len = 20
+        self.frame_len = 10
         self.data_carriers = len(tx_cfg.occupied_carriers[0])
         self.known_constellations = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
             15, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8),)
@@ -190,7 +190,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         tx_samples = []
 
         # Tx
-        buffer_size = 3000
+        buffer_size = 32000
         test_data = [random.randint(0, 255) for x in range(buffer_size)]
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
@@ -209,13 +209,13 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         time.sleep(1)
 
         self.tb.run()
-        return
+        #return
 
         tx_samples = sink.data()
 
         print(f"tx samples={len(tx_samples)}")
         tx_samples = [0 for _ in range(100)] + \
-            tx_samples + [0 for x in range(2000)]
+            tx_samples + [0 for x in range(10000)]
 
         # Channel
         freq_offset = 0
@@ -229,17 +229,18 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 
-        self.tb.connect(rx_src, rx)
+        self.tb.connect(rx_src, channel, rx)
         self.tb.connect((rx, 0), rx_sink)
         self.tb.connect((rx, 1), blocks.null_sink(gr.sizeof_gr_complex))
 
         self.tb.run()
-        return
+
         rx_data = rx_sink.data()
         packet_success = test_data == rx_data[:buffer_size]
         d = [t-r for t, r in zip(test_data, rx_data[:buffer_size])]
+        print(len(test_data), len(rx_data[:buffer_size]))
         print(f"count correct bytes = {d.count(0)}/{buffer_size}")
-        errors = [i for i in range(len(d)) if d[i]]
+        errors = [i for i in range(len(d)) if d[i]!=0]
         if len(errors) > 0:
             print(errors[:20])
             first_err = errors[0]

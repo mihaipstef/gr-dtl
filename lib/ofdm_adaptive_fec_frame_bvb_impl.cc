@@ -140,6 +140,7 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
 
     add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
     d_tag_offset += 1;
+    DTL_LOG_DEBUG("frame_out: tb_no={}", d_tb_count);
 }
 
 
@@ -147,15 +148,6 @@ void ofdm_adaptive_fec_frame_bvb_impl::padded_frame_out(int frame_payload)
 {
 
     add_frame_tags(frame_payload);
-}
-
-int align_bits_to_bytes(int nbits)
-{
-    int nbytes = nbits / 8;
-    if (nbits % 8) {
-        ++nbytes;
-    }
-    return nbytes;
 }
 
 int ofdm_adaptive_fec_frame_bvb_impl::align_bytes_to_syms(int nbytes)
@@ -166,16 +158,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::align_bytes_to_syms(int nbytes)
     }
     return nsyms;
 }
-
-int n_bits_to_syms(int nbits, int bps)
-{
-    int nsyms = nbits / bps;
-    if (nbits % bps) {
-        ++nsyms;
-    }
-    return nsyms;
-}
-
 
 int ofdm_adaptive_fec_frame_bvb_impl::tb_offset_to_bytes()
 {
@@ -266,15 +248,18 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 read_index += to_read;
 
                 d_action = Action::OUTPUT_BUFFER;
+                consumed_input += d_tb_enc->buf_payload();
+
                 d_used_frames_count = 0;
                 ++d_tb_count;
                 d_consecutive_empty_frames = 0;
 
-                DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}, padding_syms={}",
+                DTL_LOG_DEBUG("Input processed: tb_len={}, tb_payload={}, read_index={}, padding_syms={}, tb_no={}",
                             d_tb_enc->size(),
                             d_tb_enc->buf_payload(),
                             read_index,
-                            d_frame_padding_syms);
+                            d_frame_padding_syms,
+                            d_tb_count);
 
             } break;
 
@@ -336,8 +321,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                                 d_action = Action::PROCESS_INPUT;
                             }
                         }
-
-                        consumed_input += d_tb_enc->buf_payload();
                     } else {
                         // Did not output the entire buffer, wait for next scheduler
                         // allocation
@@ -356,7 +339,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 //     ++frame_payload;
                 // }
                 padded_frame_out(d_current_frame_offset);
-                d_frame_used_capacity = align_bytes_to_syms(d_current_frame_offset);
+                d_frame_used_capacity = 0;//align_bytes_to_syms(d_current_frame_offset);
                 DTL_LOG_DEBUG("finalize frame: payload={}", d_current_frame_offset);
                 d_current_frame_offset = 0;
                 d_action = Action::PROCESS_INPUT;
@@ -367,7 +350,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
     DTL_LOG_DEBUG(
         "general_work finish: d_frame_capacity={}, noutput={}, ninput={}, "
-        "read_index={}, write_index={}, tb_len={}, frame_offset={}, produced={}",
+        "read_index={}, write_index={}, tb_len={}, frame_offset={}, produced={}, consumed={}",
         d_frame_capacity,
         output_available,
         ninput_items[0],
@@ -375,7 +358,8 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         write_index,
         d_tb_len,
         d_current_frame_offset,
-        produced_frames);
+        produced_frames,
+        consumed_input);
 
     consume_each(consumed_input);
     return produced_frames;

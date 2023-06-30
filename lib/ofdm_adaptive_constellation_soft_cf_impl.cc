@@ -62,8 +62,8 @@ ofdm_adaptive_constellation_soft_cf_impl::~ofdm_adaptive_constellation_soft_cf_i
 void ofdm_adaptive_constellation_soft_cf_impl::forecast(int noutput_items,
                                    gr_vector_int& ninput_items_required)
 {
-    ninput_items_required[0] = std::max(
-            1, (int)std::floor((double)noutput_items / relative_rate() + 0.5));
+    ninput_items_required[0] = 1;//std::max(
+            //1, (int)std::floor((double)noutput_items / relative_rate() + 0.5));
 }
 
 
@@ -78,7 +78,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
 
     int read_index = 0;
     int write_index = 0;
-
+    DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
     while (read_index < ninput_items[0]) {
 
         std::vector<tag_t> tags = {};
@@ -107,7 +107,8 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
             }
         }
         if (test != 3) {
-            throw std::runtime_error("missing tags");
+            //throw std::runtime_error("missing tags");
+            DTL_LOG_DEBUG("missing tag");
         }
 
         d_constellation = d_constellations[cnst];
@@ -152,12 +153,6 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         d_tag_offset += len * bps;
     }
 
-    // if (!write_index && !read_index) {
-    //     ++SAFETY_COUNT;
-    //     if (SAFETY_COUNT > 20) {
-    //         return WORK_DONE;
-    //     }
-    // }
 
     DTL_LOG_DEBUG("work: produced={}, consumed={}",write_index, read_index);
     if (read_index>0) consume_each(read_index);

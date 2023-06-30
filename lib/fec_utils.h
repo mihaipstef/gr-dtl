@@ -50,6 +50,9 @@ fec_info_t::sptr make_fec_info(const std::vector<tag_t> tags, const std::vector<
 
 int compute_tb_len(int cw_len, int frame_len);
 
+int align_bits_to_bytes(int nbits);
+
+
 } // namespace dtl
 } // namespace gr
 
