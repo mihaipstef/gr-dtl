@@ -26,7 +26,7 @@ class DTL_API ofdm_adaptive_fec_frame_bvb : virtual public gr::block
 public:
     typedef std::shared_ptr<ofdm_adaptive_fec_frame_bvb> sptr;
 
-    static sptr make(const std::vector<fec_enc::sptr> encoders,
+    static sptr make(const std::vector<fec_enc::sptr>& encoders,
                      int frame_capacity,
                      int max_bps,
                      const std::string& len_key);

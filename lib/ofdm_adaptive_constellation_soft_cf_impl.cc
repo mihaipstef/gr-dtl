@@ -13,8 +13,6 @@ namespace gr {
 namespace dtl {
 
 
-static int SAFETY_COUNT = 0;
-
 using namespace digital;
 
 
@@ -62,8 +60,7 @@ ofdm_adaptive_constellation_soft_cf_impl::~ofdm_adaptive_constellation_soft_cf_i
 void ofdm_adaptive_constellation_soft_cf_impl::forecast(int noutput_items,
                                    gr_vector_int& ninput_items_required)
 {
-    ninput_items_required[0] = 1;//std::max(
-            //1, (int)std::floor((double)noutput_items / relative_rate() + 0.5));
+    ninput_items_required[0] = 1;
 }
 
 
@@ -88,10 +85,6 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 0,
                                 this->nitems_read(0) + read_index,
                                 this->nitems_read(0) + read_index + 1);
-        for (auto& tag: tags)
-        {
-            DTL_LOG_DEBUG("o={}, key={}, val={}",tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
-        }
         int test = 0;
         for (auto& tag : tags) {
             if (tag.key == get_constellation_tag_key()) {
@@ -107,8 +100,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
             }
         }
         if (test != 3) {
-            //throw std::runtime_error("missing tags");
-            DTL_LOG_DEBUG("missing tag");
+            throw std::runtime_error("missing tags");
         }
 
         d_constellation = d_constellations[cnst];
@@ -130,26 +122,15 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         }
         set_min_noutput_items(1);
 
-        std::stringstream ss;
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
-            ss << "," << d_constellation->decision_maker(&in[read_index]);
             std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 1));
+            // TODO: Use MSB order to avoid reversing here
             std::reverse(llrs.begin(), llrs.end());
-            for (int j=0; j<llrs.size();++j){
+            for (unsigned j=0; j<llrs.size();++j){
                 llrs[j] *= -1;
             }
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());
         }
-
-
-        DTL_LOG_DEBUG("rcvd frame {}", ss.str());
-
-        // for (auto& tag : tags) {
-        //     add_item_tag(0, d_tag_offset, tag.key, tag.value);
-        // }
-
-        //add_item_tag(0, d_tag_offset, d_len_key, pmt::from_long(len));
-
         d_tag_offset += len * bps;
     }
 

@@ -23,8 +23,6 @@ private:
     alist d_list;
     cldpc d_code;
     awgn_bp d_bp;
-    int d_k;
-    int d_n;
     std::vector<float> d_cw_buf;
     std::vector<int> d_permute;
 

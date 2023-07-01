@@ -43,7 +43,6 @@ bool tb_decoder::process_frame(const float* in,
         return false;
     }
 
-    // If frame is part of the current TB
     DTL_LOG_DEBUG("process_frame: current_no={}, rcvd_no={}, rcvd_offset={}, frame_len={}, frame_payload={}",
                   d_tb_number,
                   fec_info->d_tb_number,
@@ -51,7 +50,7 @@ bool tb_decoder::process_frame(const float* in,
                   frame_len,
                   frame_payload_len);
 
-    //DTL_LOG_BUFFER("process frame input", in, payload_len);
+    // If frame is part of the current TB
     if (fec_info->d_tb_number == d_tb_number) {
         if (d_buf_idx + frame_payload_len > d_tb_buffers[RCV_BUF].capacity()) {
             throw runtime_error("rcv buffer does not have enough capacity!");
@@ -69,9 +68,8 @@ bool tb_decoder::process_frame(const float* in,
     // If frame is part of a new TB
     } else {
 
-        // Single TB that does not fill the frame
+        // Small TB exclusively transported by the frame
         if (fec_info->d_tb_offset == frame_payload_len) {
-            // must decode
             // Start new TB buffer
             d_fec_info = fec_info;
             d_tb_number = d_fec_info->d_tb_number;
@@ -119,9 +117,6 @@ bool tb_decoder::process_frame(const float* in,
             copy(
                 in + new_tb_offset, in + frame_payload_len + extra_bits, back_inserter(d_tb_buffers[RCV_BUF]));
             d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
-
-            //TODO: Decode here if we have full tb
-
         }
     }
 
@@ -181,7 +176,7 @@ pair<int, int> tb_decoder::buf_out(unsigned char* out)
     return result;
 }
 
-int tb_decoder::expected_tb_len(fec_info_t::sptr fec_info, int ncws)
+std::size_t tb_decoder::expected_tb_len(fec_info_t::sptr fec_info, int ncws)
 {
     int total_check = (fec_info->get_n() - fec_info->get_k()) * ncws;
     return total_check + fec_info->d_tb_payload_len;

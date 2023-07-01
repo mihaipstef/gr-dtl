@@ -159,7 +159,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
-    int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
@@ -240,7 +239,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                 rand_pad(
                     &out[write_index], expected_frame_symbols, rnd_symbols_dist);
                 write_index += expected_frame_symbols;
-                frame_out_symbols = expected_frame_symbols;
                 ++d_consecutive_empty_frames;
                 wait_next_work = true;
             }

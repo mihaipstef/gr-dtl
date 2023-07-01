@@ -50,7 +50,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb = None
 
     def test_001_direct_txrx(self):
-        return
+        #return
         """
         Test Tx/Rx of multiple packets with diferent constellations.
         """
@@ -115,7 +115,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         assert (packet_success)
 
     def test_002_feedback_txrx(self):
-        return
+        #return
         test_data = [
             [int(dtl.constellation_type_t.QAM16), 4],
             [int(dtl.constellation_type_t.QPSK), 3],

@@ -20,7 +20,7 @@ private:
     std::vector<std::vector<unsigned char>> d_cw_buffers;
     std::vector<std::vector<unsigned char>> d_tb_buffers;
     int d_payload;
-    int d_buf_idx;
+    std::size_t d_buf_idx;
 public:
 
     typedef std::shared_ptr<tb_encoder> sptr;
@@ -31,7 +31,7 @@ public:
 
     int buf_out(unsigned char* out, int len, int bps);
 
-    bool ready();
+    bool ready() const;
 
     int remaining_buf_size();
 

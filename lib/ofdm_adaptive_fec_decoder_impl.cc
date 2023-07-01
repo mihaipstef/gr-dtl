@@ -23,12 +23,12 @@ typedef tuple<unsigned char, unsigned char, int, unsigned char, unsigned char>
     fec_header_tuple_t;
 
 ofdm_adaptive_fec_decoder::sptr ofdm_adaptive_fec_decoder::make(
-    const vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const string& len_key)
+    const vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const string& len_key)
 {
     return gnuradio::make_block_sptr<ofdm_adaptive_fec_decoder_impl>(decoders, frame_capacity, max_bps, len_key);
 }
 
-ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const string& len_key)
+ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const string& len_key)
     : gr::block(
           "ofdm_adaptive_fec_decoder",
           gr::io_signature::make(1 /* min inputs */, 1 /* max inputs */, sizeof(float)),
@@ -65,11 +65,8 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
     auto in = static_cast<const float*>(input_items[0]);
     auto out = static_cast<unsigned char*>(output_items[0]);
 
-    int nframes = 0;
     int read_index = 0;
     int write_index = 0;
-    int frame_len = 0;
-    int processed_input = 0;
 
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
 
@@ -81,6 +78,8 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         int bps = 0;
         int len = 0;
         int frame_payload_len = 0;
+        int frame_len = 0;
+
         for (auto& tag : tags) {
 
             if (tag.key == get_constellation_tag_key()) {
@@ -105,16 +104,11 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             throw runtime_error("Tags missing");
         }
 
-        frame_len = len * bps; //align_bits_to_bytes(d_frame_capacity * bps);
+        frame_len = len * bps;
 
         if (read_index + frame_len > ninput_items[0]) {
             break;
         }
-
-        // for (auto& tag: tags)
-        // {
-        //     DTL_LOG_DEBUG("o={}, key={}, val={}",tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
-        // }
 
         fec_info_t::sptr fec_info = make_fec_info(tags, {}, d_decoders);
     
@@ -137,7 +131,6 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         if (d_data_ready) {
             auto r = d_tb_dec->buf_out(&out[write_index]);
             write_index += r.first;
-            processed_input = read_index;
             d_data_ready = false;
         }
     }

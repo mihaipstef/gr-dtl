@@ -24,7 +24,7 @@ class DTL_API ofdm_adaptive_fec_decoder : virtual public gr::block
 {
 public:
     typedef std::shared_ptr<ofdm_adaptive_fec_decoder> sptr;
-    static sptr make(const std::vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const std::string& len_key);
+    static sptr make(const std::vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const std::string& len_key);
 };
 
 } // namespace dtl

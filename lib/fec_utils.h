@@ -8,9 +8,9 @@
 #ifndef INCLUDED_DTL_FEC_UTILS_H
 #define INCLUDED_DTL_FEC_UTILS_H
 
-#include <cassert>
 #include <gnuradio/dtl/fec.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
+#include <cassert>
 
 #include <gnuradio/tags.h>
 
@@ -29,16 +29,17 @@ struct fec_info_t {
     int d_tb_frame_idx;
     int d_tb_number;
     int d_tb_payload_len;
+    int d_ncheck;
 
     fec_info_t() = default;
 
     fec_info_t(fec_enc::sptr enc,
-            fec_dec::sptr dec,
-            int frame_len,
-            int tb_offset,
-            int tb_frame_idx,
-            int tb_number,
-            int tb_payload_len);
+               fec_dec::sptr dec,
+               int frame_len,
+               int tb_offset,
+               int tb_frame_idx,
+               int tb_number,
+               int tb_payload_len);
 
     int get_n();
 
@@ -46,7 +47,9 @@ struct fec_info_t {
 };
 
 
-fec_info_t::sptr make_fec_info(const std::vector<tag_t> tags, const std::vector<fec_enc::sptr> encoders, const std::vector<fec_dec::sptr> decoders);
+fec_info_t::sptr make_fec_info(const std::vector<tag_t>& tags,
+                               const std::vector<fec_enc::sptr>& encoders,
+                               const std::vector<fec_dec::sptr>& decoders);
 
 int compute_tb_len(int cw_len, int frame_len);
 

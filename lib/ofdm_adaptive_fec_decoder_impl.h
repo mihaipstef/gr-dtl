@@ -26,7 +26,7 @@ private:
     bool d_processed_input;
 
 public:
-    ofdm_adaptive_fec_decoder_impl(const std::vector<fec_dec::sptr> decoders, int frame_capacity, int max_bps, const std::string& len_key);
+    ofdm_adaptive_fec_decoder_impl(const std::vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const std::string& len_key);
     ~ofdm_adaptive_fec_decoder_impl();
 
     // Where all the action really happens

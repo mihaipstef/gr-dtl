@@ -24,7 +24,7 @@ private:
     std::vector<int> d_permute;
 
 public:
-    ldpc_enc(const std::string& alist_fname);
+    explicit ldpc_enc(const std::string& alist_fname);
     ~ldpc_enc();
 
     void encode(const unsigned char* in_data, int len, unsigned char* out_data) override;

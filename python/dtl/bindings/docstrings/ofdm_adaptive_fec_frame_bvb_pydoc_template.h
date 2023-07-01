@@ -18,15 +18,16 @@
 static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_ofdm_adaptive_fec_frame_bvb_0 =
-    R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_ofdm_adaptive_fec_frame_bvb_0 = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_ofdm_adaptive_fec_frame_bvb_1 =
-    R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_ofdm_adaptive_fec_frame_bvb_1 = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_make = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_process_feedback = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_fec_frame_bvb_process_feedback =
+    R"doc()doc";

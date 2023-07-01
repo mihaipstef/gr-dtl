@@ -215,7 +215,6 @@ int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
     int k = first_pos;
     for (auto& h : fec_header_to_tags) {
         int val = 0;
-        int offset = get<0>(h);
         int len = get<1>(h);
         for (int i = 0; i < len && k < d_header_len; i += d_bits_per_byte, k++) {
             val |= (((int)in[k]) & d_mask) << i;

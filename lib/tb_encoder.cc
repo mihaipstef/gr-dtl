@@ -58,22 +58,19 @@ int tb_encoder::encode(const unsigned char* in, int len, fec_enc::sptr enc, int 
         // copy K' bits from input into the buffer
         memset(&d_cw_buffers[0][0], 0, enc->get_n());
         memcpy(&d_cw_buffers[0][0], &in[read_index], k_new);
-        //DTL_LOG_BYTES("cw buffer 0", &d_cw_buffers[0][0], k_new);
         // calculate the codeword
         enc->encode(&d_cw_buffers[0][0], enc->get_k(), &d_cw_buffers[1][0]);
-        //DTL_LOG_BYTES("cw buffer 1", &d_cw_buffers[1][0],  enc->get_n());
-        //DTL_LOG_BUFFER("encoded", &d_cw_buffers[1][0], enc->get_n());
+
         read_index += k_new;
-        //++d_cw_count;
+
         // Move cw to the TB buffer
         copy(&d_cw_buffers[1][0], &d_cw_buffers[1][ncheck], back_inserter(d_tb_buffers[0]));
         copy(&d_cw_buffers[1][ncheck], &d_cw_buffers[1][ncheck+k_new], back_inserter(d_tb_buffers[0]));
     }
-    //DTL_LOG_VEC("tb", d_tb_buffers[0]);
     return d_tb_buffers[0].size();
 }
 
-bool tb_encoder::ready()
+bool tb_encoder::ready() const
 {
     return d_tb_buffers[0].size() == 0 || d_tb_buffers[0].size() == d_buf_idx;
 }
@@ -91,11 +88,9 @@ int tb_encoder::size()
 int tb_encoder::buf_out(unsigned char* out, int len, int bps)
 {
     repack repacker(1, bps);
-    DTL_LOG_BUFFER("buf_out", &d_tb_buffers[0][d_buf_idx], len);
     int syms = repacker.repack_lsb_first(&d_tb_buffers[0][d_buf_idx], len, out);
     d_buf_idx += len;
     DTL_LOG_DEBUG("buf_out: idx={}, size={}, n_syms={}, len={}", d_buf_idx, d_tb_buffers[0].size(), syms, len);
-    DTL_LOG_BUFFER("buf_out syms", out, syms);
     return syms;
 }
 

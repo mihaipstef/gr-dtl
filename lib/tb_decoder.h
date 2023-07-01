@@ -31,14 +31,14 @@ private:
     int d_payload;
     int d_tb_payload_len;
     int d_tb_number;
-    int d_buf_idx;
+    std::size_t d_buf_idx;
     int d_tb_len;
     fec_info_t::sptr d_fec_info;
     int d_processed;
 
     int decode(int tb_len);
 
-    int expected_tb_len(fec_info_t::sptr fec_info, int ncws);
+    std::size_t expected_tb_len(fec_info_t::sptr fec_info, int ncws);
 
 public:
 
@@ -48,7 +48,7 @@ public:
 
     std::pair<int, int> buf_out(unsigned char* out);
  
-    tb_decoder(int max_tb_len);
+    explicit tb_decoder(int max_tb_len);
 
 
 };
