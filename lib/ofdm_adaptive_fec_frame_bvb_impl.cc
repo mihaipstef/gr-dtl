@@ -5,13 +5,38 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+/* Action diagram
+
+@startuml
+title "FEC frame construction"
+(*) --> if "No input" then
+        ->[true] "Generate a single
+                  empty frame" as empty_frame
+    else
+        --> if "action == INPUT" then
+            ->[true] "Compute a single transport block (TB)
+                      and store it in internal buffer" as encode
+        else
+            if "action == OUTPUT" then
+                ->[true] "Output the internal buffer frame by frame"
+            else
+                if "action == FINALIZE" then
+                    ->[true] "Pad and finalize the frame"
+                else
+                endif
+            endif
+        endif
+endif
+@enduml
+*/
+
 #include "ofdm_adaptive_fec_frame_bvb_impl.h"
 
 #include "fec_utils.h"
 #include "logger.h"
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
-
+#include "repack.h"
 
 namespace gr {
 namespace dtl {
@@ -61,22 +86,31 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_action(Action::PROCESS_INPUT),
       d_used_frames_count(0),
       d_frame_used_capacity(0),
-      d_consecutive_empty_frames(0)
+      d_consecutive_empty_frames(0),
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
         throw(std::runtime_error("No encoder found!"));
     }
-    auto it = max_element(d_encoders.begin() + 1,
+    auto it_max_n = max_element(d_encoders.begin() + 1,
                           d_encoders.end(),
                           [](const decltype(d_encoders)::value_type& l,
                              const decltype(d_encoders)::value_type& r) {
                               return l->get_n() < r->get_n();
                           });
+    auto it_max_k = max_element(d_encoders.begin() + 1,
+                          d_encoders.end(),
+                          [](const decltype(d_encoders)::value_type& l,
+                             const decltype(d_encoders)::value_type& r) {
+                              return l->get_k() < r->get_k();
+                          });
 
+    int ncws = compute_tb_len((*it_max_n)->get_n(), d_frame_capacity * max_bps);
+    d_tb_enc = make_shared<tb_encoder>((*it_max_n)->get_n() * ncws, (*it_max_n)->get_n());
 
-    int ncws = compute_tb_len((*it)->get_n(), d_frame_capacity * max_bps);
-    d_tb_enc = make_shared<tb_encoder>((*it)->get_n() * ncws, (*it)->get_n());
+    d_tb_payload.resize((*it_max_k)->get_k() * ncws);
+    d_crc_buffer.resize((*it_max_k)->get_k() * ncws / 8 + 1);
 
     set_min_noutput_items(1);
     this->message_port_register_in(pmt::mp("feedback"));
@@ -173,8 +207,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::tb_offset_to_bytes()
 
 int ofdm_adaptive_fec_frame_bvb_impl::current_frame_available_bytes()
 {
-    DTL_LOG_DEBUG(
-        "capacity={}, used_capacity={}", d_frame_capacity, d_frame_used_capacity);
     int available_bytes = (d_frame_capacity - d_frame_used_capacity) * d_current_bps / 8;
     return available_bytes;
 }
@@ -193,6 +225,8 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     int consumed_input = 0;
     int produced_frames = 0;
     int output_available = noutput_items * d_frame_capacity;
+    repack to_bytes(1, 8);
+    repack to_bits(8, 1);
 
     DTL_LOG_DEBUG("work_start: d_frame_capacity={}, noutput={}, ninput={}, action={}",
                   d_frame_capacity,
@@ -245,19 +279,30 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
             // d_current_frame_len *= 8;
 
-            int tb_required_nin = d_tb_len * d_current_enc->get_k();
+            int tb_payload_max = d_tb_len * d_current_enc->get_k() - d_crc.get_crc_len() * 8;
+
+            if (tb_payload_max <= 0) {
+                throw runtime_error("Misconfiguration: TB should be able to carry  at least 1 user data bit");
+            }
 
             int available_in = ninput_items[0] - read_index;
 
-            int to_read = min(available_in, tb_required_nin);
+            int to_read = min(available_in, tb_payload_max);
+
+            // Copy user data in payload and CRC buffers
+            memcpy(&d_tb_payload[0], &in[read_index], to_read);
+            int crc_buf_len = to_bytes.repack_lsb_first(&in[read_index], to_read, &d_crc_buffer[0]);
+            // Compute CRC and move the value in payload buffer
+            d_crc.append_crc(&d_crc_buffer[0], crc_buf_len);
+            to_bits.repack_lsb_first(&d_crc_buffer[crc_buf_len], d_crc.get_crc_len(), &d_tb_payload[to_read]);
 
             // encode
-            d_tb_enc->encode(&in[read_index], to_read, d_current_enc, d_tb_len);
+            d_tb_enc->encode(&d_tb_payload[0], to_read + d_crc.get_crc_len() * 8, d_current_enc, d_tb_len);
 
             read_index += to_read;
 
             d_action = Action::OUTPUT_BUFFER;
-            consumed_input += d_tb_enc->buf_payload();
+            consumed_input += to_read;
 
             d_used_frames_count = 0;
             ++d_tb_count;

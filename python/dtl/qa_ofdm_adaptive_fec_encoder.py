@@ -136,8 +136,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
 
     def test_001_encode_qam16(self):
         #return
-        self.run_flow(cnst = constellation_type_t.QAM16, fec=1, frame_len=3, ofdm_sym_capacity=10)
-        self.run_flow(cnst = constellation_type_t.QAM16, fec=2, frame_len=3, ofdm_sym_capacity=10)
+        self.run_flow(cnst = constellation_type_t.QAM16, fec=1, frame_len=3, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.QAM16, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QAM16, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QAM16, fec=2, frame_len=10, ofdm_sym_capacity=48)
 
@@ -145,25 +145,22 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
 
     def test_002_encode_psk8(self):
         #return
-        self.run_flow(cnst = constellation_type_t.PSK8, fec=1, frame_len=3, ofdm_sym_capacity=10)
-        self.run_flow(cnst = constellation_type_t.PSK8, fec=2, frame_len=3, ofdm_sym_capacity=10)
+        self.run_flow(cnst = constellation_type_t.PSK8, fec=1, frame_len=3, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.PSK8, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.PSK8, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.PSK8, fec=2, frame_len=10, ofdm_sym_capacity=48)
-        #pass
 
     def test_003_encode_qpsk(self):
         #return
-        self.run_flow(cnst = constellation_type_t.QPSK, fec=1, frame_len=3, ofdm_sym_capacity=10)
-        self.run_flow(cnst = constellation_type_t.QPSK, fec=2, frame_len=3, ofdm_sym_capacity=10)
+        self.run_flow(cnst = constellation_type_t.QPSK, fec=1, frame_len=3, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.QPSK, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)
-        #pass
 
     def test_004_encode_bpsk(self):
         #return
-        self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=3, ofdm_sym_capacity=10)
-        #return
-        self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=3, ofdm_sym_capacity=10)
+        self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=3, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)
 

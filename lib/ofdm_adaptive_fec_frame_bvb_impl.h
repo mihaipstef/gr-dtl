@@ -12,6 +12,8 @@
 #include <gnuradio/dtl/fec.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_frame_bvb.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
+#include "crc_util.h"
+
 
 namespace gr {
 namespace dtl {
@@ -51,6 +53,9 @@ private:
     int d_frame_padding_syms;
     int d_frame_used_capacity;
     int d_consecutive_empty_frames;
+    std::vector<unsigned char> d_tb_payload;
+    std::vector<unsigned char> d_crc_buffer;
+    crc_util d_crc;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,

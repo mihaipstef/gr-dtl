@@ -10,6 +10,7 @@
 #include <gnuradio/io_signature.h>
 #include "fec_utils.h"
 #include "logger.h"
+#include "repack.h"
 
 namespace gr {
 namespace dtl {
@@ -38,20 +39,29 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(const vector<fec_
       d_decoders(decoders),
       d_frame_capacity(frame_capacity),
       d_data_ready(false),
-      d_processed_input(0)
+      d_processed_input(0),
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
 {
-    auto it = max_element(d_decoders.begin() + 1,
+    auto it_max_n = max_element(d_decoders.begin() + 1,
                           d_decoders.end(),
                           [](const decltype(d_decoders)::value_type& l,
                              const decltype(d_decoders)::value_type& r) {
                               return l->get_n() < r->get_n();
                           });
-    if (it == d_decoders.end()) {
-        throw(std::runtime_error("No encoder found!"));
+    auto it_max_k = max_element(d_decoders.begin() + 1,
+                          d_decoders.end(),
+                          [](const decltype(d_decoders)::value_type& l,
+                             const decltype(d_decoders)::value_type& r) {
+                              return l->get_k() < r->get_k();
+                          });
+    if (it_max_n == d_decoders.end() || it_max_k == d_decoders.end()) {
+        throw(std::runtime_error("Misconfiguration: decoder not found!"));
     }
     int frame_len = d_frame_capacity * max_bps;
-    d_tb_dec = make_shared<tb_decoder>((*it)->get_n() *
-                                           compute_tb_len((*it)->get_n(), frame_len));
+    int ncws = compute_tb_len((*it_max_n)->get_n(), frame_len);
+    d_tb_dec = make_shared<tb_decoder>((*it_max_n)->get_n() * ncws);
+    d_tb_payload.resize((*it_max_k)->get_k() * ncws);
+    d_crc_buffer.resize((*it_max_k)->get_k() * ncws / 8 + 1);
 }
 
 ofdm_adaptive_fec_decoder_impl::~ofdm_adaptive_fec_decoder_impl() {}
@@ -67,6 +77,8 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
+    repack to_bytes(1, 8);
+    repack to_bits(8, 1);
 
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
 
@@ -129,9 +141,15 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         if (d_data_ready) {
-            auto r = d_tb_dec->buf_out(&out[write_index]);
-            write_index += r.first;
+            auto r = d_tb_dec->buf_out(&d_tb_payload[0]);
+            int user_data_len = r.first - d_crc.get_crc_len() * 8;
+            int crc_buf_len = to_bytes.repack_lsb_first(&d_tb_payload[0], user_data_len, &d_crc_buffer[0]);
+            to_bytes.repack_lsb_first(&d_tb_payload[user_data_len], d_crc.get_crc_len()*8, &d_crc_buffer[crc_buf_len]);
+            bool crc_ok = d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
+            memcpy(&out[write_index], &d_tb_payload[0], user_data_len);
+            write_index += user_data_len;
             d_data_ready = false;
+            DTL_LOG_DEBUG("data_ready: crc_ok={}", crc_ok);
         }
     }
     DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);

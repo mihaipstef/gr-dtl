@@ -21,6 +21,7 @@ private:
     std::vector<std::vector<unsigned char>> d_tb_buffers;
     int d_payload;
     std::size_t d_buf_idx;
+
 public:
 
     typedef std::shared_ptr<tb_encoder> sptr;

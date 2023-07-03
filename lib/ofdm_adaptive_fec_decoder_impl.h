@@ -10,6 +10,7 @@
 
 #include <gnuradio/dtl/fec.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
+#include "crc_util.h"
 #include "tb_decoder.h"
 
 namespace gr {
@@ -24,6 +25,9 @@ private:
     tb_decoder::sptr d_tb_dec;
     bool d_data_ready;
     bool d_processed_input;
+    std::vector<unsigned char> d_tb_payload;
+    std::vector<unsigned char> d_crc_buffer;
+    crc_util d_crc;
 
 public:
     ofdm_adaptive_fec_decoder_impl(const std::vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const std::string& len_key);
