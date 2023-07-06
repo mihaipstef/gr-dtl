@@ -49,6 +49,7 @@ ofdm_adaptive_constellation_soft_cf_impl::ofdm_adaptive_constellation_soft_cf_im
         d_constellations[constellation_type] = constellation;
     }
     set_max_noutput_items(65536);
+    set_tag_propagation_policy(tag_propagation_policy_t::TPP_DONT);
 }
 
 /*
@@ -77,7 +78,6 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
     int write_index = 0;
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
     while (read_index < ninput_items[0]) {
-
         std::vector<tag_t> tags = {};
         constellation_type_t cnst = constellation_type_t::UNKNOWN;
         int len = 0;
@@ -87,6 +87,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 this->nitems_read(0) + read_index + 1);
         int test = 0;
         for (auto& tag : tags) {
+            DTL_LOG_DEBUG("offset={}, key={}, value={}", tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
             if (tag.key == get_constellation_tag_key()) {
                 cnst = static_cast<constellation_type_t>(pmt::to_long(tag.value));
                 test |= 1;
@@ -100,11 +101,15 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
             }
         }
         if (test != 3) {
-            throw std::runtime_error("missing tags");
+            DTL_LOG_ERROR("Tags missing: check_bitmap={}, lookup_offset={}", test, nitems_read(0) + read_index);
+            throw std::runtime_error("Tags missing");
         }
 
         d_constellation = d_constellations[cnst];
         int bps = d_constellation->bits_per_symbol();
+
+        DTL_LOG_DEBUG("len_key={}, val={}, offset={}", pmt::symbol_to_string(d_len_key), pmt::from_long(len * bps), nitems_written(0) + write_index);
+
         set_relative_rate(bps, 1);
         set_output_multiple(len * bps);
 
@@ -122,13 +127,18 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         }
         set_min_noutput_items(1);
 
+        for (auto& tag: tags) {
+            if (tag.key == d_len_key) {
+                add_item_tag(0, nitems_written(0) + write_index, d_len_key, pmt::from_long(len * bps));
+            } else {
+                add_item_tag(0, nitems_written(0) + write_index, tag.key, tag.value);
+            }
+        }
+
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
-            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 1));
+            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 0.1));
             // TODO: Use MSB order to avoid reversing here
             std::reverse(llrs.begin(), llrs.end());
-            for (unsigned j=0; j<llrs.size();++j){
-                llrs[j] *= -1;
-            }
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());
         }
         d_tag_offset += len * bps;

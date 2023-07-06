@@ -7,7 +7,6 @@ from gnuradio import (
     filter,
 )
 import pmt
-import ofdm_adaptive
 
 
 class ofdm_adaptive_tx(gr.hier_block2):
@@ -53,7 +52,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
 
-        self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
         self._setup_direct_tx()
 
         self._setup_feedback_rx()
@@ -106,15 +104,16 @@ class ofdm_adaptive_tx(gr.hier_block2):
         # )
 
         if self.fec:
+            self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
             repack = blocks.repack_bits_bb(8, 1)
             self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
-                                                            ofdm_adaptive.frame_capacity(
+                                                            dtl.ofdm_adaptive.frame_capacity(
                                                                 self.frame_length, self.occupied_carriers),
-                                                            ofdm_adaptive.max_bps(
+                                                            dtl.ofdm_adaptive.max_bps(
                                                                 list(zip(*self.constellations))[1]),
                                                             self.packet_length_tag_key)
 
-            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(ofdm_adaptive.frame_capacity(
+            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(dtl.ofdm_adaptive.frame_capacity(
                 self.frame_length, self.occupied_carriers), self.packet_length_tag_key)
 
             # self.connect(self.to_stream, blocks.file_sink(

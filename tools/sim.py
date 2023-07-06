@@ -16,12 +16,12 @@ import signal
 
 class ofdm_adaptive_sim(gr.top_block):
 
-    def __init__(self, config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20):
+    def __init__(self, config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20, codes = []):
         gr.top_block.__init__(self, "OFDM Adaptive Simulator", catch_exceptions=True)
         self.samp_rate = samp_rate = 200000
-        self.n_bytes = n_bytes = 100
-        self.direct_channel_noise_level = direct_channel_noise_level = 0.0001
-        self.direct_channel_freq_offset = direct_channel_freq_offset = 0.5
+        self.n_bytes = 100
+        self.direct_channel_noise_level = 0.0001
+        self.direct_channel_freq_offset = 0.5
         self.fft_len = 64
         self.cp_len = 16
         self.config_file = config_file
@@ -29,7 +29,8 @@ class ofdm_adaptive_sim(gr.top_block):
         self.max_doppler = 0
         self.propagation_paths = propagation_paths
         self.frame_length = frame_length
-        self.frame_samples = (self.frame_length + 3) * (self.fft_len + self.cp_len)
+        self.frame_samples = (self.frame_length + 4) * (self.fft_len + self.cp_len)
+        self.codes = codes
 
         ##################################################
         # Blocks
@@ -43,6 +44,8 @@ class ofdm_adaptive_sim(gr.top_block):
             scramble_bits=False,
             stop_no_input=False,
             frame_length=self.frame_length,
+            codes_alist=self.codes,
+             fec=len(self.codes),
         )
         self.rx = dtl.ofdm_adaptive_rx.from_parameters(
             fft_len=self.fft_len,
@@ -51,6 +54,8 @@ class ofdm_adaptive_sim(gr.top_block):
             scramble_bits=False,
             use_sync_correct=self.use_sync_correct,
             frame_length=self.frame_length,
+            codes_alist=self.codes,
+            fec=len(self.codes),
         )
         delays, delays_std, delays_maxdev, mags = zip(*self.propagation_paths)
         self.fadding_channel = channels.selective_fading_model2(8, self.max_doppler, False, 4.0, 0, delays, delays_std, delays_maxdev, mags, 8)
@@ -70,6 +75,7 @@ class ofdm_adaptive_sim(gr.top_block):
         ##################################################
 
         if sent_frames is None:
+            print(sent_frames)
             self.connect((self.src, 0), (self.tx, 0), (self.throtle, 0))
         else:
             self.connect((self.src, 0), (self.tx, 0), blocks.head(gr.sizeof_gr_complex, sent_frames * self.frame_samples), (self.throtle, 0))
@@ -110,7 +116,7 @@ class ofdm_adaptive_sim(gr.top_block):
         self.n_bytes = n_bytes
 
     def set_direct_channel_noise_level(self, direct_channel_noise_level):
-        self.direct_channel_noise_level = direct_channel_noise_level
+        self.direct_channel_noise_level = float(direct_channel_noise_level)
         self.awgn_channel.set_noise_voltage(self.direct_channel_noise_level)
 
     def set_direct_channel_freq_offset(self, direct_channel_freq_offset):
@@ -128,14 +134,16 @@ def main(
     sent_frames=None,
     propagation_paths = [()],
     use_sync_correct = True,
-    frame_length = 20):
+    frame_length = 20,
+    codes = [],):
 
     tb = top_block_cls(
         config_file=config_file,
         sent_frames=sent_frames,
         propagation_paths=propagation_paths,
         use_sync_correct=use_sync_correct,
-        frame_length=frame_length)
+        frame_length=frame_length,
+        codes=codes,)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()

@@ -265,6 +265,11 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         case Action::PROCESS_INPUT: {
 
             // Update constellation and FEC
+            if (d_feedback_cnst != d_current_cnst && d_current_frame_offset > 0) {
+                d_action = Action::FINALIZE_FRAME;
+                continue;
+            }
+
             d_current_fec_idx = d_feedback_fec_idx;
             d_current_enc = d_encoders[d_current_fec_idx];
             d_current_cnst = d_feedback_cnst;

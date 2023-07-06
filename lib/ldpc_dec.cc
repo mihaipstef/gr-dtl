@@ -24,7 +24,7 @@ vector<fec_dec::sptr> DTL_API make_ldpc_decoders(const vector<string>& alist_fna
 {
     vector<fec_dec::sptr> decoders{nullptr};
     for (auto& fname: alist_fnames) {
-        ldpc_dec::sptr dec(new ldpc_dec(fname, 0, 30));
+        ldpc_dec::sptr dec(new ldpc_dec(fname, sqrt(2), 30));
         decoders.push_back(dec);
     }
     return decoders;
@@ -62,7 +62,7 @@ ldpc_dec::ldpc_dec(const std::string& alist_fname, float sigma, int max_it)
 int ldpc_dec::decode(const float* in_data, int* nit, unsigned char* out_data)
 {
     for (int i=0; i<d_code.get_N(); ++i) {
-        d_cw_buf[d_permute[i]] = in_data[i];
+        d_cw_buf[d_permute[i]] = -1 * in_data[i];
     }
     std::vector<uint8_t> estimated(d_bp.decode(d_cw_buf, nit));
     std::vector<uint8_t> data(d_code.get_systematic_bits(estimated));

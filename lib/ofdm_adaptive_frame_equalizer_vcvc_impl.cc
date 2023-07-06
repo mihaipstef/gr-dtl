@@ -118,7 +118,6 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     get_tags_in_window(tags, 0, 0, 1);
     for (unsigned i = 0; i < tags.size(); i++) {
         if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_chan_taps") {
-            DTL_LOG_DEBUG("aici");
             d_channel_state = pmt::c32vector_elements(tags[i].value);
         } else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
             carrier_offset = pmt::to_long(tags[i].value);
@@ -197,7 +196,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         get_constellation_type(*cnst_tag_it), d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
         static_cast<unsigned char>(feedback),
-        0, // for FEC
+        1, // for FEC
     };
     pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
         pmt::init_u8vector(feedback_vector.size(), feedback_vector));
@@ -224,7 +223,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                      nitems_written(0),
                      feedback_constellation_key(),
                      pmt::from_long(static_cast<unsigned char>(feedback)));
-        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(0));
+        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(1));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

@@ -9,7 +9,6 @@ from gnuradio import (
     pdu,
 )
 import pmt
-import ofdm_adaptive
 
 
 class ofdm_adaptive_rx(gr.hier_block2):
@@ -160,7 +159,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.occupied_carriers,
             self.pilot_carriers,
             self.pilot_symbols,
-            symbols_skipped=1,  # already in the header
+            symbols_skipped=header_len,  # already in the header
             alpha=0.1,
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
@@ -197,12 +196,12 @@ class ofdm_adaptive_rx(gr.hier_block2):
             payload_demod = dtl.ofdm_adaptive_constellation_soft_cf(list(zip(*self.constellations))[1], self.packet_length_tag_key)
             fec_dec = dtl.ofdm_adaptive_fec_decoder(
                 ldpc_decs,
-                ofdm_adaptive.frame_capacity(self.frame_length, self.occupied_carriers),
-                ofdm_adaptive.max_bps(list(zip(*self.constellations))[1]),
+                dtl.ofdm_adaptive.frame_capacity(self.frame_length, self.occupied_carriers),
+                dtl.ofdm_adaptive.max_bps(list(zip(*self.constellations))[1]),
                 self.packet_length_tag_key
             )
             repack = blocks.repack_bits_bb(1, 8)
-
+            self.connect(payload_demod, blocks.tag_debug(gr.sizeof_float, "payload_demod"))
             self.connect(
                 payload_serializer,
                 payload_demod,

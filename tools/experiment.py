@@ -37,10 +37,18 @@ current_log = f"{logs_folder}/sim.log"
 # Load experiments
 experiments = []
 with open(experiments_file, "r") as f:
+    experimets_path = os.path.dirname(experiments_file)
     content = f.read()
     experiments = json.loads(content)
+    for e in experiments:
+        if "codes" in e and len(e["codes"]):
+            e["codes"] = [f"{experimets_path}/{fn}" for fn in e["codes"]]
 
 run_timestamp = int(time.time())
+run_timestamp = 0
+
+# print(experiments)
+# exit(0)
 
 for i, e in enumerate(experiments):
 
@@ -57,13 +65,12 @@ for i, e in enumerate(experiments):
     try:
 
         if name is None:
-            name = uuid.uuid2()
+            name = uuid.uuid4()
 
         log_store_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.log"
         result_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.result"
         config_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.run.json"
         experiment_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.json"
-
 
         sent_frames = None
         if "frames" in e:
@@ -81,6 +88,10 @@ for i, e in enumerate(experiments):
         if "frame_length" in e:
             frame_length = e["frame_length"]
 
+        codes = []
+        if "codes" in e:
+            codes = e["codes"]
+
         with open(experiment_fname, "w") as f:
             f.write(json.dumps(e))
 
@@ -94,7 +105,8 @@ for i, e in enumerate(experiments):
                 sent_frames=sent_frames,
                 propagation_paths=propagation_paths,
                 use_sync_correct=use_sync_correct,
-                frame_length=frame_length)
+                frame_length=frame_length,
+                codes=codes)
             #pass
 
         result = subprocess.check_output([f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])

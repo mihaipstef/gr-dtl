@@ -83,6 +83,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
 
     while (read_index < ninput_items[0]) {
+        DTL_LOG_DEBUG("nitems_read={}, read_index={}", nitems_read(0), read_index);
         vector<tag_t> tags;
         get_tags_in_range(tags, 0, nitems_read(0) + read_index, nitems_read(0) + read_index + 1);
 
@@ -113,10 +114,11 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         if (test != 7) {
+            DTL_LOG_ERROR("Tags missing: check_bitmap={}, lookup_offset={}", test, nitems_read(0) + read_index);
             throw runtime_error("Tags missing");
         }
 
-        frame_len = len * bps;
+        frame_len = len;
 
         if (read_index + frame_len > ninput_items[0]) {
             break;

@@ -53,6 +53,7 @@ struct dtl_logger_wrapper {
 
 #define DTL_LOG_INFO(msg, ...) _logger.logger->info(msg VA_ARGS(__VA_ARGS__));
 #define DTL_LOG_DEBUG(msg, ...) _logger.logger->debug(msg VA_ARGS(__VA_ARGS__));
+#define DTL_LOG_ERROR(msg, ...) _logger.logger->error(msg VA_ARGS(__VA_ARGS__));
 
 #define DTL_LOG_TAGS(title, tags)                                           \
     _logger.logger->debug(title);                                           \
@@ -175,6 +176,7 @@ inline void _append_buf_to_stream(std::stringstream& ss, T* buf, int len)
 #define INIT_DTL_LOGGER(name)
 #define DTL_LOG_INFO(msg, ...)
 #define DTL_LOG_DEBUG(msg, ...)
+#define DTL_LOG_ERROR(msg, ...)
 #define DTL_LOG_TAGS(title, tags)
 #define DTL_LOG_BYTES(msg, buffer, length)
 #define DTL_LOG_VEC(msg, vec)
