@@ -8,6 +8,7 @@
 #include "logger.h"
 #include <gnuradio/dtl/ofdm_adaptive_feedback_decision.h>
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -36,8 +37,8 @@ ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision(
       d_hyteresis(hysterisis),
       d_decision_th(decision_th),
       d_decision_counter(0),
-      d_last_decision(constellation_type_t::UNKNOWN),
-      d_new_decision(constellation_type_t::UNKNOWN)
+      d_last_decision(0),
+      d_new_decision(0)
 {
     // Construct the lookup table for decision
     if (d_feedback_lut.size() == 0) {
@@ -50,8 +51,7 @@ ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision(
 ofdm_adaptive_feedback_decision::~ofdm_adaptive_feedback_decision() {}
 
 ofdm_adaptive_feedback_t
-ofdm_adaptive_feedback_decision::get_feedback(constellation_type_t current_cnst,
-                                              double estimated_snr)
+ofdm_adaptive_feedback_decision::get_feedback(double estimated_snr)
 {
     DTL_LOG_DEBUG(
         "Get feedback for snr={}, last_decision={}, new_decision={}, counter={}",
@@ -60,36 +60,26 @@ ofdm_adaptive_feedback_decision::get_feedback(constellation_type_t current_cnst,
         (int)d_new_decision,
         d_decision_counter);
 
-    if (d_last_decision == constellation_type_t::UNKNOWN) {
-        d_last_decision = current_cnst;
-    }
+    mcs_id_t current_mcs_id = d_last_decision;
+    auto& mcs = d_feedback_lut[current_mcs_id];
 
-    auto it = std::find_if(d_feedback_lut.begin(), d_feedback_lut.end(), [&](auto& t) {
-        return t.second == d_last_decision;
-    });
-
-    if (it == d_feedback_lut.end()) {
-        // Something terribly wrong must have happen, so fallback to current constellation
-        d_last_decision = current_cnst;
-        return static_cast<ofdm_adaptive_feedback_t>(current_cnst);
-    }
-
-    if (estimated_snr < it->first) {
-        update_decision((--it)->second);
-    } else if (++it != d_feedback_lut.end() && estimated_snr > (it->first + d_hyteresis)) {
-        update_decision(it->second);
+    if (estimated_snr < mcs.first) {
+        assert(current_mcs_id > 0);
+        update_decision(current_mcs_id-1);
+    } else if (current_mcs_id+1 < d_feedback_lut.size() && estimated_snr > (mcs.first + d_hyteresis)) {
+        update_decision(current_mcs_id+1);
     } else {
         d_decision_counter = 0;
     }
-    return static_cast<ofdm_adaptive_feedback_t>(d_last_decision);
+    return d_feedback_lut[d_last_decision].second;
 }
 
 
-void ofdm_adaptive_feedback_decision::update_decision(constellation_type_t cnst)
+void ofdm_adaptive_feedback_decision::update_decision(mcs_id_t mcs_id)
 {
-    if (cnst != d_new_decision) {
+    if (mcs_id != d_new_decision) {
         d_decision_counter = 0;
-        d_new_decision = cnst;
+        d_new_decision = mcs_id;
     } else {
         if (++d_decision_counter >= d_decision_th) {
             d_decision_counter = 0;

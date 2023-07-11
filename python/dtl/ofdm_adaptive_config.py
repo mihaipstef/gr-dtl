@@ -37,11 +37,11 @@ class ofdm_adaptive_config:
     rolloff: int = 0
     scramble_bits: bool = False
     frame_length: int = 20
-    constellations: t.Tuple[t.Tuple[float, dtl.constellation_type_t]] = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
-        11, dtl.constellation_type_t.QPSK), (12, dtl.constellation_type_t.PSK8), (23, dtl.constellation_type_t.QAM16),)
     frame_store_folder: str = "/tmp"
     fec: bool = False
-    codes_alist: t.Tuple[str] = ()
+    fec_codes: t.Tuple[str] = (("fec_1", "n_0100_k_0027_gap_04.alist"))
+    mcs: t.Tuple[t.Tuple[float, t.Tuple[dtl.constellation_type_t, str]]] = ((sys.float_info.min, (dtl.constellation_type_t.BPSK, "fec_1")), (
+        11, (dtl.constellation_type_t.QPSK, "fec_1")), (12, (dtl.constellation_type_t.PSK8, "fec_1")), (23, (dtl.constellation_type_t.QAM16, "fec_1")),)
 
 
 @dc.dataclass
@@ -53,3 +53,40 @@ class ofdm_adaptive_tx_config(ofdm_adaptive_config):
 class ofdm_adaptive_rx_config(ofdm_adaptive_config):
     sync_threshold: float = 0.95
     use_sync_correct: bool = True
+
+
+def _make_config(cfg, json_dict, parser):
+
+    class _default_parser:
+        def mcs(cls, v):
+            cnsts = {
+                "bpsk": dtl.constellation_type_t.BPSK,
+                "qpsk": dtl.constellation_type_t.QPSK,
+                "psk8": dtl.constellation_type_t.PSK8,
+                "qam16": dtl.constellation_type_t.QAM16,
+            }
+            return [(snr, (cnsts[cnst], fec)) for (snr, (cnst, fec)) in v]
+
+    if json_dict:
+        for key, val in json_dict.items():
+            if key in cfg.__dict__:
+                if key in parser.__dict__:
+                    cfg.__setattr__(key, parser.__dict__[key](parser, val))
+                elif key in _default_parser.__dict__:
+                    cfg.__setattr__(key, _default_parser.__dict__[key](_default_parser, val))
+                else:
+                    cfg.__setattr__(key, val)
+    return cfg
+
+
+def make_tx_config(json_dict):
+    class _parser:
+        pass
+    return _make_config(ofdm_adaptive_tx_config(), json_dict, _parser)
+
+
+def make_rx_config(json_dict):
+    class _parser:
+        pass
+    return _make_config(ofdm_adaptive_rx_config(), json_dict, _parser)
+

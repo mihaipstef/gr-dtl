@@ -14,8 +14,11 @@ class ofdm_adaptive_tx(gr.hier_block2):
     """
 
     @classmethod
-    def from_parameters(cls, **kwargs):
-        return cls(dtl.ofdm_adaptive_config.ofdm_adaptive_tx_config(**kwargs))
+    def from_parameters(cls, config_dict = None, **kwargs):
+        cfg = dtl.ofdm_adaptive_config.make_tx_config(config_dict)
+        cfg.__dict__.update(kwargs)
+        return cls(cfg)
+
 
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_tx",
@@ -37,11 +40,15 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
-        self.constellations = config.constellations
+        mc_schemes = list(zip(*config.mcs))[1]
+        cnsts = list(zip(*mc_schemes))[0]
+        self.constellations = list(set(cnsts))
         self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
         self.stop_no_input = config.stop_no_input
-        self.fec = config.fec
-        self.codes_alist = config.codes_alist
+        self.fec = len(config.fec_codes)
+        self.codes_alist = []
+        if self.fec:
+            self.codes_alist = list(zip(*config.fec_codes))[1]
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -56,7 +63,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         self._setup_feedback_rx()
 
-
     def _setup_direct_tx(self):
 
         # Header path blocks
@@ -69,7 +75,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             header_len = 2
 
         header = dtl.ofdm_adaptive_packet_header(
-            [self.occupied_carriers[0] for _ in range(header_len)], header_len, self.frame_length,
+            [self.occupied_carriers[0]
+                for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,
@@ -87,7 +94,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         # Payload path blocks
         payload_mod = dtl.ofdm_adaptive_chunks_to_symbols_bc(
-            list(zip(*self.constellations))[1],
+            self.constellations,
             self.packet_length_tag_key
         )
 
@@ -107,11 +114,11 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
             repack = blocks.repack_bits_bb(8, 1)
             self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
-                                                            dtl.ofdm_adaptive.frame_capacity(
-                                                                self.frame_length, self.occupied_carriers),
-                                                            dtl.ofdm_adaptive.max_bps(
-                                                                list(zip(*self.constellations))[1]),
-                                                            self.packet_length_tag_key)
+                                                             dtl.ofdm_adaptive.frame_capacity(
+                                                                 self.frame_length, self.occupied_carriers),
+                                                             dtl.ofdm_adaptive.max_bps(
+                                                                 self.constellations),
+                                                             self.packet_length_tag_key)
 
             self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(dtl.ofdm_adaptive.frame_capacity(
                 self.frame_length, self.occupied_carriers), self.packet_length_tag_key)
@@ -136,8 +143,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             )
         else:
             self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
-                self.packet_length_tag_key, list(
-                    zip(*self.constellations))[1], self.frame_length,
+                self.packet_length_tag_key,
+                self.constellations, self.frame_length,
                 len(self.occupied_carriers[0]), self.frame_store_fname, 3)
             self.connect(
                 self.frame_unpack,
@@ -232,12 +239,12 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         if self.fec:
             self.msg_connect(self.feedback_parser, "info",
-                            self.fec_frame, "feedback")
+                             self.fec_frame, "feedback")
             self.msg_connect(self.fec_frame, "monitor", self, "monitor")
 
         else:
             self.msg_connect(self.feedback_parser, "info",
-                            self.frame_unpack, "feedback")
+                             self.frame_unpack, "feedback")
             self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
 
     def set_constellation(self, constellation):

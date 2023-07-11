@@ -16,8 +16,10 @@ class ofdm_adaptive_rx(gr.hier_block2):
     """
 
     @classmethod
-    def from_parameters(cls, **kwargs):
-        return cls(dtl.ofdm_adaptive_config.ofdm_adaptive_rx_config(**kwargs))
+    def from_parameters(cls, config_dict = None, **kwargs):
+        cfg = dtl.ofdm_adaptive_config.make_rx_config(config_dict)
+        cfg.__dict__.update(kwargs)
+        return cls(cfg)
 
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
@@ -37,11 +39,18 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
-        self.constellations = config.constellations
+        mc_schemes = list(zip(*config.mcs))[1]
+        cnsts = list(zip(*mc_schemes))[0]
+        self.constellations = list(set(cnsts))
         self.frame_store_fname = "/tmp/rx.dat" #f"{config.frame_store_folder}/rx.dat"
         self.use_sync_correct = config.use_sync_correct
-        self.fec = config.fec
-        self.codes_alist = config.codes_alist
+        self.fec = len(config.fec_codes)
+        self.codes_alist = []
+        self.codes_id = {}
+        if self.fec:
+            self.codes_alist = list(zip(*config.fec_codes))[1]
+            self.codes_id = { name: id+1 for (id, name) in enumerate(list(zip(*config.fec_codes))[0]) }
+        self.mcs = [(snr_th, (cnst, self.codes_id.get(code_name, 0))) for (snr_th, (cnst, code_name)) in config.mcs]
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -154,7 +163,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
 
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
-            list(zip(*self.constellations))[1],
+            self.constellations,
             dtl.ofdm_adaptive_frame_snr_simple(0.1),
             self.occupied_carriers,
             self.pilot_carriers,
@@ -164,7 +173,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(2, 5, list(self.constellations)),
+            dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs),
             self.cp_len,
             self.frame_length_tag_key,
             False,
@@ -193,11 +202,11 @@ class ofdm_adaptive_rx(gr.hier_block2):
         if self.fec:
             ldpc_decs = dtl.make_ldpc_decoders(self.codes_alist)
 
-            payload_demod = dtl.ofdm_adaptive_constellation_soft_cf(list(zip(*self.constellations))[1], self.packet_length_tag_key)
+            payload_demod = dtl.ofdm_adaptive_constellation_soft_cf(self.constellations, self.packet_length_tag_key)
             fec_dec = dtl.ofdm_adaptive_fec_decoder(
                 ldpc_decs,
                 dtl.ofdm_adaptive.frame_capacity(self.frame_length, self.occupied_carriers),
-                dtl.ofdm_adaptive.max_bps(list(zip(*self.constellations))[1]),
+                dtl.ofdm_adaptive.max_bps(self.constellations),
                 self.packet_length_tag_key
             )
             repack = blocks.repack_bits_bb(1, 8)
@@ -212,7 +221,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             )
         else:
             payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
-                list(zip(*self.constellations))[1],
+                self.constellations,
                 self.packet_length_tag_key,
             )
 

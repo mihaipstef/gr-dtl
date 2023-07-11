@@ -16,7 +16,7 @@ import signal
 
 class ofdm_adaptive_sim(gr.top_block):
 
-    def __init__(self, config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20, codes = []):
+    def __init__(self, config_dict, run_config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20):
         gr.top_block.__init__(self, "OFDM Adaptive Simulator", catch_exceptions=True)
         self.samp_rate = samp_rate = 200000
         self.n_bytes = 100
@@ -24,13 +24,12 @@ class ofdm_adaptive_sim(gr.top_block):
         self.direct_channel_freq_offset = 0.5
         self.fft_len = 64
         self.cp_len = 16
-        self.config_file = config_file
+        self.run_config_file = run_config_file
         self.use_sync_correct = use_sync_correct
         self.max_doppler = 0
         self.propagation_paths = propagation_paths
         self.frame_length = frame_length
         self.frame_samples = (self.frame_length + 4) * (self.fft_len + self.cp_len)
-        self.codes = codes
 
         ##################################################
         # Blocks
@@ -38,24 +37,22 @@ class ofdm_adaptive_sim(gr.top_block):
 
         #self.zeromq_pub = zeromq.pub_msg_sink('tcp://0.0.0.0:5552', 100, True)
         self.tx = dtl.ofdm_adaptive_tx.from_parameters(
+            config_dict=config_dict,
             fft_len=self.fft_len,
             cp_len=self.cp_len,
             rolloff=0,
             scramble_bits=False,
             stop_no_input=False,
             frame_length=self.frame_length,
-            codes_alist=self.codes,
-             fec=len(self.codes),
         )
         self.rx = dtl.ofdm_adaptive_rx.from_parameters(
+            config_dict=config_dict,
             fft_len=self.fft_len,
             cp_len=self.cp_len,
             rolloff=0,
             scramble_bits=False,
             use_sync_correct=self.use_sync_correct,
             frame_length=self.frame_length,
-            codes_alist=self.codes,
-            fec=len(self.codes),
         )
         delays, delays_std, delays_maxdev, mags = zip(*self.propagation_paths)
         self.fadding_channel = channels.selective_fading_model2(8, self.max_doppler, False, 4.0, 0, delays, delays_std, delays_maxdev, mags, 8)
@@ -130,20 +127,20 @@ class ofdm_adaptive_sim(gr.top_block):
 
 def main(
     top_block_cls=ofdm_adaptive_sim,
-    config_file="sim.run.json",
+    config_dict=None,
+    run_config_file="sim.run.json",
     sent_frames=None,
     propagation_paths = [()],
     use_sync_correct = True,
-    frame_length = 20,
-    codes = [],):
+    frame_length = 20,):
 
     tb = top_block_cls(
-        config_file=config_file,
+        config_dict=config_dict,
+        run_config_file=run_config_file,
         sent_frames=sent_frames,
         propagation_paths=propagation_paths,
         use_sync_correct=use_sync_correct,
-        frame_length=frame_length,
-        codes=codes,)
+        frame_length=frame_length,)
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
@@ -154,12 +151,12 @@ def main(
     # - implement setter, eg. set_new_attr
     def config_update(sig=None, frame=None):
         try:
-            if "/" in tb.config_file:
-                config_file = f"{tb.config_file}"
+            if "/" in tb.run_config_file:
+                run_config_file = f"{tb.run_config_file}"
             else:
-                config_file = f"{os.path.dirname(__file__)}/{tb.config_file}"
-            print(f"Load: {config_file}")
-            with open(config_file, "r") as f:
+                run_config_file = f"{os.path.dirname(__file__)}/{tb.run_config_file}"
+            print(f"Load: {run_config_file}")
+            with open(run_config_file, "r") as f:
                 content = f.read()
                 config = json.loads(content)
                 for k,v in config.items():
@@ -167,7 +164,7 @@ def main(
                         print(f"update {k}={v}")
                         setter(v)
         except Exception as ex:
-            print(f"Config file not found or broken ({tb.config_file})")
+            print(f"Config file not found or broken ({tb.run_config_file})")
             print(str(ex))
 
     signal.signal(signal.SIGINT, sig_handler)

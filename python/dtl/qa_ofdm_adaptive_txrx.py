@@ -40,14 +40,11 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         self.tb = gr.top_block()
         self.frame_len = 10
         self.data_carriers = len(tx_cfg.occupied_carriers[0])
-        self.known_constellations = ((sys.float_info.min, dtl.constellation_type_t.BPSK), (
-            15, dtl.constellation_type_t.QPSK), (18, dtl.constellation_type_t.PSK8),)
-        test_codes_dir = os.path.dirname(__file__)
-        self.codes = (f"{test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{test_codes_dir}/n_0100_k_0027_gap_04.alist")
 
 
     def tearDown(self):
         self.tb = None
+
 
     def test_001_direct_txrx(self):
         #return
@@ -55,6 +52,8 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         Test Tx/Rx of multiple packets with diferent constellations.
         """
         tx_samples = []
+        mcs = ((sys.float_info.min, (dtl.constellation_type_t.BPSK,"no_fec")), (
+            15, (dtl.constellation_type_t.QPSK, "no_fec")), (18, (dtl.constellation_type_t.PSK8, "no_fec")),)
 
         # Tx
         buffer_size = 32000
@@ -62,7 +61,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True, codes_alist=self.codes))
+            tx_cfg(frame_length=self.frame_len, mcs=mcs, stop_no_input=True, fec_codes=[]))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
@@ -91,7 +90,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
         rx = ofdm_adaptive_rx(
-            rx_cfg(frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations, codes_alist=self.codes))
+            rx_cfg(frame_length=self.frame_len, sync_threshold=0.99, mcs=mcs, fec_codes=[]))
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 
@@ -113,6 +112,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
             print(rx_data[first_err-20:first_err+20])
             print(subfinder(test_data, rx_data[first_err: first_err+20]))
         assert (packet_success)
+
 
     def test_002_feedback_txrx(self):
         #return
@@ -142,7 +142,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
 
         tx_tb = gr.top_block()
 
-        tx = ofdm_adaptive_tx(tx_cfg(codes_alist=self.codes))
+        tx = ofdm_adaptive_tx(tx_cfg(fec_codes=[]))
 
         # Channel
         freq_offset = 0
@@ -187,6 +187,10 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         """
         Test Tx/Rx of multiple packets with diferent constellations.
         """
+        test_codes_dir = os.path.dirname(__file__)
+        fec_codes = (("fec_1", f"{test_codes_dir}/n_0100_k_0023_gap_10.alist"), ("fec_2", f"{test_codes_dir}/n_0100_k_0027_gap_04.alist"))
+        mcs = ((sys.float_info.min, (dtl.constellation_type_t.BPSK,"fec_1")), (
+            15, (dtl.constellation_type_t.QPSK, "fec_1")), (18, (dtl.constellation_type_t.PSK8, "fec_2")),)
         tx_samples = []
 
         # Tx
@@ -195,7 +199,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(fec=True, frame_length=self.frame_len, constellations=self.known_constellations, stop_no_input=True, codes_alist=self.codes))
+            tx_cfg(fec=True, frame_length=self.frame_len, mcs=mcs, stop_no_input=True, fec_codes=fec_codes))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
@@ -225,7 +229,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # Rx
         rx_src = blocks.vector_source_c(tx_samples)
         rx = ofdm_adaptive_rx(
-            rx_cfg(fec=True, frame_length=self.frame_len, sync_threshold=0.99, constellations=self.known_constellations, codes_alist=self.codes))
+            rx_cfg(fec=True, frame_length=self.frame_len, sync_threshold=0.99, mcs=mcs, fec_codes=fec_codes))
         rx_sink = blocks.vector_sink_b()
         null_sink = blocks.null_sink(gr.sizeof_gr_complex)
 

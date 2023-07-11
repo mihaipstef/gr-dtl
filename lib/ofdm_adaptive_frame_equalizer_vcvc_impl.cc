@@ -192,11 +192,10 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
 
     // Publish decided constellation to decision feedback port.
-    ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(
-        get_constellation_type(*cnst_tag_it), d_eq->get_snr());
+    ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
-        static_cast<unsigned char>(feedback),
-        1, // for FEC
+        static_cast<unsigned char>(feedback.first), // constellation
+        feedback.second, // FEC
     };
     pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
         pmt::init_u8vector(feedback_vector.size(), feedback_vector));
@@ -206,7 +205,10 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     pmt::pmt_t monitor_msg = pmt::make_dict();
     monitor_msg = pmt::dict_add(monitor_msg,
                                  feedback_constellation_key(),
-                                 pmt::from_long(static_cast<unsigned char>(feedback)));
+                                 pmt::from_long(static_cast<unsigned char>(feedback.first)));
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 fec_key(),
+                                 pmt::from_long(feedback.second));
     monitor_msg = pmt::dict_add(monitor_msg,
                                  estimated_snr_tag_key(),
                                  pmt::from_float(d_eq->get_snr()));
@@ -222,8 +224,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         add_item_tag(0,
                      nitems_written(0),
                      feedback_constellation_key(),
-                     pmt::from_long(static_cast<unsigned char>(feedback)));
-        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(1));
+                     pmt::from_long(static_cast<unsigned char>(feedback.first)));
+        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(feedback.second));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

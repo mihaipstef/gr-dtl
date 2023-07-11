@@ -47,7 +47,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
-      d_constellation(constellation_type_t::QAM16),
+      d_constellation(constellation_type_t::BPSK),
       d_fec_scheme(0),
       d_tag_offset(0),
       d_frame_len(frame_len),
