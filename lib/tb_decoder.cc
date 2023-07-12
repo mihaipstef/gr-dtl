@@ -73,7 +73,7 @@ bool tb_decoder::process_frame(const float* in,
     } else {
 
         // Small TB exclusively transported by the frame
-        if (fec_info->d_tb_offset == frame_payload_len) {
+        if (d_tb_buffers[RCV_BUF].size() == 0 && fec_info->d_tb_offset == frame_payload_len) {
             // Start new TB buffer
             d_fec_info = fec_info;
             d_tb_number = d_fec_info->d_tb_number;
@@ -118,13 +118,13 @@ bool tb_decoder::process_frame(const float* in,
             if (fec_info->d_tb_offset) {
                 new_tb_offset = fec_info->d_tb_offset + extra_bits;
             }
-            DTL_LOG_DEBUG("size={}, append={}",
-                          d_tb_buffers[RCV_BUF].size(),
-                          frame_payload_len + extra_bits - new_tb_offset);
             copy(in + new_tb_offset,
                  in + frame_payload_len + extra_bits,
                  back_inserter(d_tb_buffers[RCV_BUF]));
             d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
+            DTL_LOG_DEBUG("rcv_buf_size={}, append={}",
+                          d_tb_buffers[RCV_BUF].size(),
+                          frame_payload_len + extra_bits - new_tb_offset);
         }
     }
 
@@ -135,7 +135,7 @@ bool tb_decoder::process_frame(const float* in,
 
 int tb_decoder::decode(int tb_len)
 {
-    static const float SHORTENED_VALUE = 2;
+    static const float SHORTENED_VALUE = -5;
 
     int payload_len = d_fec_info->d_tb_payload_len;
     int n = d_fec_info->get_n();

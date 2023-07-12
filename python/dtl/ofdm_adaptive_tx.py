@@ -247,6 +247,12 @@ class ofdm_adaptive_tx(gr.hier_block2):
                              self.frame_unpack, "feedback")
             self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
 
-    def set_constellation(self, constellation):
+    def set_feedback(self, constellation, fec_scheme=None):
         if not self.fec:
             self.frame_unpack.set_constellation(constellation)
+        else:
+            assert(fec_scheme is not None)
+            feedback = pmt.make_dict()
+            feedback = pmt.dict_add(feedback, dtl.fec_feedback_key(), pmt.from_long(fec_scheme))
+            feedback = pmt.dict_add(feedback, dtl.feedback_constellation_key(), pmt.from_long(int(constellation)))
+            self.fec_frame.process_feedback(feedback)

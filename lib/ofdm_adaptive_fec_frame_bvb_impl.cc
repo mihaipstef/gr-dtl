@@ -311,12 +311,13 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
             d_consecutive_empty_frames = 0;
 
             DTL_LOG_DEBUG("input_processed: tb_len={}, tb_payload={}, read_index={}, "
-                          "padding_syms={}, tb_no={}",
+                          "padding_syms={}, tb_no={}, to_read={}",
                           d_tb_enc->size(),
                           d_tb_enc->buf_payload(),
                           read_index,
                           d_frame_padding_syms,
-                          d_tb_count);
+                          d_tb_count,
+                          to_read);
 
         } break;
 

@@ -86,7 +86,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 this->nitems_read(0) + read_index,
                                 this->nitems_read(0) + read_index + 1);
         int test = 0;
-        double noise = 0.1;
+        double sigma = 0.1;
         for (auto& tag : tags) {
             DTL_LOG_DEBUG("offset={}, key={}", tag.offset, pmt::symbol_to_string(tag.key));
             if (tag.key == get_constellation_tag_key()) {
@@ -97,7 +97,11 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                 test |= 2;
                 //remove_item_tag(0, tag);
             } else if (tag.key == noise_tag_key()) {
-                noise = pmt::to_double(tag.value);
+                double noise = pmt::to_double(tag.value);
+                double sigma_noise = sqrt(noise);
+                if (sigma_noise > sigma) {
+                    sigma = sigma_noise;
+                }
                 test |= 4;
             }
             if (test == 7) {
@@ -140,7 +144,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         }
 
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
-            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], noise));
+            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], sigma));
             // TODO: Use MSB order to avoid reversing here
             std::reverse(llrs.begin(), llrs.end());
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());

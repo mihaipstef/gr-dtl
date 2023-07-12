@@ -91,14 +91,9 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
                 d_bps = bps;
             }
         }
-        if (pmt::dict_has_key(feedback, fec_feedback_key())) {
-            d_fec_scheme = pmt::to_long(
-                pmt::dict_ref(feedback, fec_feedback_key(), pmt::from_long(0)));
-        }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}, d_fec_scheme={}",
-                  static_cast<int>(d_constellation),
-                  d_fec_scheme);
+    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+                  static_cast<int>(d_constellation));
 }
 
 
