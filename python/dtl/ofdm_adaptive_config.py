@@ -39,7 +39,7 @@ class ofdm_adaptive_config:
     frame_length: int = 20
     frame_store_folder: str = "/tmp"
     fec: bool = False
-    fec_codes: t.Tuple[str] = (("fec_1", "n_0100_k_0027_gap_04.alist"))
+    fec_codes: t.Tuple[str] = () #(("fec_1", "n_0100_k_0027_gap_04.alist"))
     mcs: t.Tuple[t.Tuple[float, t.Tuple[dtl.constellation_type_t, str]]] = ((sys.float_info.min, (dtl.constellation_type_t.BPSK, "fec_1")), (
         11, (dtl.constellation_type_t.QPSK, "fec_1")), (12, (dtl.constellation_type_t.PSK8, "fec_1")), (23, (dtl.constellation_type_t.QAM16, "fec_1")),)
 

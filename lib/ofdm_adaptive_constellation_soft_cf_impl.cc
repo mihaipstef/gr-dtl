@@ -86,8 +86,9 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 this->nitems_read(0) + read_index,
                                 this->nitems_read(0) + read_index + 1);
         int test = 0;
+        double noise = 0.1;
         for (auto& tag : tags) {
-            DTL_LOG_DEBUG("offset={}, key={}, value={}", tag.offset, pmt::symbol_to_string(tag.key), pmt::to_long(tag.value));
+            DTL_LOG_DEBUG("offset={}, key={}", tag.offset, pmt::symbol_to_string(tag.key));
             if (tag.key == get_constellation_tag_key()) {
                 cnst = static_cast<constellation_type_t>(pmt::to_long(tag.value));
                 test |= 1;
@@ -95,13 +96,16 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                 len = pmt::to_long(tag.value);
                 test |= 2;
                 //remove_item_tag(0, tag);
+            } else if (tag.key == noise_tag_key()) {
+                noise = pmt::to_double(tag.value);
+                test |= 4;
             }
-            if (test == 3) {
+            if (test == 7) {
                 break;
             }
         }
-        if (test != 3) {
-            DTL_LOG_ERROR("Tags missing: check_bitmap={}, lookup_offset={}", test, nitems_read(0) + read_index);
+        if (test != 7 && test != 3) {
+            DTL_LOG_DEBUG("Tags missing: check_bitmap={}, lookup_offset={}", test, nitems_read(0) + read_index);
             throw std::runtime_error("Tags missing");
         }
 
@@ -136,7 +140,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         }
 
         for (int i=0; i < len; ++i, ++read_index, write_index += bps) {
-            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], 0.1));
+            std::vector<float> llrs(d_constellation->calc_soft_dec(in[read_index], noise));
             // TODO: Use MSB order to avoid reversing here
             std::reverse(llrs.begin(), llrs.end());
             memcpy(&out[write_index], &llrs[0], sizeof(float) * llrs.size());

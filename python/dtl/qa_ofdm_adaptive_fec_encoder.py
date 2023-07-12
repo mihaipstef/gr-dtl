@@ -93,6 +93,8 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         to_stream = ofdm_adaptive_frame_to_stream_vbb(self.frame_len * self.ofdm_sym_capacity, self.len_key)
         mod = ofdm_adaptive_chunks_to_symbols_bc(self.constellations, self.len_key)
 
+        noise_tag_add = blocks.add_cc()
+
         cnst_dec = ofdm_adaptive_constellation_soft_cf(self.constellations, self.len_key)
 
         dec = ofdm_adaptive_fec_decoder(

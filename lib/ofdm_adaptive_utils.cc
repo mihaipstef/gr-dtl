@@ -24,6 +24,8 @@ static const pmt::pmt_t CONSTELLATION_TAG_KEY =
     pmt::string_to_symbol("constellation_tag_key");
 static const pmt::pmt_t ESTIMATED_SNR_TAG_KEY =
     pmt::string_to_symbol("estimated_snr_tag_key");
+static const pmt::pmt_t NOISE_TAG_KEY =
+    pmt::string_to_symbol("noise_tag_key");
 static const pmt::pmt_t FEEDBACK_CONSTELLATION_KEY =
     pmt::string_to_symbol("feedback_constellation_key");
 static const pmt::pmt_t PAYLOAD_LENGTH_KEY = pmt::string_to_symbol("payload_length_key");
@@ -147,6 +149,8 @@ std::vector<tag_t>::const_iterator DTL_API find_tag(const std::vector<tag_t>& ta
 pmt::pmt_t DTL_API get_constellation_tag_key() { return CONSTELLATION_TAG_KEY; }
 
 pmt::pmt_t DTL_API estimated_snr_tag_key() { return ESTIMATED_SNR_TAG_KEY; }
+
+pmt::pmt_t DTL_API noise_tag_key() { return NOISE_TAG_KEY; }
 
 pmt::pmt_t DTL_API feedback_constellation_key() { return FEEDBACK_CONSTELLATION_KEY; }
 

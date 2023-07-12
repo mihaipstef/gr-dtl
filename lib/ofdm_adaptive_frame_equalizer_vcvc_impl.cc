@@ -215,6 +215,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
     message_port_pub(MONITOR_PORT, monitor_msg);
 
+    add_item_tag(0,
+                    nitems_written(0),
+                    noise_tag_key(),
+                    pmt::from_double(d_eq->get_noise()));
+
     // Propagate feedback via tags
     if (d_propagate_feedback_tags) {
         add_item_tag(0,

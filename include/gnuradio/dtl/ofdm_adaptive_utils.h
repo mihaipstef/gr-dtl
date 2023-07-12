@@ -52,6 +52,8 @@ pmt::pmt_t get_constellation_tag_key();
 
 pmt::pmt_t estimated_snr_tag_key();
 
+pmt::pmt_t noise_tag_key();
+
 pmt::pmt_t feedback_constellation_key();
 
 pmt::pmt_t payload_length_key();

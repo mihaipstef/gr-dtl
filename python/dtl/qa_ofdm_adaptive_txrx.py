@@ -187,6 +187,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         """
         Test Tx/Rx of multiple packets with diferent constellations.
         """
+        #return
         test_codes_dir = os.path.dirname(__file__)
         fec_codes = (("fec_1", f"{test_codes_dir}/n_0100_k_0023_gap_10.alist"), ("fec_2", f"{test_codes_dir}/n_0100_k_0027_gap_04.alist"))
         mcs = ((sys.float_info.min, (dtl.constellation_type_t.BPSK,"fec_1")), (

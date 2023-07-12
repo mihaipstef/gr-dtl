@@ -167,9 +167,6 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  d_tag_offset,
                  fec_tb_payload_key(),
                  pmt::from_long(static_cast<int>(d_tb_enc->buf_payload() & 0xffff)));
-    // add_item_tag(
-    //     0, d_tag_offset, fec_tb_index_key(), pmt::from_long(d_used_frames_count &&
-    //     0xf));
     add_item_tag(0,
                  d_tag_offset,
                  fec_offset_key(),

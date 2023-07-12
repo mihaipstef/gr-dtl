@@ -106,7 +106,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 frame_payload_len = 8 * pmt::to_long(tag.value);
                 test |= 4;
             }
-            DTL_LOG_DEBUG("tag {}, {}, {}", pmt::symbol_to_string(tag.key), test, pmt::to_long(tag.value));
+            DTL_LOG_DEBUG("tag {}, {}", pmt::symbol_to_string(tag.key), test);
 
             if (test == 7) {
                 break;
