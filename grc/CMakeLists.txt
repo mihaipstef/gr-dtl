@@ -15,6 +15,5 @@ install(FILES
     dtl_ofdm_adaptive_constellation_metric_vcvf.block.yml
     dtl_ofdm_adaptive_fec_decoder.block.yml
     dtl_ofdm_adaptive_frame_to_stream_vbb.block.yml
-    dtl_ofdm_adaptive_stream_to_frame_fvf.block.yml
     dtl_ofdm_adaptive_constellation_soft_cf.block.yml DESTINATION share/gnuradio/grc/blocks
 )

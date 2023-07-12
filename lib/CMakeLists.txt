@@ -36,7 +36,6 @@ list(APPEND dtl_sources
     tb_encoder.cc
     tb_decoder.cc
     ofdm_adaptive_frame_to_stream_vbb_impl.cc
-    ofdm_adaptive_stream_to_frame_fvf_impl.cc
     fec_utils.cc
     ofdm_adaptive_constellation_soft_cf_impl.cc)
 

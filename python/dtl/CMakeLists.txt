@@ -52,6 +52,5 @@ GR_ADD_TEST(qa_ofdm_adaptive_txrx ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DI
 GR_ADD_TEST(qa_ofdm_adaptive_config ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_config.py)
 GR_ADD_TEST(qa_ofdm_adaptive_feedback_decision ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_feedback_decision.py)
 GR_ADD_TEST(qa_ofdm_adaptive_constellation_metric_vcvf ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_constellation_metric_vcvf.py)
-GR_ADD_TEST(qa_ofdm_adaptive_fec_encoder ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_fec_encoder.py)
-GR_ADD_TEST(qa_ofdm_adaptive_fec_decoder ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_fec_decoder.py)
+GR_ADD_TEST(qa_ofdm_adaptive_fec ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_fec.py)
 GR_ADD_TEST(qa_ofdm_adaptive_frame_to_stream_vbb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_frame_to_stream_vbb.py)

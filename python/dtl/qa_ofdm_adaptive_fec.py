@@ -48,7 +48,7 @@ except ImportError:
   )
 
 
-class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
+class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
 
     def setUp(self):
         self.tb = gr.top_block(catch_exceptions=True)
@@ -167,4 +167,4 @@ class qa_ofdm_adaptive_fec_encoder(gr_unittest.TestCase):
         self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_ofdm_adaptive_fec_encoder)
+    gr_unittest.run(qa_ofdm_adaptive_fec)
