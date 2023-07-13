@@ -117,9 +117,9 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     std::vector<tag_t> tags;
     get_tags_in_window(tags, 0, 0, 1);
     for (unsigned i = 0; i < tags.size(); i++) {
-        if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_chan_taps") {
+        if (tags[i].key == CHAN_TAPS_KEY) {
             d_channel_state = pmt::c32vector_elements(tags[i].value);
-        } else if (pmt::symbol_to_string(tags[i].key) == "ofdm_sync_carr_offset") {
+        } else if (tags[i].key == CARR_OFFSET_KEY) {
             carrier_offset = pmt::to_long(tags[i].value);
             DTL_LOG_DEBUG("carrier_offset={}", carrier_offset);
         }
@@ -172,13 +172,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     for (int k = 0; k < d_fft_len; k++) {
         d_channel_state[k] *= phase_correction;
     }
-
     // Propagate tags (except for the channel state and the TSB tag)
-    get_tags_in_window(tags, 0, 0, n_ofdm_sym);
     for (size_t i = 0; i < tags.size(); i++) {
         if (tags[i].key != CHAN_TAPS_KEY &&
             tags[i].key != pmt::mp(d_length_tag_key_str)) {
-            add_item_tag(0, tags[i]);
+            add_item_tag(0, nitems_written(0), tags[i].key, tags[i].value);
         }
     }
 
@@ -192,11 +190,10 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
 
     // Publish decided constellation to decision feedback port.
-    ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(
-        get_constellation_type(*cnst_tag_it), d_eq->get_snr());
+    ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(d_eq->get_snr());
     std::vector<unsigned char> feedback_vector{
-        static_cast<unsigned char>(feedback),
-        0, // for FEC
+        static_cast<unsigned char>(feedback.first), // constellation
+        feedback.second, // FEC
     };
     pmt::pmt_t feedback_msg = pmt::cons(pmt::PMT_NIL,
         pmt::init_u8vector(feedback_vector.size(), feedback_vector));
@@ -206,13 +203,20 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     pmt::pmt_t monitor_msg = pmt::make_dict();
     monitor_msg = pmt::dict_add(monitor_msg,
                                  feedback_constellation_key(),
-                                 pmt::from_long(static_cast<unsigned char>(feedback)));
+                                 pmt::from_long(static_cast<unsigned char>(feedback.first)));
+    monitor_msg = pmt::dict_add(monitor_msg,
+                                 fec_key(),
+                                 pmt::from_long(feedback.second));
     monitor_msg = pmt::dict_add(monitor_msg,
                                  estimated_snr_tag_key(),
                                  pmt::from_float(d_eq->get_snr()));
 
     message_port_pub(MONITOR_PORT, monitor_msg);
-
+    add_item_tag(0,
+                    nitems_written(0),
+                    noise_tag_key(),
+                    pmt::from_double(d_eq->get_noise()));
+    DTL_LOG_DEBUG("aici2");
     // Propagate feedback via tags
     if (d_propagate_feedback_tags) {
         add_item_tag(0,
@@ -222,8 +226,8 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         add_item_tag(0,
                      nitems_written(0),
                      feedback_constellation_key(),
-                     pmt::from_long(static_cast<unsigned char>(feedback)));
-        add_item_tag(0, nitems_written(0), feedback_fec_key(), pmt::from_long(0));
+                     pmt::from_long(static_cast<unsigned char>(feedback.first)));
+        add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(feedback.second));
     }
 
     if (d_fixed_frame_len && d_length_tag_key_str.empty()) {

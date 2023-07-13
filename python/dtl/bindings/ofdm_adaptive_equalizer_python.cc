@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_equalizer.h) */
-/* BINDTOOL_HEADER_FILE_HASH(ff6f261d0c9278afa09a97a345edeb5b)                     */
+/* BINDTOOL_HEADER_FILE_HASH(2b292c0bb62bb2b6e033a9798a2ea3fc)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -60,6 +60,11 @@ void bind_ofdm_adaptive_equalizer(py::module& m)
         .def("get_snr",
              &ofdm_adaptive_equalizer_base::get_snr,
              D(ofdm_adaptive_equalizer_base, get_snr))
+
+
+        .def("get_noise",
+             &ofdm_adaptive_equalizer_base::get_noise,
+             D(ofdm_adaptive_equalizer_base, get_noise))
 
 
         .def("equalize",
@@ -143,6 +148,11 @@ void bind_ofdm_adaptive_equalizer(py::module& m)
         .def("get_snr",
              &ofdm_adaptive_equalizer::get_snr,
              D(ofdm_adaptive_equalizer, get_snr))
+
+
+        .def("get_noise",
+             &ofdm_adaptive_equalizer::get_noise,
+             D(ofdm_adaptive_equalizer, get_noise))
 
 
         ;

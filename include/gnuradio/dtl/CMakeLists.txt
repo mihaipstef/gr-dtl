@@ -22,5 +22,10 @@ install(FILES
     ofdm_adaptive_frame_bb.h
     ofdm_adaptive_frame_detect_bb.h
     zmq_msq_pub.h
-    ofdm_adaptive_constellation_metric_vcvf.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_constellation_metric_vcvf.h
+    ofdm_adaptive_fec_frame_bvb.h
+    ofdm_adaptive_fec_decoder.h
+    fec.h
+    ofdm_adaptive_frame_to_stream_vbb.h
+    ofdm_adaptive_constellation_soft_cf.h DESTINATION include/gnuradio/dtl
 )

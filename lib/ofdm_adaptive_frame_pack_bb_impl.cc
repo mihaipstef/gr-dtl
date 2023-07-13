@@ -41,6 +41,7 @@ ofdm_adaptive_frame_pack_bb_impl::ofdm_adaptive_frame_pack_bb_impl(
                           tsb_tag_key),
       d_bits_per_symbol(1),
       d_len_tag_key(tsb_tag_key),
+      d_repacker(d_bits_per_symbol, 8),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_packet_number_key(pmt::mp(packet_number_key))
 {
@@ -62,6 +63,7 @@ void ofdm_adaptive_frame_pack_bb_impl::parse_length_tags(
     if (constellation_type_t::UNKNOWN != constellation_type) {
         d_bits_per_symbol = get_bits_per_symbol(constellation_type);
         set_relative_rate(d_bits_per_symbol, 8);
+        d_repacker = repack(d_bits_per_symbol, 8);
     }
 }
 
@@ -76,7 +78,11 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
     int n_written = 0;
 
     n_written =
-        repacker.repack_lsb_first(in, ninput_items[0], out, d_bits_per_symbol, false);
+        d_repacker.repack_lsb_first(in, ninput_items[0], out);
+
+    if (ninput_items[0] % d_bits_per_symbol) {
+        --n_written;
+    }
 
     bool crc_ok = d_crc.verify_crc(out, n_written);
 

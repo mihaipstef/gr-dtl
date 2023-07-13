@@ -40,6 +40,8 @@ void bind_ofdm_adaptive_frame_snr_template(py::module& m, const char* classname)
         .def("reset",
              &frame_snr::reset)
         .def("snr",
+             &frame_snr::snr)
+        .def("noise",
              &frame_snr::snr);
 }
 
@@ -73,6 +75,9 @@ void bind_ofdm_adaptive_frame_snr(py::module& m)
 
 
         .def("snr",
+             &ofdm_adaptive_frame_snr_base::snr)
+
+        .def("noise",
              &ofdm_adaptive_frame_snr_base::snr)
 
         ;

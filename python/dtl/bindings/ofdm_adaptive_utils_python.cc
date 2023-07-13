@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(d265e6bb52dbeebb381f6d23638e6e2d)                     */
+/* BINDTOOL_HEADER_FILE_HASH(92ecda33719f9757d90244f05db9215a)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -94,13 +94,34 @@ void bind_ofdm_adaptive_utils(py::module& m)
           D(estimated_snr_tag_key));
 
 
+    m.def("noise_tag_key", &::gr::dtl::noise_tag_key, D(noise_tag_key));
+
+
     m.def("feedback_constellation_key",
           &::gr::dtl::feedback_constellation_key,
           D(feedback_constellation_key));
 
 
-    m.def("feedback_fec_key", &::gr::dtl::feedback_fec_key, D(feedback_fec_key));
-
-
     m.def("payload_length_key", &::gr::dtl::payload_length_key, D(payload_length_key));
+
+
+    m.def("fec_key", &::gr::dtl::fec_key, D(fec_key));
+
+
+    m.def("fec_feedback_key", &::gr::dtl::fec_feedback_key, D(fec_feedback_key));
+
+
+    m.def("fec_tb_key", &::gr::dtl::fec_tb_key, D(fec_tb_key));
+
+
+    m.def("fec_offset_key", &::gr::dtl::fec_offset_key, D(fec_offset_key));
+
+
+    m.def("fec_tb_payload_key", &::gr::dtl::fec_tb_payload_key, D(fec_tb_payload_key));
+
+
+    m.def("fec_tb_len_key", &::gr::dtl::fec_tb_len_key, D(fec_tb_len_key));
+
+
+    m.def("fec_tb_index_key", &::gr::dtl::fec_tb_index_key, D(fec_tb_index_key));
 }

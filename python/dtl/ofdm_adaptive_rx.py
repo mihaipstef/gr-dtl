@@ -16,8 +16,10 @@ class ofdm_adaptive_rx(gr.hier_block2):
     """
 
     @classmethod
-    def from_parameters(cls, **kwargs):
-        return cls(dtl.ofdm_adaptive_config.ofdm_adaptive_rx_config(**kwargs))
+    def from_parameters(cls, config_dict = None, **kwargs):
+        cfg = dtl.ofdm_adaptive_config.make_rx_config(config_dict)
+        cfg.__dict__.update(kwargs)
+        return cls(cfg)
 
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
@@ -37,9 +39,18 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.sync_threshold = config.sync_threshold
         self.frame_length = config.frame_length
-        self.constellations = config.constellations
-        self.frame_store_fname = f"{config.frame_store_folder}/rx.dat"
+        mc_schemes = list(zip(*config.mcs))[1]
+        cnsts = list(zip(*mc_schemes))[0]
+        self.constellations = list(set(cnsts))
+        self.frame_store_fname = "/tmp/rx.dat" #f"{config.frame_store_folder}/rx.dat"
         self.use_sync_correct = config.use_sync_correct
+        self.fec = len(config.fec_codes)
+        self.codes_alist = []
+        self.codes_id = {}
+        if self.fec:
+            self.codes_alist = list(zip(*config.fec_codes))[1]
+            self.codes_id = { name: id+1 for (id, name) in enumerate(list(zip(*config.fec_codes))[0]) }
+        self.mcs = [(snr_th, (cnst, self.codes_id.get(code_name, 0))) for (snr_th, (cnst, code_name)) in config.mcs]
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -56,6 +67,10 @@ class ofdm_adaptive_rx(gr.hier_block2):
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
 
+        header_len = 1
+        if self.fec:
+            header_len = 2
+
         # Synchronization
         self.sync_detect = digital.ofdm_sync_sc_cfb(
             self.fft_len, self.cp_len, threshold=self.sync_threshold)
@@ -64,9 +79,9 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.oscillator = analog.frequency_modulator_fc(-2.0 / self.fft_len)
         self.mixer = blocks.multiply_cc()
         sync_correct = dtl.ofdm_adaptive_frame_detect_bb(
-            (self.frame_length + 3) * (self.fft_len + self.cp_len))
+            (self.frame_length +  len(self.sync_words) + header_len) * (self.fft_len + self.cp_len))
         hpd = digital.header_payload_demux(
-            len(self.sync_words) + 1,
+            len(self.sync_words) + header_len,
             self.fft_len, self.cp_len,
             self.frame_length_tag_key,
             "",
@@ -90,7 +105,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         # Header path
         header_fft = fft.fft_vcc(self.fft_len, True, (), True)
         chanest = digital.ofdm_chanest_vcvc(
-            self.sync_words[0], self.sync_words[1], 1)
+            self.sync_words[0], self.sync_words[1], header_len)
         header_constellation = digital.bpsk_constellation()
         header_equalizer = digital.ofdm_equalizer_simpledfe(
             self.fft_len,
@@ -105,7 +120,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.cp_len,
             self.frame_length_tag_key,
             True,
-            1  # Header is 1 symbol long
+            header_len
         )
         header_serializer = digital.ofdm_serializer_vcc(
             self.fft_len, self.occupied_carriers,
@@ -113,13 +128,15 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         header_demod = digital.constellation_decoder_cb(
             header_constellation.base())
+
         header_formatter = dtl.ofdm_adaptive_packet_header(
-            self.occupied_carriers, 1, self.frame_length,
+            [self.occupied_carriers[0] for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
             self.packet_num_tag_key,
             1,  # BPSK
-            scramble_header=self.scramble_bits
+            scramble_header=self.scramble_bits,
+            has_fec=self.fec
         )
 
         header_parser = digital.packet_headerparser_b(
@@ -135,61 +152,104 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
 
+        self.connect(chanest, blocks.file_sink(
+            self.fft_len*gr.sizeof_gr_complex, "/tmp/headers.dat"))
+
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
+
+        self.connect(payload_fft, blocks.file_sink(
+            64 * gr.sizeof_gr_complex, "/tmp/rx_fft_frames.dat"))
+
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
-            list(zip(*self.constellations))[1],
+            self.constellations,
             dtl.ofdm_adaptive_frame_snr_simple(0.1),
             self.occupied_carriers,
             self.pilot_carriers,
             self.pilot_symbols,
-            symbols_skipped=1,  # already in the header
+            symbols_skipped=header_len,  # already in the header
             alpha=0.1,
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(2, 5, list(self.constellations)),
+            dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs),
             self.cp_len,
             self.frame_length_tag_key,
             False,
             0,
         )
+
+        self.connect(self.payload_eq, blocks.file_sink(
+            64 * gr.sizeof_gr_complex, "/tmp/rx_frames.dat"))
+
         payload_serializer = digital.ofdm_serializer_vcc(
             self.fft_len, self.occupied_carriers,
             self.frame_length_tag_key,
             self.packet_length_tag_key,
             1  # Skip 1 symbol (that was already in the header)
         )
-        payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
-            list(zip(*self.constellations))[1],
-            self.packet_length_tag_key,
-        )
-        self.payload_descrambler = digital.additive_scrambler_bb(
-            0x8a,
-            self.scramble_seed,
-            7,
-            0,  # Don't reset after fixed length
-            bits_per_byte=8,  # This is after packing
-            reset_tag_key=self.packet_length_tag_key
-        )
-        payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
-            self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
-        self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
+
         self.connect(
             (hpd, 1),
             payload_fft,
             (self.payload_eq, 0),
             payload_serializer,
-            payload_demod,
-            payload_pack,
-            # self.payload_descrambler,
-            (self, 0)
         )
+
+        self.connect(payload_serializer, blocks.tag_debug(gr.sizeof_gr_complex, "payload_serializer"))
+
+        if self.fec:
+            ldpc_decs = dtl.make_ldpc_decoders(self.codes_alist)
+
+            payload_demod = dtl.ofdm_adaptive_constellation_soft_cf(self.constellations, self.packet_length_tag_key)
+            fec_dec = dtl.ofdm_adaptive_fec_decoder(
+                ldpc_decs,
+                dtl.ofdm_adaptive.frame_capacity(self.frame_length, self.occupied_carriers),
+                dtl.ofdm_adaptive.max_bps(self.constellations),
+                self.packet_length_tag_key
+            )
+            repack = blocks.repack_bits_bb(1, 8)
+            self.connect(payload_demod, blocks.tag_debug(gr.sizeof_float, "payload_demod"))
+            self.connect(
+                payload_serializer,
+                payload_demod,
+                fec_dec,
+                repack,
+                # self.payload_descrambler,
+                (self, 0)
+            )
+        else:
+            payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
+                self.constellations,
+                self.packet_length_tag_key,
+            )
+
+            self.payload_descrambler = digital.additive_scrambler_bb(
+                0x8a,
+                self.scramble_seed,
+                7,
+                0,  # Don't reset after fixed length
+                bits_per_byte=8,  # This is after packing
+                reset_tag_key=self.packet_length_tag_key
+            )
+            payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
+                self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
+            # self.connect(payload_demod, blocks.file_sink(gr.sizeof_char, "/tmp/rx_demod_frames.dat"))
+            # self.connect(payload_demod, blocks.tag_debug(gr.sizeof_char, "demod"))
+            #self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
+            self.connect(
+                payload_serializer,
+                payload_demod,
+                payload_pack,
+                # self.payload_descrambler,
+                (self, 0)
+            )
 
         self.connect((self.payload_eq, 0), (self, 4))
         self.connect((self.payload_eq, 1), (self, 5))
         self.connect((self.sync_detect, 0), (self, 6))
+
 
     def _setup_feedback_tx(self):
         self.feedback_sps = 2

@@ -30,7 +30,7 @@ public:
                      size_t frame_len,
                      size_t n_payload_carriers,
                      std::string frames_fname = "",
-                     bool stop_no_input = false);
+                     int max_empty_frames = -1);
 
     virtual void set_constellation(constellation_type_t constellation) = 0;
 };

@@ -24,11 +24,19 @@ static const pmt::pmt_t CONSTELLATION_TAG_KEY =
     pmt::string_to_symbol("constellation_tag_key");
 static const pmt::pmt_t ESTIMATED_SNR_TAG_KEY =
     pmt::string_to_symbol("estimated_snr_tag_key");
+static const pmt::pmt_t NOISE_TAG_KEY =
+    pmt::string_to_symbol("noise_tag_key");
 static const pmt::pmt_t FEEDBACK_CONSTELLATION_KEY =
     pmt::string_to_symbol("feedback_constellation_key");
-static const pmt::pmt_t FEEDBACK_FEC_KEY = pmt::string_to_symbol("feedback_fec_key");
 static const pmt::pmt_t PAYLOAD_LENGTH_KEY = pmt::string_to_symbol("payload_length_key");
 
+static const pmt::pmt_t FEC_KEY = pmt::string_to_symbol("fec_key");
+static const pmt::pmt_t FEC_FEEDBACK_KEY = pmt::string_to_symbol("fec_feedback_key");
+static const pmt::pmt_t FEC_TB_KEY = pmt::string_to_symbol("fec_tb_key");
+static const pmt::pmt_t FEC_OFFSET_KEY = pmt::string_to_symbol("fec_offset_key");
+static const pmt::pmt_t FEC_TB_PAYLOAD_KEY = pmt::string_to_symbol("fec_tb_payload_key");
+static const pmt::pmt_t FEC_TB_LEN_KEY = pmt::string_to_symbol("fec_tb_len_key");
+static const pmt::pmt_t FEC_TB_INDEX_KEY = pmt::string_to_symbol("fec_tb_index_key");
 
 template <class T>
 struct constellation_helper {
@@ -142,11 +150,25 @@ pmt::pmt_t DTL_API get_constellation_tag_key() { return CONSTELLATION_TAG_KEY; }
 
 pmt::pmt_t DTL_API estimated_snr_tag_key() { return ESTIMATED_SNR_TAG_KEY; }
 
+pmt::pmt_t DTL_API noise_tag_key() { return NOISE_TAG_KEY; }
+
 pmt::pmt_t DTL_API feedback_constellation_key() { return FEEDBACK_CONSTELLATION_KEY; }
 
-pmt::pmt_t DTL_API feedback_fec_key() { return FEEDBACK_FEC_KEY; }
-
 pmt::pmt_t DTL_API payload_length_key() { return PAYLOAD_LENGTH_KEY; }
+
+pmt::pmt_t DTL_API fec_key() { return FEC_KEY; }
+
+pmt::pmt_t DTL_API fec_feedback_key() { return FEC_FEEDBACK_KEY; }
+
+pmt::pmt_t DTL_API fec_tb_key() { return FEC_TB_KEY; }
+
+pmt::pmt_t DTL_API fec_tb_index_key() { return FEC_TB_INDEX_KEY; }
+
+pmt::pmt_t DTL_API fec_offset_key() { return FEC_OFFSET_KEY; }
+
+pmt::pmt_t DTL_API fec_tb_payload_key() { return FEC_TB_PAYLOAD_KEY; }
+
+pmt::pmt_t DTL_API fec_tb_len_key() { return FEC_TB_LEN_KEY; }
 
 } /* namespace dtl */
 } /* namespace gr */

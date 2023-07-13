@@ -53,6 +53,7 @@ struct dtl_logger_wrapper {
 
 #define DTL_LOG_INFO(msg, ...) _logger.logger->info(msg VA_ARGS(__VA_ARGS__));
 #define DTL_LOG_DEBUG(msg, ...) _logger.logger->debug(msg VA_ARGS(__VA_ARGS__));
+#define DTL_LOG_ERROR(msg, ...) _logger.logger->error(msg VA_ARGS(__VA_ARGS__));
 
 #define DTL_LOG_TAGS(title, tags)                                           \
     _logger.logger->debug(title);                                           \
@@ -68,15 +69,105 @@ struct dtl_logger_wrapper {
         }                                                                   \
     }
 
-#define DTL_LOG_BYTES(msg, buffer, length)                             \
-    {                                                                  \
-        std::stringstream ss;                                          \
-        for (int i = 0; i < length; ++i) {                             \
-            ss << "," << std::setfill('0') << std::setw(2) << std::hex \
-               << (int)buffer[i];                                      \
-        }                                                              \
-        _logger.logger->debug("{}: {}", msg, ss.str());                \
+// inline void _append_buf_to_stream(std::stringstream& ss, unsigned char* buf, int len)
+// {
+//     for (int i = 0; i < len; ++i) {
+//         ss << "," << std::setfill('0') << std::setw(2) << std::hex << (int)buf[i];
+//     }
+// }
+
+template<typename T>
+inline void format(std::stringstream& ss)
+{
+    throw std::runtime_error("not implemented");
+}
+
+
+template<>
+inline void format<float>(std::stringstream& ss)
+{
+    ss << std::setw(11) << std::setprecision(6);// << std::setfill('');
+}
+
+template<>
+inline void format<const float>(std::stringstream& ss)
+{
+    ss << std::setw(11) << std::setprecision(6);// << std::setfill('');
+}
+
+template<>
+inline void format<unsigned char>(std::stringstream& ss)
+{
+    ss << std::setw(2) << std::hex;
+}
+
+template<>
+inline void format<const unsigned char>(std::stringstream& ss)
+{
+    ss << std::setw(2) << std::hex;
+}
+
+// template<>
+// inline void format<const uint8_t>(std::stringstream& ss)
+// {
+//     ss << std::setfill('0') << std::setw(2) << std::hex;
+// }
+
+// template<>
+// inline void format<uint8_t>(std::stringstream& ss)
+// {
+//     ss << std::setfill('0') << std::setw(2) << std::hex;
+// }
+
+
+template<typename T>
+inline void _append_vec_to_stream(std::stringstream& ss, std::vector<T>& vec)
+{
+    ss << "size=" << vec.size();
+    format<T>(ss);
+    for (auto& v: vec) {
+        if (sizeof(T) == 1) {
+            ss << "," << (int)v;
+        } else {
+            ss << "," << v;
+        }
     }
+}
+
+template<typename T>
+inline void _append_buf_to_stream(std::stringstream& ss, T* buf, int len)
+{
+    format<T>(ss);
+    for (int i=0; i<len; ++i) {
+        if (sizeof(T) == 1) {
+            ss << "," << (int)buf[i];
+        } else {
+            ss << "," << buf[i];
+        }
+    }
+}
+
+#define DTL_LOG_BYTES(msg, buffer, length)              \
+    {                                                   \
+        std::stringstream ss;                           \
+        _append_buf_to_stream(ss, buffer, length);      \
+        _logger.logger->debug("{}: {}", msg, ss.str()); \
+    }
+
+#define DTL_LOG_BUFFER(msg, buffer, length)              \
+    {                                                   \
+        std::stringstream ss;                           \
+        _append_buf_to_stream(ss, buffer, length);      \
+        _logger.logger->debug("{}: {}", msg, ss.str()); \
+    }
+
+#define DTL_LOG_VEC(msg, vec)                           \
+    {                                                   \
+        std::stringstream ss;                           \
+        _append_vec_to_stream(ss, vec);                 \
+        _logger.logger->debug("{}: {}", msg, ss.str()); \
+    }
+
 
 } // namespace dtl
 } // namespace gr
@@ -85,8 +176,11 @@ struct dtl_logger_wrapper {
 #define INIT_DTL_LOGGER(name)
 #define DTL_LOG_INFO(msg, ...)
 #define DTL_LOG_DEBUG(msg, ...)
+#define DTL_LOG_ERROR(msg, ...)
 #define DTL_LOG_TAGS(title, tags)
 #define DTL_LOG_BYTES(msg, buffer, length)
+#define DTL_LOG_VEC(msg, vec)
+#define DTL_LOG_BUFFER(msg, buffer, length)
 #endif
 
 #endif /* INCLUDED_DTL_LOGGER_H */

@@ -20,6 +20,7 @@ public:
     virtual int update(int noutput_items, const gr_complex* input) = 0;
     virtual void reset() = 0;
     virtual double snr() = 0;
+    virtual double noise() = 0;
 };
 
 
@@ -38,6 +39,7 @@ public:
     }
 
     virtual double snr() override { return d_snr_estimator->snr(); }
+    virtual double noise() override { return d_snr_estimator->noise(); }
 
 protected:
     std::shared_ptr<T> d_snr_estimator;

@@ -52,8 +52,8 @@ void frame_file_store::store(size_t payload_len, unsigned long count, const char
     d_frame_long_count += long_count_increment;
     d_frame_last_number = count;
 
-    DTL_LOG_DEBUG("no={}, long_no={}, len={}", count, d_frame_long_count, payload_len);
     if (d_stream.is_open()) {
+        DTL_LOG_DEBUG("store: no={}, long_no={}, len={}", count, d_frame_long_count, payload_len);
         d_stream.write(reinterpret_cast<char*>(&payload_len), 4);
         d_stream.write(reinterpret_cast<char*>(&d_frame_long_count), 8);
         d_stream.write(payload, payload_len);

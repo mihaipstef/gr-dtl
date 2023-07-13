@@ -19,7 +19,7 @@ import time
 try:
     from gnuradio.dtl import (
         feedback_constellation_key,
-        feedback_fec_key,
+        fec_feedback_key,
         ofdm_adaptive_feedback_format,
     )
 except ImportError:
@@ -29,7 +29,7 @@ except ImportError:
     sys.path.append(os.path.join(dirname, "bindings"))
     from gnuradio.dtl import (
         feedback_constellation_key,
-        feedback_fec_key,
+        fec_feedback_key,
         ofdm_adaptive_feedback_format,
     )
 
@@ -119,9 +119,9 @@ class qa_ofdm_adaptive_feedback_format(gr_unittest.TestCase):
         self.assertEqual(pmt.to_long(pmt.dict_ref(
             parsed_header, feedback_constellation_key(), pmt.PMT_F)), constellation_type)
         self.assertTrue(pmt.dict_has_key(
-            parsed_header, feedback_fec_key()))
+            parsed_header, fec_feedback_key()))
         self.assertEqual(pmt.to_long(pmt.dict_ref(
-            parsed_header, feedback_fec_key(), pmt.PMT_F)), fec_secheme)
+            parsed_header, fec_feedback_key(), pmt.PMT_F)), fec_secheme)
 
 if __name__ == '__main__':
     gr_unittest.run(qa_ofdm_adaptive_feedback_format)
