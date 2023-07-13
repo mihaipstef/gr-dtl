@@ -80,6 +80,10 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
     n_written =
         d_repacker.repack_lsb_first(in, ninput_items[0], out);
 
+    if (ninput_items[0] % d_bits_per_symbol) {
+        --n_written;
+    }
+
     bool crc_ok = d_crc.verify_crc(out, n_written);
 
     pmt::pmt_t monitor_msg = pmt::make_dict();

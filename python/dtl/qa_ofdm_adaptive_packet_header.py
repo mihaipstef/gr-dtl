@@ -27,9 +27,9 @@ try:
         get_constellation_tag_key,
         payload_length_key,
         fec_key,
-        fec_codeword_key,
+        fec_tb_key,
         fec_offset_key,
-        fec_shortening_key,
+        fec_tb_payload_key,
     )
 except ImportError:
     import os
@@ -41,9 +41,9 @@ except ImportError:
         get_constellation_tag_key,
         payload_length_key,
         fec_key,
-        fec_codeword_key,
+        fec_tb_key,
         fec_offset_key,
-        fec_shortening_key,
+        fec_tb_payload_key,
     )
 
 
@@ -115,15 +115,16 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         self.tb.msg_connect(header_parser, "header_data", sink_parse, "store")
 
         self.tb.run()
-        # 0x04 0x00 0x00 0x00 0x04 0xd8 0x8e
-        # 0x02 0x00 0x01 0x00 0x03 0x52 0xDC
-        # 0x04 0x00 0x02 0x00 0x02 0xD6 0x28
+        # 0x20 0x00 0x00 0x20 0x97 0xEC
+        # 0x40 0x08 0x00 0xC0 0x9A 0xB1
+        # 0x20 0x04 0x00 0x40 0x27 0x8A
         expected_format_data = [
             #                                  |                                   |                       |                       |
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0,
-            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0,
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1,
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0
         ]
+        print(sink_format.data())
         self.assertEqual(sink_format.data(), expected_format_data)
         for i in range(len(packets)):
             msg = pmt.to_python(sink_parse.get_message(i))
@@ -132,14 +133,15 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     "len_key": packet_lenghts_in_symbols[i],
                     "head_num": i,
                     pmt.symbol_to_string(get_constellation_tag_key()): constellations[i][0],
-                    "frame_len_key": 1
+                    "frame_len_key": 1,
+                    pmt.symbol_to_string(payload_length_key()): len(packets[i])
                 }
             )
 
     def test_pass_constellation_through_header_fec(self):
         packets = ((1, 2, 3, 4), (1, 2), (1, 2, 3, 4))
         constellations = ((4, 4), (3, 3), (2, 2))
-        fec = ((1, 0xff, 0, 0xaa), (1, 0, 1, 0), (1, 0, 2, 0xaa))
+        fec = ((1, 0xff, 1, 0xaa), (1, 0, 0, 0), (1, 0, 2, 0xaa))
         packet_lenghts_in_symbols = []
 
         data, tags = packet_utils.packets_to_vectors(
@@ -160,7 +162,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = fec_codeword_key()
+            tag.key = fec_tb_key()
             tag.value = pmt.from_long(f[0])
             tags.append(tag)
             tag = tag_t()
@@ -175,7 +177,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = fec_shortening_key()
+            tag.key = fec_tb_payload_key()
             tag.value = pmt.from_long(f[3])
             tags.append(tag)
             offset = offset + len(p)
@@ -183,8 +185,8 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
 
         src = blocks.vector_source_b(data, tags=tags)
         formatter = ofdm_adaptive_packet_header(
-             [self._occupied_carriers_real, self._occupied_carriers_real, self._occupied_carriers_real[:8]], 3, 1, "len_key", "frame_len_key", "head_num", 1, False, True)
-        self.assertEqual(formatter.header_len(), 2 * len(self._occupied_carriers_real) + 8)
+             [self._occupied_carriers_real, self._occupied_carriers_real], 2, 1, "len_key", "frame_len_key", "head_num", 1, False, True)
+        self.assertEqual(formatter.header_len(), 2 * len(self._occupied_carriers_real) )
         self.assertEqual(
             pmt.symbol_to_string(
                 formatter.len_tag_key()),
@@ -207,14 +209,15 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         self.tb.msg_connect(header_parser, "header_data", sink_parse, "store")
 
         self.tb.run()
-        # 0x04 0x00 0x00 0x00 0x04 0x01 0x00 0xff 0x00 0x00 0xaa 0x00 0x69 0xdc
-        # 0x02 0x00 0x01 0x00 0x03 0x01 0x00 0x00 0x00 0x01 0x00 0x00 0x55 0x4e 
-        # 0x04 0x00 0x02 0x00 0x02 0x01 0x00 0x00 0x00 0x02 0xaa 0x00 0x3f 0xad
+
+        # 0x20 0x00 0x00 0x20 0x80 0x00 0xff 0x08 0x77 0x00 0x71 0xAA
+        # 0x40 0x08 0x00 0xC0 0x80 0x00 0x00 0x00 0x00 0x00 0x18 0xE9
+        # 0x20 0x04 0x00 0x40 0x80 0x00 0x00 0x04 0x55 0x00 0x60 0x9D
         expected_format_data = [
-            #                      |                       |               |                               |                               |               |                               |
-            0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,1,1,0,0,0,1,1,1,0,1,1,
-            0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,1,1,1,0,0,1,0,
-            0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,1,1,0,1,0,1,
+            #                      |                       |               |                               |                       |       |                               |
+            0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,1,0,1,0,1,0,
+            0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,1,0,0,1,
+            0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1,1,1,0,1,
         ]
         self.assertEqual(sink_format.data(), expected_format_data)
         for i in range(len(packets)):
@@ -225,10 +228,11 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     "head_num": i,
                     pmt.symbol_to_string(get_constellation_tag_key()): constellations[i][0],
                     "frame_len_key": 1,
-                    pmt.symbol_to_string(fec_codeword_key()): fec[i][0],
+                    pmt.symbol_to_string(fec_tb_key()): fec[i][0],
                     pmt.symbol_to_string(fec_offset_key()): fec[i][1],
                     pmt.symbol_to_string(fec_key()): fec[i][2],
-                    pmt.symbol_to_string(fec_shortening_key()): fec[i][3],
+                    pmt.symbol_to_string(fec_tb_payload_key()): fec[i][3],
+                    pmt.symbol_to_string(payload_length_key()): len(packets[i])
                 }
             )
 

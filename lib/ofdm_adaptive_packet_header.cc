@@ -93,13 +93,12 @@ int ofdm_adaptive_packet_header::add_header_field(unsigned char* buf,
 
 void ofdm_adaptive_packet_header::pack_crc(const unsigned char* header_bits, vector<unsigned char>& crc_buf)
 {
-    crc_buf.clear();
     int len = (d_header_len - d_crc_len) / 8;
     if ((d_header_len - d_crc_len) % 8) {
         ++len;
     }
+    crc_buf.resize(len, 0);
     for (int i=0; i<len; ++i) {
-        crc_buf[i] = 8;
         for (int j=0; j<8 && i*len+j < d_header_len; j++) {
             crc_buf[i] = (crc_buf[i] << 1) | (header_bits[i*8+j] & 0x01);
        }
@@ -109,8 +108,7 @@ void ofdm_adaptive_packet_header::pack_crc(const unsigned char* header_bits, vec
 
 int ofdm_adaptive_packet_header::add_fec_header(const std::vector<tag_t>& tags,
                                                 unsigned char* out,
-                                                int first_pos,
-                                                vector<unsigned char>& crc_buf)
+                                                int first_pos)
 {
 
     static std::map<pmt::pmt_t, tuple<int, int>> _fec_tags_to_header = {
@@ -169,20 +167,14 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     // Constellation (bit 24-31: 8 bits)
     k = add_header_field(out, k, constellation_type_tag_value, 8);
 
-    vector<unsigned char> buffer_crc = { (unsigned char)(payload_length & 0xFF),
-                                         (unsigned char)(payload_length >> 8),
-                                         (unsigned char)(d_header_number & 0xFF),
-                                         (unsigned char)(d_header_number >> 8),
-                                         (unsigned char)constellation_type_tag_value };
-
     if (d_has_fec) {
         // Add FEC tags to header (6 bytes) and return next position for CRC
-        k = add_fec_header(tags, out, k, buffer_crc);
+        k = add_fec_header(tags, out, k);
     }
-    DTL_LOG_DEBUG("aici {}", k);
 
     // Compute CRC and insert (Bit 32-47 (short header) / bit 88-103 (long header): 16
     // bits)
+    vector<unsigned char> buffer_crc;
     pack_crc(out, buffer_crc);
     unsigned crc = d_crc.compute(&buffer_crc[0], buffer_crc.size());
     k = add_header_field(out, k, crc, 16);
@@ -202,8 +194,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
 
 int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
                                                   int first_pos,
-                                                  std::vector<tag_t>& tags,
-                                                  vector<unsigned char>& crc_buf)
+                                                  std::vector<tag_t>& tags)
 {
     static vector<tuple<int, int, pmt::pmt_t>> fec_header_to_tags = {
         make_tuple(0, 16, fec_tb_key()),
@@ -247,16 +238,12 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         constellation_type |= (((int)in[k]) & d_mask) << i;
     }
-    vector<unsigned char> buffer = { (unsigned char)(payload_len & 0xFF),
-                               (unsigned char)(payload_len >> 8),
-                               (unsigned char)(packet_number & 0xFF),
-                               (unsigned char)(packet_number >> 8),
-                               constellation_type };
 
     if (d_has_fec) {
-        k = parse_fec_header(in, k, tags, buffer);
+        k = parse_fec_header(in, k, tags);
     }
 
+    vector<unsigned char> buffer;
     pack_crc(in, buffer);
 
     unsigned crc_calcd = d_crc.compute(&buffer[0], buffer.size());

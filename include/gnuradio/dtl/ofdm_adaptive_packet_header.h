@@ -61,12 +61,10 @@ private:
     add_header_field(unsigned char* buf, int offset, unsigned long long val, int n_bits);
     int add_fec_header(const std::vector<tag_t>& tags,
                        unsigned char* out,
-                       int first_pos,
-                       std::vector<unsigned char>& crc_buf);
+                       int first_pos);
     int parse_fec_header(const unsigned char* in,
                          int first_pos,
-                         std::vector<tag_t>& tags,
-                         std::vector<unsigned char>& crc_buf);
+                         std::vector<tag_t>& tags);
 
     void pack_crc(const unsigned char* buf_bits, std::vector<unsigned char>& crc_buf);
 

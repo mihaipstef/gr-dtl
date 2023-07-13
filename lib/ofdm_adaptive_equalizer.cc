@@ -202,7 +202,8 @@ double ofdm_adaptive_equalizer::get_snr() { return d_snr_estimator->snr(); }
 
 double ofdm_adaptive_equalizer::get_noise() {
     double noise_db = d_snr_estimator->noise();
-    return pow(10, noise_db/10);
+    DTL_LOG_DEBUG("get_noise {}", noise_db);
+    return pow(10, noise_db/10.0);
 }
 
 } // namespace dtl

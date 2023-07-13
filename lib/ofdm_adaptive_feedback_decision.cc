@@ -23,22 +23,24 @@ ofdm_adaptive_feedback_decision_base::~ofdm_adaptive_feedback_decision_base() {}
 ofdm_adaptive_feedback_decision::sptr ofdm_adaptive_feedback_decision::make(
     double hysterisis,
     int decision_th,
-    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut)
+    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut,
+    mcs_id_t initial_mcs)
 {
     return std::make_shared<ofdm_adaptive_feedback_decision>(
-        hysterisis, decision_th, lut);
+        hysterisis, decision_th, lut, initial_mcs);
 }
 
 ofdm_adaptive_feedback_decision::ofdm_adaptive_feedback_decision(
     double hysterisis,
     int decision_th,
-    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut)
+    const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut,
+    mcs_id_t initial_mcs)
     : d_feedback_lut(lut),
       d_hyteresis(hysterisis),
       d_decision_th(decision_th),
       d_decision_counter(0),
-      d_last_decision(0),
-      d_new_decision(0)
+      d_last_decision(initial_mcs),
+      d_new_decision(initial_mcs)
 {
     // Construct the lookup table for decision
     if (d_feedback_lut.size() == 0) {

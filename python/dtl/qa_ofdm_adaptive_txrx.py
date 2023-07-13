@@ -69,7 +69,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         # self.tb.connect((tx,0), blocks.file_sink(
         #     gr.sizeof_char, "/tmp/tx.dat"))
 
-        cnst = dtl.constellation_type_t.QPSK
+        cnst = dtl.constellation_type_t.PSK8
         tx.set_feedback(cnst)
 
         time.sleep(1)

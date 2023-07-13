@@ -48,12 +48,14 @@ public:
 
     static sptr make(double hysterisis,
                      int decision_th,
-                     const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut);
+                     const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut,
+                     mcs_id_t initial_mcs = 0);
 
     ofdm_adaptive_feedback_decision(
         double hysterisis,
         int decision_counter,
-        const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut);
+        const std::vector<std::pair<double, ofdm_adaptive_feedback_t>>& lut,
+        mcs_id_t initial_mcs = 0);
 
     ~ofdm_adaptive_feedback_decision() override;
 
