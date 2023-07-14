@@ -96,7 +96,7 @@ bool tb_decoder::process_frame(const float* in,
             }
 
             // Decode
-            if (d_tb_buffers[RCV_BUF].size() > 0) {
+            if (d_tb_buffers[RCV_BUF].size() > 0 && d_fec_info) {
                 int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
                 decode(tb_len);
                 data_ready = true;
