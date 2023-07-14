@@ -25,7 +25,6 @@ private:
     int d_frame_capacity;
     tb_decoder::sptr d_tb_dec;
     bool d_processed_input;
-    std::vector<unsigned char> d_tb_payload;
     std::vector<unsigned char> d_crc_buffer;
     crc_util d_crc;
     repack d_to_bytes;

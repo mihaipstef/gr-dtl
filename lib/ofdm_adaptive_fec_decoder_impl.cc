@@ -67,7 +67,6 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(
     int frame_len = d_frame_capacity * max_bps;
     int ncws = compute_tb_len((*it_max_n)->get_n(), frame_len);
     d_tb_dec = make_shared<tb_decoder>((*it_max_n)->get_n() * ncws);
-    d_tb_payload.resize((*it_max_k)->get_k() * ncws);
     d_crc_buffer.resize((*it_max_k)->get_k() * ncws / 8 + 1);
 }
 
