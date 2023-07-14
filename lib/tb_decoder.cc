@@ -19,11 +19,7 @@ using namespace std;
 INIT_DTL_LOGGER("tb_decoder");
 
 tb_decoder::tb_decoder(int max_tb_len)
-    : d_payload(0),
-      d_tb_number(-1),
-      d_buf_idx(0),
-      d_fec_info(nullptr),
-      d_processed(0)
+    : d_payload(0), d_tb_number(-1), d_buf_idx(0), d_fec_info(nullptr)
 {
     DTL_LOG_DEBUG("max_tb_len={}", max_tb_len);
     d_tb_buffers.resize(2);
@@ -33,13 +29,14 @@ tb_decoder::tb_decoder(int max_tb_len)
     d_tb_buffers[RCV_BUF].clear();
 }
 
-bool tb_decoder::process_frame(const float* in,
-                               int frame_len,
-                               int frame_payload_len,
-                               int bps,
-                               fec_info_t::sptr fec_info)
+bool tb_decoder::process_frame(
+    const float* in,
+    int frame_len,
+    int frame_payload_len,
+    int bps,
+    fec_info_t::sptr fec_info,
+    function<void(const vector<unsigned char>&, fec_info_t::sptr)> on_data_ready)
 {
-    bool data_ready = false;
 
     if (!fec_info) {
         DTL_LOG_DEBUG("process_frame: fec info fail");
@@ -67,13 +64,14 @@ bool tb_decoder::process_frame(const float* in,
             decode(ncws);
             d_buf_idx = 0;
             d_tb_buffers[RCV_BUF].clear();
-            data_ready = true;
+            on_data_ready(d_data_buffer, fec_info);
         }
         // If frame is part of a new TB
     } else {
 
         // Small TB exclusively transported by the frame
-        if (d_tb_buffers[RCV_BUF].size() == 0 && fec_info->d_tb_offset == frame_payload_len) {
+        if (d_tb_buffers[RCV_BUF].size() == 0 &&
+            fec_info->d_tb_offset == frame_payload_len) {
             // Start new TB buffer
             d_fec_info = fec_info;
             d_tb_number = d_fec_info->d_tb_number;
@@ -86,7 +84,7 @@ bool tb_decoder::process_frame(const float* in,
             int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
             decode(tb_len);
             d_tb_buffers[RCV_BUF].clear();
-            data_ready = true;
+            on_data_ready(d_data_buffer, fec_info);
         } else {
 
             // Fill current TB buffer and decode current TB
@@ -99,7 +97,7 @@ bool tb_decoder::process_frame(const float* in,
             if (d_tb_buffers[RCV_BUF].size() > 0 && d_fec_info) {
                 int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
                 decode(tb_len);
-                data_ready = true;
+                on_data_ready(d_data_buffer, d_fec_info);
             }
 
             // Start new TB buffer
@@ -127,10 +125,7 @@ bool tb_decoder::process_frame(const float* in,
                           frame_payload_len + extra_bits - new_tb_offset);
         }
     }
-
-    d_processed += frame_payload_len;
-
-    return data_ready;
+    return true;
 }
 
 int tb_decoder::decode(int tb_len)
@@ -175,10 +170,6 @@ int tb_decoder::decode(int tb_len)
              d_tb_buffers[FULL_BUF].begin() + i * n + ncheck);
         rcv_idx += k_;
 
-        // NO SHORTENING
-        // copy(&d_tb_buffers[RCV_BUF][i*n], &d_tb_buffers[RCV_BUF][(i+1)*n],
-        // &d_tb_buffers[FULL_BUF][i * n]);
-
         d_fec_info->d_dec->decode(
             &d_tb_buffers[FULL_BUF][i * n], &n_iterations, &d_data_buffer[d_idx]);
         d_idx += k_;
@@ -187,14 +178,6 @@ int tb_decoder::decode(int tb_len)
     }
 
     return tb_len * ncheck + d_fec_info->d_tb_payload_len;
-}
-
-pair<int, int> tb_decoder::buf_out(unsigned char* out)
-{
-    memcpy(out, &d_data_buffer[0], d_data_buffer.size());
-    auto result = make_pair(static_cast<int>(d_data_buffer.size()), d_processed);
-    d_processed = 0;
-    return result;
 }
 
 std::size_t tb_decoder::expected_tb_len(fec_info_t::sptr fec_info, int ncws)
