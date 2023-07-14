@@ -51,6 +51,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             self.codes_alist = list(zip(*config.fec_codes))[1]
             self.codes_id = { name: id+1 for (id, name) in enumerate(list(zip(*config.fec_codes))[0]) }
         self.mcs = [(snr_th, (cnst, self.codes_id.get(code_name, 0))) for (snr_th, (cnst, code_name)) in config.mcs]
+        self.initial_mcs_id = config.initial_mcs_id
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError(
@@ -152,14 +153,8 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.msg_connect(header_parser, "header_data", hpd, "header_data")
 
-        self.connect(chanest, blocks.file_sink(
-            self.fft_len*gr.sizeof_gr_complex, "/tmp/headers.dat"))
-
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
-
-        self.connect(payload_fft, blocks.file_sink(
-            64 * gr.sizeof_gr_complex, "/tmp/rx_fft_frames.dat"))
 
         payload_equalizer = dtl.ofdm_adaptive_equalizer(
             self.fft_len,
@@ -173,7 +168,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs),
+            dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs, self.initial_mcs_id),
             self.cp_len,
             self.frame_length_tag_key,
             False,

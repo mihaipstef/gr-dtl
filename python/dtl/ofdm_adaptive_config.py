@@ -42,6 +42,7 @@ class ofdm_adaptive_config:
     fec_codes: t.Tuple[str] = () #(("fec_1", "n_0100_k_0027_gap_04.alist"))
     mcs: t.Tuple[t.Tuple[float, t.Tuple[dtl.constellation_type_t, str]]] = ((sys.float_info.min, (dtl.constellation_type_t.BPSK, "no_fec")), (
         13, (dtl.constellation_type_t.QPSK, "no_fec")), (18, (dtl.constellation_type_t.PSK8, "no_fec")), (23, (dtl.constellation_type_t.QAM16, "no_fec")),)
+    initial_mcs_id: int = 0
 
 
 @dc.dataclass

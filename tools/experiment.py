@@ -72,9 +72,9 @@ for i, e in enumerate(experiments):
         config_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.run.json"
         experiment_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.json"
 
-        sent_frames = None
-        if "frames" in e:
-            sent_frames = e["frames"]
+        data_bytes = None
+        if "data_bytes" in e:
+            data_bytes = e["data_bytes"]
 
         propagation_paths = [(0,0,0,1)]
         if "propagation_paths" in e:
@@ -99,7 +99,7 @@ for i, e in enumerate(experiments):
             sim.main(
                 config_dict=e,
                 run_config_file=config_fname,
-                sent_frames=sent_frames,
+                data_bytes=data_bytes,
                 propagation_paths=propagation_paths,
                 use_sync_correct=use_sync_correct,
                 frame_length=frame_length)
