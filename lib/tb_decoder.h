@@ -10,6 +10,7 @@
 
 #include "fec_utils.h"
 #include <gnuradio/dtl/fec.h>
+#include <functional>
 
 
 namespace gr {
@@ -19,7 +20,6 @@ class tb_decoder
 {
 
 private:
-
     enum buffers_id_t {
         RCV_BUF = 0,
         FULL_BUF,
@@ -34,23 +34,27 @@ private:
     std::size_t d_buf_idx;
     int d_tb_len;
     fec_info_t::sptr d_fec_info;
-    int d_processed;
 
     int decode(int tb_len);
 
     std::size_t expected_tb_len(fec_info_t::sptr fec_info, int ncws);
 
 public:
-
     typedef std::shared_ptr<tb_decoder> sptr;
 
-    bool process_frame(const float* in, int frame_len, int frame_payload_len, int bps, fec_info_t::sptr fec_info);
+    bool process_frame(const float* in,
+                       int frame_len,
+                       int frame_payload_len,
+                       int bps,
+                       fec_info_t::sptr fec_info,
+                       std::function<void(const std::vector<unsigned char>&,
+                                          fec_info_t::sptr)> on_data_ready);
 
-    std::pair<int, int> buf_out(unsigned char* out);
- 
+    int get_current_tb_payload() { return d_fec_info->d_tb_payload_len; };
+
+    bool receive_buffer_empty() { return d_tb_buffers[RCV_BUF].size() == 0; }
+
     explicit tb_decoder(int max_tb_len);
-
-
 };
 
 } // namespace dtl
