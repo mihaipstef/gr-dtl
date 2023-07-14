@@ -16,7 +16,7 @@ import signal
 
 class ofdm_adaptive_sim(gr.top_block):
 
-    def __init__(self, config_dict, run_config_file, sent_frames = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20):
+    def __init__(self, config_dict, run_config_file, data_bytes = None, propagation_paths = [()], use_sync_correct = True, frame_length = 20):
         gr.top_block.__init__(self, "OFDM Adaptive Simulator", catch_exceptions=True)
         self.samp_rate = samp_rate = 200000
         self.n_bytes = 100
@@ -71,11 +71,11 @@ class ofdm_adaptive_sim(gr.top_block):
         # Connections
         ##################################################
 
-        if sent_frames is None:
-            print(sent_frames)
+        if data_bytes is None:
+            print(data_bytes)
             self.connect((self.src, 0), (self.tx, 0), (self.throtle, 0))
         else:
-            self.connect((self.src, 0), (self.tx, 0), blocks.head(gr.sizeof_gr_complex, sent_frames * self.frame_samples), (self.throtle, 0))
+            self.connect((self.src, 0), blocks.head(gr.sizeof_char, data_bytes), (self.tx, 0), (self.throtle, 0))
 
         # Direct path
         self.connect(
@@ -129,7 +129,7 @@ def main(
     top_block_cls=ofdm_adaptive_sim,
     config_dict=None,
     run_config_file="sim.run.json",
-    sent_frames=None,
+    data_bytes=None,
     propagation_paths = [()],
     use_sync_correct = True,
     frame_length = 20,):
@@ -137,7 +137,7 @@ def main(
     tb = top_block_cls(
         config_dict=config_dict,
         run_config_file=run_config_file,
-        sent_frames=sent_frames,
+        data_bytes=data_bytes,
         propagation_paths=propagation_paths,
         use_sync_correct=use_sync_correct,
         frame_length=frame_length,)

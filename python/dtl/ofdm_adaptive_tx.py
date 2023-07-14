@@ -40,8 +40,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.rolloff = config.rolloff
         self.frame_length = config.frame_length
         self.payload_length_tag_key = "payload_length"
-        mc_schemes = list(zip(*config.mcs))[1]
-        cnsts = list(zip(*mc_schemes))[0]
+        self.mc_schemes = list(zip(*config.mcs))[1]
+        cnsts = list(zip(*self.mc_schemes))[0]
         self.constellations = list(set(cnsts))
         self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
         self.stop_no_input = config.stop_no_input
@@ -49,6 +49,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.codes_alist = []
         if self.fec:
             self.codes_alist = list(zip(*config.fec_codes))[1]
+            self.codes_id = { name: id+1 for (id, name) in enumerate(list(zip(*config.fec_codes))[0]) }
+        self.initial_mcs = self.mc_schemes[config.initial_mcs_id]
 
         if [self.fft_len, self.fft_len] != [len(config.sync_word1), len(config.sync_word2)]:
             raise ValueError("Length of sync sequence(s) must be FFT length.")
@@ -98,9 +100,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.packet_length_tag_key
         )
 
-        self.connect(header_payload_mux, blocks.tag_debug(
-            gr.sizeof_gr_complex, "mux"))
-
         # payload_scrambler = digital.additive_scrambler_bb(
         #     0x8a,
         #     self.scramble_seed,
@@ -123,8 +122,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(dtl.ofdm_adaptive.frame_capacity(
                 self.frame_length, self.occupied_carriers), self.packet_length_tag_key)
 
-            # self.connect(self.to_stream, blocks.file_sink(
-            #     gr.sizeof_char, "/tmp/tx.dat"))
+            # set initial MCS scheme
+            self.set_feedback(self.initial_mcs[0], self.initial_mcs[1])
 
             self.connect(
                 (self, 0),
@@ -135,6 +134,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 payload_mod,
                 (header_payload_mux, 1)
             )
+
             self.connect(
                 self.to_stream,
                 header_gen,
@@ -146,6 +146,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 self.packet_length_tag_key,
                 self.constellations, self.frame_length,
                 len(self.occupied_carriers[0]), self.frame_store_fname, 3)
+            self.set_feedback(self.initial_mcs[0])
             self.connect(
                 self.frame_unpack,
                 header_gen,
@@ -181,10 +182,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.rolloff,
             self.packet_length_tag_key
         )
-        # self.connect(allocator, blocks.file_sink(
-        #     64*gr.sizeof_gr_complex, "/tmp/frames.dat"))
         self.connect(header_payload_mux, allocator,
                      ffter, cyclic_prefixer, self)
+
 
     def _setup_feedback_rx(self):
         self.feedback_sps = 2  # samples per symbol
@@ -251,8 +251,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
         if not self.fec:
             self.frame_unpack.set_constellation(constellation)
         else:
-            assert(fec_scheme is not None)
+            assert(fec_scheme is not None and fec_scheme in self.codes_id)
             feedback = pmt.make_dict()
-            feedback = pmt.dict_add(feedback, dtl.fec_feedback_key(), pmt.from_long(fec_scheme))
+            feedback = pmt.dict_add(feedback, dtl.fec_feedback_key(), pmt.from_long(self.codes_id[fec_scheme]))
             feedback = pmt.dict_add(feedback, dtl.feedback_constellation_key(), pmt.from_long(int(constellation)))
             self.fec_frame.process_feedback(feedback)

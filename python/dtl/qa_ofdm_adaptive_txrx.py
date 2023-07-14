@@ -209,7 +209,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         #     gr.sizeof_char, "/tmp/tx.dat"))
 
         cnst = dtl.constellation_type_t.PSK8
-        tx.set_feedback(cnst, 1)
+        tx.set_feedback(cnst, "fec_1")
 
         time.sleep(1)
 
