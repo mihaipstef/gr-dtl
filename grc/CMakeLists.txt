@@ -11,7 +11,7 @@ install(FILES
     dtl_ofdm_adaptive_constellation_decoder_cb.block.yml
     dtl_ofdm_adaptive_tx.block.yml
     dtl_ofdm_adaptive_rx.block.yml
-    dtl_zmq_msq_pub.block.yml
+    dtl_zmq_probe.block.yml
     dtl_ofdm_adaptive_constellation_metric_vcvf.block.yml
     dtl_ofdm_adaptive_fec_decoder.block.yml
     dtl_ofdm_adaptive_frame_to_stream_vbb.block.yml

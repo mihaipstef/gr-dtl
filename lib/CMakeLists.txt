@@ -26,7 +26,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_detect_bb_impl.cc
     constellation.cc
     crc_util.cc
-    zmq_msq_pub_impl.cc
+    zmq_probe_impl.cc
     frame_file_store.cc
     ofdm_adaptive_constellation_metric_vcvf_impl.cc
     ofdm_adaptive_fec_frame_bvb_impl.cc

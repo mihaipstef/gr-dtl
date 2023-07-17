@@ -24,7 +24,7 @@ struct fec_info_t {
 
     fec_enc::sptr d_enc;
     fec_dec::sptr d_dec;
-    int d_frame_len;
+    int d_frame_payload;
     int d_tb_offset;
     int d_tb_frame_idx;
     int d_tb_number;
@@ -35,7 +35,7 @@ struct fec_info_t {
 
     fec_info_t(fec_enc::sptr enc,
                fec_dec::sptr dec,
-               int frame_len,
+               int frame_payload,
                int tb_offset,
                int tb_frame_idx,
                int tb_number,

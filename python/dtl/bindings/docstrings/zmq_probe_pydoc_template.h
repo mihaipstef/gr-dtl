@@ -15,10 +15,10 @@
  */
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub = R"doc()doc";
+static const char* __doc_gr_dtl_zmq_probe = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub_zmq_msq_pub = R"doc()doc";
+static const char* __doc_gr_dtl_zmq_probe_zmq_probe = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub_make = R"doc()doc";
+static const char* __doc_gr_dtl_zmq_probe_make = R"doc()doc";

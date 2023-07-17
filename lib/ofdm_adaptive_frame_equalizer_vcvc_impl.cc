@@ -23,7 +23,7 @@ using namespace gr::digital;
 static const pmt::pmt_t CARR_OFFSET_KEY = pmt::mp("ofdm_sync_carr_offset");
 static const pmt::pmt_t CHAN_TAPS_KEY = pmt::mp("ofdm_sync_chan_taps");
 static const pmt::pmt_t FEEDBACK_PORT = pmt::mp("feedback_port");
-static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor_port");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 
 ofdm_adaptive_frame_equalizer_vcvc::sptr ofdm_adaptive_frame_equalizer_vcvc::make(

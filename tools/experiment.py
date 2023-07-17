@@ -7,6 +7,8 @@ import sim
 import subprocess
 import sys
 import time
+import timeit
+import traceback
 import uuid
 
 class capture_stdout():
@@ -47,14 +49,9 @@ with open(experiments_file, "r") as f:
 run_timestamp = int(time.time())
 run_timestamp = 0
 
-# print(experiments)
-# exit(0)
-
 for i, e in enumerate(experiments):
 
-    name = None
-    if "name" in e:
-        name = e["name"]
+    name = e.get("name", None)
 
     if "skip" in e and e["skip"]:
         print(f"Skip experiment {name}, number: {i}")
@@ -62,6 +59,7 @@ for i, e in enumerate(experiments):
 
     print(f"Run experiment {name}, number: {i}")
     print(e)
+
     try:
 
         if name is None:
@@ -72,21 +70,10 @@ for i, e in enumerate(experiments):
         config_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.run.json"
         experiment_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.json"
 
-        data_bytes = None
-        if "data_bytes" in e:
-            data_bytes = e["data_bytes"]
-
-        propagation_paths = [(0,0,0,1)]
-        if "propagation_paths" in e:
-            propagation_paths = e["propagation_paths"]
-
-        use_sync_correct = True
-        if "use_sync_correct" in e:
-            use_sync_correct = e["use_sync_correct"]
-
-        frame_length = 20
-        if "frame_length" in e:
-            frame_length = e["frame_length"]
+        data_bytes = e.get("data_bytes", None)
+        propagation_paths = e.get("propagation_paths", [(0,0,0,1)])
+        use_sync_correct =  e.get("use_sync_correct", True)
+        frame_length = e.get("frame_length", 20)
 
         with open(experiment_fname, "w") as f:
             f.write(json.dumps(e))
@@ -96,14 +83,16 @@ for i, e in enumerate(experiments):
                 f.write(json.dumps(e["config"]))
 
         with capture_stdout(log_store_fname) as _:
-            sim.main(
-                config_dict=e,
-                run_config_file=config_fname,
-                data_bytes=data_bytes,
-                propagation_paths=propagation_paths,
-                use_sync_correct=use_sync_correct,
-                frame_length=frame_length)
-            #pass
+            print(
+                timeit.timeit(
+                    lambda: sim.main(
+                        config_dict=e,
+                        run_config_file=config_fname,
+                        data_bytes=data_bytes,
+                        propagation_paths=propagation_paths,
+                        use_sync_correct=use_sync_correct,
+                        frame_length=frame_length),
+            number=1))
 
         result = subprocess.check_output([f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])
 
@@ -113,3 +102,4 @@ for i, e in enumerate(experiments):
     except Exception as ex:
         print("experiment failed")
         print(str(ex))
+        print(traceback.format_exc())
