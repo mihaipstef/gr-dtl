@@ -16,14 +16,14 @@ namespace dtl {
 
 fec_info_t::fec_info_t(fec_enc::sptr enc,
                        fec_dec::sptr dec,
-                       int frame_len,
+                       int frame_payload,
                        int tb_offset,
                        int tb_frame_idx,
                        int tb_number,
                        int tb_payload_len)
     : d_enc(enc),
       d_dec(dec),
-      d_frame_len(frame_len),
+      d_frame_payload(frame_payload),
       d_tb_offset(tb_offset),
       d_tb_frame_idx(tb_frame_idx),
       d_tb_number(tb_number),
@@ -89,8 +89,12 @@ fec_info_t::sptr make_fec_info(const std::vector<tag_t>& tags,
         } else if (tag.key == fec_tb_payload_key()) {
             fec_info->d_tb_payload_len = pmt::to_long(tag.value);
             tags_check |= 8;
+        } else if (tag.key == payload_length_key()) {
+            fec_info->d_frame_payload = 8 * pmt::to_long(tag.value);
+            tags_check |= 16;
+
         }
-        if ((tags_check ^ 0xF) == 0) {
+        if ((tags_check ^ 0x1F) == 0) {
             return fec_info;
         }
     }

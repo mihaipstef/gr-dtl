@@ -32,7 +32,6 @@ tb_decoder::tb_decoder(int max_tb_len)
 bool tb_decoder::process_frame(
     const float* in,
     int frame_len,
-    int frame_payload_len,
     int bps,
     fec_info_t::sptr fec_info,
     function<void(const vector<unsigned char>&, fec_info_t::sptr)> on_data_ready)
@@ -42,6 +41,8 @@ bool tb_decoder::process_frame(
         DTL_LOG_DEBUG("process_frame: fec info fail");
         return false;
     }
+
+    int frame_payload_len = fec_info->d_frame_payload;
 
     DTL_LOG_DEBUG("process_frame: current_no={}, rcvd_no={}, rcvd_offset={}, "
                   "frame_len={}, frame_payload={}",

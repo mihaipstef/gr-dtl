@@ -1,6 +1,6 @@
 file_format: 1
-id: dtl_zmq_msq_pub
-label: zmq_msq_pub
+id: dtl_zmq_probe
+label: zmq_probe
 category: '[DTL]'
 
 parameters:
@@ -19,5 +19,5 @@ inputs:
 
 templates:
     imports: from gnuradio import dtl
-    make: dtl.zmq_msq_pub(${address}, ${bind})
+    make: dtl.zmq_probe(${address}, ${bind})
     

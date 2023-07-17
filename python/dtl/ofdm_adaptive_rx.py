@@ -175,9 +175,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
             0,
         )
 
-        self.connect(self.payload_eq, blocks.file_sink(
-            64 * gr.sizeof_gr_complex, "/tmp/rx_frames.dat"))
-
         payload_serializer = digital.ofdm_serializer_vcc(
             self.fft_len, self.occupied_carriers,
             self.frame_length_tag_key,
@@ -191,8 +188,6 @@ class ofdm_adaptive_rx(gr.hier_block2):
             (self.payload_eq, 0),
             payload_serializer,
         )
-
-        self.connect(payload_serializer, blocks.tag_debug(gr.sizeof_gr_complex, "payload_serializer"))
 
         if self.fec:
             ldpc_decs = dtl.make_ldpc_decoders(self.codes_alist)
@@ -214,6 +209,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 # self.payload_descrambler,
                 (self, 0)
             )
+            self.msg_connect(fec_dec, "monitor", self, "monitor")
         else:
             payload_demod = dtl.ofdm_adaptive_constellation_decoder_cb(
                 self.constellations,
@@ -244,6 +240,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.connect((self.payload_eq, 0), (self, 4))
         self.connect((self.payload_eq, 1), (self, 5))
         self.connect((self.sync_detect, 0), (self, 6))
+        self.msg_connect(self.payload_eq, "monitor", self, "monitor")
 
 
     def _setup_feedback_tx(self):

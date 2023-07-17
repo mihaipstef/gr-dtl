@@ -44,7 +44,6 @@ public:
 
     bool process_frame(const float* in,
                        int frame_len,
-                       int frame_payload_len,
                        int bps,
                        fec_info_t::sptr fec_info,
                        std::function<void(const std::vector<unsigned char>&,

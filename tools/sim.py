@@ -67,12 +67,17 @@ class ofdm_adaptive_sim(gr.top_block):
         self.src = analog.sig_source_b(10000, analog.GR_SIN_WAVE, 100, 95, 0, 0)
         self.msg_debug = blocks.message_debug(True)
 
+        monitor_address = config_dict.get("monitor_address", "tcp://127.0.0.1:5555")
+        monitor_probe_name = config_dict.get("monitor_probe_name", "probe")
+        monitor_collection = config_dict.get("monitor_collection", "john_doe")
+
+        self.monitor_probe = dtl.zmq_probe(monitor_address, monitor_probe_name, monitor_collection, bind=False)
+
         ##################################################
         # Connections
         ##################################################
 
         if data_bytes is None:
-            print(data_bytes)
             self.connect((self.src, 0), (self.tx, 0), (self.throtle, 0))
         else:
             self.connect((self.src, 0), blocks.head(gr.sizeof_char, data_bytes), (self.tx, 0), (self.throtle, 0))
@@ -95,6 +100,8 @@ class ofdm_adaptive_sim(gr.top_block):
         self.connect((self.rx, 2), blocks.null_sink(gr.sizeof_char))
         self.connect((self.rx, 5), blocks.null_sink(gr.sizeof_gr_complex))
         self.msg_connect((self.rx, "monitor"), (blocks.message_debug(True), "store"))
+        self.msg_connect((self.rx, "monitor"), (self.monitor_probe, "in"))
+
         self.msg_connect((self.tx, "monitor"), (self.msg_debug, "store"))
 
 
@@ -174,7 +181,6 @@ def main(
     config_update()
 
     tb.run()
-
 
 if __name__ == '__main__':
     main()
