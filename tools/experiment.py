@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import os
-import shutil
 import sim
 import subprocess
 import sys
@@ -30,8 +30,16 @@ class capture_stdout():
         os.close(self.log)
 
 
-logs_folder = sys.argv[1]
-experiments_file = sys.argv[2]
+parser = argparse.ArgumentParser()
+parser.add_argument("--logs", type=str, default=".", help="Logs and other artifacts location")
+parser.add_argument("--config", type=str, default="config.json", help="Experiment configuration json file")
+parser.add_argument("--sim_cls", type=str, default="ofdm_adaptive_loopback_sim", help="Simulator class used for the experiment")
+
+args = parser.parse_args()
+
+logs_folder = args.logs
+experiments_file = args.config
+sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_loopback_sim)
 
 logs_store = f"{logs_folder}"
 current_log = f"{logs_folder}/sim.log"
@@ -70,11 +78,6 @@ for i, e in enumerate(experiments):
         config_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.run.json"
         experiment_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.json"
 
-        data_bytes = e.get("data_bytes", None)
-        propagation_paths = e.get("propagation_paths", [(0,0,0,1)])
-        use_sync_correct =  e.get("use_sync_correct", True)
-        frame_length = e.get("frame_length", 20)
-
         with open(experiment_fname, "w") as f:
             f.write(json.dumps(e))
 
@@ -86,12 +89,9 @@ for i, e in enumerate(experiments):
             print(
                 timeit.timeit(
                     lambda: sim.main(
+                        top_block_cls=sim_cls,
                         config_dict=e,
-                        run_config_file=config_fname,
-                        data_bytes=data_bytes,
-                        propagation_paths=propagation_paths,
-                        use_sync_correct=use_sync_correct,
-                        frame_length=frame_length),
+                        run_config_file=config_fname,),
             number=1))
 
         result = subprocess.check_output([f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])
