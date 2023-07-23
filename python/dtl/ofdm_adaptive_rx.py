@@ -205,7 +205,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 payload_serializer,
                 payload_demod,
                 fec_dec,
-                repack,
+                #repack,
                 # self.payload_descrambler,
                 (self, 0)
             )

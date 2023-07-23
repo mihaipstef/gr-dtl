@@ -139,7 +139,6 @@ int tb_decoder::decode(int tb_len)
     int ncheck = n - k;
     int n_iterations = 0;
 
-    DTL_LOG_VEC("decode tb", d_tb_buffers[RCV_BUF]);
     DTL_LOG_DEBUG("decode: ncws={}, n_it={}, sz={}, tb_payload_len={}, n={}",
                   tb_len,
                   n_iterations,
