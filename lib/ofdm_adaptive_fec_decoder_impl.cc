@@ -70,6 +70,7 @@ ofdm_adaptive_fec_decoder_impl::ofdm_adaptive_fec_decoder_impl(
     d_tb_dec = make_shared<tb_decoder>((*it_max_n)->get_n() * ncws);
     d_crc_buffer.resize((*it_max_k)->get_k() * ncws / 8 + 1);
     message_port_register_out(pmt::mp("monitor"));
+    set_tag_propagation_policy(block::tag_propagation_policy_t::TPP_DONT);
 }
 
 ofdm_adaptive_fec_decoder_impl::~ofdm_adaptive_fec_decoder_impl() {}
@@ -161,13 +162,15 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                                         &d_crc_buffer[crc_buf_len]);
             bool crc_ok =
                 d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
-            memcpy(&out[write_index], &data_buffer[0], user_data_len);
-            write_index += user_data_len;
-            DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}",
-                          crc_ok,
-                          tb_fec_info->d_tb_number,
-                          tb_fec_info->d_tb_payload_len,
-                          bps);
+            //memcpy(&out[write_index], &data_buffer[0], user_data_len);
+            int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
+
+            assert(data_bytes == user_data_len/8);
+
+            add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(data_bytes));
+
+            write_index += data_bytes;
+
             pmt::pmt_t monitor_msg =
                 pmt::dict_add(pmt::make_dict(),
                               pmt::string_to_symbol("tb_no"),
@@ -197,6 +200,13 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                           pmt::string_to_symbol("crc_fail_count"),
                           pmt::from_long(d_crc.get_failed()));
             message_port_pub(MONITOR_PORT, monitor_msg);
+
+            DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}",
+                          crc_ok,
+                          tb_fec_info->d_tb_number,
+                          tb_fec_info->d_tb_payload_len,
+                          bps,
+                          user_data_len);
         };
 
         d_tb_dec->process_frame(&in[read_index],

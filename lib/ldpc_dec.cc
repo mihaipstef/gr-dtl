@@ -24,7 +24,7 @@ vector<fec_dec::sptr> DTL_API make_ldpc_decoders(const vector<string>& alist_fna
 {
     vector<fec_dec::sptr> decoders{nullptr};
     for (auto& fname: alist_fnames) {
-        ldpc_dec::sptr dec(new ldpc_dec(fname, sqrt(2), 30));
+        ldpc_dec::sptr dec(new ldpc_dec(fname, sqrt(2), 15));
         decoders.push_back(dec);
     }
     return decoders;

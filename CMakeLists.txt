@@ -54,6 +54,8 @@ include(GrMinReq)
 
 include(GrCompilerSettings)
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb3")
+
 ########################################################################
 # Install directories
 ########################################################################
@@ -150,3 +152,4 @@ configure_package_config_file(
     INSTALL_DESTINATION ${GR_CMAKE_DIR}
 )
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb3")
