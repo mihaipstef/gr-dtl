@@ -24,7 +24,6 @@ private:
 public:
     zmq_probe_impl(char* address,
                    const std::string& probe_name,
-                   const std::string& collection_name,
                    bool bind);
     ~zmq_probe_impl() override;
 

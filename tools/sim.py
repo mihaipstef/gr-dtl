@@ -80,10 +80,9 @@ class ofdm_adaptive_loopback(gr.top_block):
         monitor_address = config_dict.get(
             "monitor_address", "tcp://127.0.0.1:5555")
         monitor_probe_name = config_dict.get("monitor_probe_name", "probe")
-        monitor_collection = config_dict.get("monitor_collection", "john_doe")
 
         self.monitor_probe = dtl.zmq_probe(
-            monitor_address, monitor_probe_name, monitor_collection, bind=False)
+            monitor_address, monitor_probe_name, bind=False)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -178,8 +177,6 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
             (self.tx, 1)
         )
         self.connect((self.rx, 0), self.to_pdu)
-        self.connect((self.rx, 0), blocks.tag_debug(gr.sizeof_char, "rxed"))
-        self.connect((self.rx, 0), blocks.file_sink(gr.sizeof_char, "/tmp/rx.dat"))
         self.msg_connect(self.to_pdu, "pdus", self.tun1, "pdus")
         self.msg_connect(self.to_pdu, "pdus", blocks.message_debug(), "print")
         #self.msg_connect(self.tun0, "pdus", blocks.message_debug(), "print")

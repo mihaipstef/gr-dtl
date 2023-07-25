@@ -2,7 +2,10 @@
 
 import argparse
 import json
+import monitoring
+import multiprocessing
 import os
+import pymongo
 import sim
 import subprocess
 import sys
@@ -11,18 +14,20 @@ import timeit
 import traceback
 import uuid
 
+
 class capture_stdout():
     def __init__(self, log_fname):
         self.log_fname = log_fname
         sys.stdout.flush()
-        self.log = os.open(self.log_fname, os.O_WRONLY|os.O_TRUNC|os.O_CREAT)
-    
+        self.log = os.open(self.log_fname, os.O_WRONLY |
+                           os.O_TRUNC | os.O_CREAT)
+
     def __enter__(self):
         self.orig_stdout = os.dup(1)
         self.new_stdout = os.dup(1)
         os.dup2(self.log, 1)
         sys.stdout = os.fdopen(self.new_stdout, 'w')
-        
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         sys.stdout.flush()
         os.dup2(self.orig_stdout, 1)
@@ -31,9 +36,12 @@ class capture_stdout():
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--logs", type=str, default=".", help="Logs and other artifacts location")
-parser.add_argument("--config", type=str, default="config.json", help="Experiment configuration json file")
-parser.add_argument("--sim_cls", type=str, default="ofdm_adaptive_loopback_sim", help="Simulator class used for the experiment")
+parser.add_argument("--logs", type=str, default=".",
+                    help="Logs and other artifacts location")
+parser.add_argument("--config", type=str, default="config.json",
+                    help="Experiment configuration json file")
+parser.add_argument("--sim_cls", type=str, default="ofdm_adaptive_loopback_sim",
+                    help="Simulator class used for the experiment")
 
 args = parser.parse_args()
 
@@ -52,26 +60,32 @@ with open(experiments_file, "r") as f:
     experiments = json.loads(content)
     for e in experiments:
         if "fec_codes" in e and len(e["fec_codes"]):
-            e["fec_codes"] = [(name, f"{experimets_path}/{fn}") for name, fn in e["fec_codes"]]
+            e["fec_codes"] = [(name, f"{experimets_path}/{fn}")
+                              for name, fn in e["fec_codes"]]
 
 run_timestamp = int(time.time())
 run_timestamp = 0
 
 for i, e in enumerate(experiments):
 
-    name = e.get("name", None)
+    name = e.get("name", uuid.uuid4())
 
     if "skip" in e and e["skip"]:
         print(f"Skip experiment {name}, number: {i}")
         continue
 
-    print(f"Run experiment {name}, number: {i}")
+    db_url = e.get("monitor_db", "mongodb://probe:probe@127.0.0.1:27017/")
+    probe_url = e.get("monitor_probe", "tcp://127.0.0.1:5555")
+    db_client = pymongo.MongoClient(db_url)
+    db = db_client["probe_data"]
+    monitor_process = multiprocessing.Process(
+        target=monitoring.start_collect, args=(probe_url, db, f"{name}_{run_timestamp}",))
+    monitor_process.start()
+
+    print(f"Run experiment {name}, number: {i}, monitoring PID: {monitor_process.pid}")
     print(e)
 
     try:
-
-        if name is None:
-            name = uuid.uuid4()
 
         log_store_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.log"
         result_fname = f"{logs_store}/experiment_{run_timestamp}_{name}.result"
@@ -92,12 +106,17 @@ for i, e in enumerate(experiments):
                         top_block_cls=sim_cls,
                         config_dict=e,
                         run_config_file=config_fname,),
-            number=1))
+                    number=1))
 
-        result = subprocess.check_output([f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])
+        result = subprocess.check_output(
+            [f"{os.path.dirname(__file__)}/log.sh", log_store_fname, log_store_fname])
 
         with open(result_fname, "w") as f:
             f.write(result.decode("utf-8"))
+
+        if monitor_process and monitor_process.is_alive():
+            monitor_process.terminate()
+            time.sleep(1)
 
     except Exception as ex:
         print("experiment failed")

@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(zmq_probe.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(5815729a7400a5194e2406a5ede9eb9d)                     */
+/* BINDTOOL_HEADER_FILE_HASH(d7c4a880cbcfa874fef0d2f0b6427dd2)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -39,7 +39,6 @@ void bind_zmq_probe(py::module& m)
         .def(py::init(&zmq_probe::make),
              py::arg("address"),
              py::arg("probe_name"),
-             py::arg("collection_name"),
              py::arg("bind") = true,
              D(zmq_probe, make))
 
