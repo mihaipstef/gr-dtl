@@ -145,7 +145,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
                 self.packet_length_tag_key,
                 self.constellations, self.frame_length,
-                len(self.occupied_carriers[0]), self.frame_store_fname, 3)
+                len(self.occupied_carriers[0]), self.frame_store_fname, -1)
             self.set_feedback(self.initial_mcs[0])
             self.connect(
                 self.frame_unpack,
