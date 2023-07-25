@@ -25,7 +25,6 @@ public:
     typedef std::shared_ptr<zmq_probe> sptr;
     static sptr make(char* address,
                      const std::string& probe_name,
-                     const std::string& collection_name,
                      bool bind = true);
 };
 

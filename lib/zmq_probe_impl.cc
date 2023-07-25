@@ -20,16 +20,14 @@ using namespace std;
 
 zmq_probe::sptr zmq_probe::make(char* address,
                                 const string& probe_name,
-                                const string& collection_name,
                                 bool bind)
 {
     return gnuradio::make_block_sptr<zmq_probe_impl>(
-        address, probe_name, collection_name, bind);
+        address, probe_name, bind);
 }
 
 zmq_probe_impl::zmq_probe_impl(char* address,
                                const string& probe_name,
-                               const string& collection_name,
                                bool bind)
     : gr::block(
           "zmq_probe", gr::io_signature::make(0, 0, 0), gr::io_signature::make(0, 0, 0)),
@@ -47,9 +45,6 @@ zmq_probe_impl::zmq_probe_impl(char* address,
     d_meta_msg = pmt::dict_add(pmt::make_dict(),
                                pmt::string_to_symbol("probe_name"),
                                pmt::string_to_symbol(probe_name));
-    d_meta_msg = pmt::dict_add(d_meta_msg,
-                               pmt::string_to_symbol("collection"),
-                               pmt::string_to_symbol(collection_name));
     message_port_register_in(pmt::mp("in"));
     set_msg_handler(pmt::mp("in"), [this](pmt::pmt_t msg) { this->handler(msg); });
 }
