@@ -49,6 +49,7 @@ ofdm_adaptive_frame_pack_bb_impl::ofdm_adaptive_frame_pack_bb_impl(
     if (!frames_fname.empty()) {
         d_frame_store = frame_file_store(frames_fname);
     }
+    set_tag_propagation_policy(block::tag_propagation_policy_t::TPP_DONT);
 }
 
 ofdm_adaptive_frame_pack_bb_impl::~ofdm_adaptive_frame_pack_bb_impl() {}
