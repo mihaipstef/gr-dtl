@@ -81,7 +81,7 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
     n_written =
         d_repacker.repack_lsb_first(in, ninput_items[0], out);
 
-    if (ninput_items[0] % d_bits_per_symbol) {
+    if (ninput_items[0] * d_bits_per_symbol % 8) {
         --n_written;
     }
 
