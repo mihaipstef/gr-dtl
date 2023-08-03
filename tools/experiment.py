@@ -40,14 +40,14 @@ parser.add_argument("--logs", type=str, default=".",
                     help="Logs and other artifacts location")
 parser.add_argument("--config", type=str, default="config.json",
                     help="Experiment configuration json file")
-parser.add_argument("--sim_cls", type=str, default="ofdm_adaptive_loopback_sim",
+parser.add_argument("--sim_cls", type=str, default="ofdm_adaptive_loopback_src",
                     help="Simulator class used for the experiment")
 
 args = parser.parse_args()
 
 logs_folder = args.logs
 experiments_file = args.config
-sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_loopback_sim)
+sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_loopback_src)
 
 logs_store = f"{logs_folder}"
 current_log = f"{logs_folder}/sim.log"
@@ -74,15 +74,20 @@ for i, e in enumerate(experiments):
         print(f"Skip experiment {name}, number: {i}")
         continue
 
-    db_url = e.get("monitor_db", "mongodb://probe:probe@127.0.0.1:27017/")
-    probe_url = e.get("monitor_probe", "tcp://127.0.0.1:5555")
-    db_client = pymongo.MongoClient(db_url)
-    db = db_client["probe_data"]
-    monitor_process = multiprocessing.Process(
-        target=monitoring.start_collect, args=(probe_url, db, f"{name}_{run_timestamp}",))
-    monitor_process.start()
+    db_url = e.get("monitor_db", None)
+    probe_url = e.get("monitor_probe", None)
 
-    print(f"Run experiment {name}, number: {i}, monitoring PID: {monitor_process.pid}")
+    monitor_process = None
+    monitor_process_pid = None
+    if probe_url and db_url:
+        db_client = pymongo.MongoClient(db_url)
+        db = db_client["probe_data"]
+        monitor_process = multiprocessing.Process(
+            target=monitoring.start_collect, args=(probe_url, db, f"{name}_{run_timestamp}",))
+        monitor_process.start()
+        monitor_process_pid = monitor_process.pid
+
+    print(f"Run experiment {name}, number: {i}, monitoring PID: {monitor_process_pid}")
     print(e)
 
     try:

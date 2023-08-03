@@ -24,7 +24,7 @@ class ofdm_adaptive_loopback(gr.top_block):
     def __init__(self, config_dict, run_config_file):
         gr.top_block.__init__(
             self, "OFDM Adaptive Simulator", catch_exceptions=True)
-        self.samp_rate = samp_rate = 200000
+        self.samp_rate = samp_rate = config_dict.get("sample_rate", 200000)
         self.n_bytes = 100
         self.direct_channel_noise_level = 0.0001
         self.direct_channel_freq_offset = 0.5
@@ -82,7 +82,7 @@ class ofdm_adaptive_loopback(gr.top_block):
         monitor_probe_name = config_dict.get("monitor_probe_name", "probe")
 
         self.monitor_probe = dtl.zmq_probe(
-            monitor_address, monitor_probe_name, bind=False)
+            monitor_address, monitor_probe_name, bind=True)
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -111,7 +111,7 @@ class ofdm_adaptive_loopback(gr.top_block):
         self.fadding_channel.set_fDTs(self.max_doppler)
 
 
-class ofdm_adaptive_loopback_sim(ofdm_adaptive_loopback):
+class ofdm_adaptive_loopback_src(ofdm_adaptive_loopback):
 
     def __init__(self, config_dict, run_config_file):
         super().__init__(config_dict, run_config_file)
@@ -150,12 +150,12 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
 
     def __init__(self, config_dict, run_config_file):
         super().__init__(config_dict, run_config_file)
-        self.tun0 = network.tuntap_pdu("tun0", 10000, True)
-        self.tun1 = network.tuntap_pdu("tun1", 10000, True)
+        self.tun0 = network.tuntap_pdu("tun0", 500, True)
+        self.tun1 = network.tuntap_pdu("tun1", 500, True)
         # self.reverse_recv = network.tuntap_pdu("tun1", 10000, True)
         # self.reverse_send = network.tuntap_pdu("tun0", 10000, True)
         self.to_pdu = pdu.tagged_stream_to_pdu(gr.types.byte_t, self.rx.packet_length_tag_key)
-        self.to_stream = pdu.pdu_to_stream_b(pdu.EARLY_BURST_APPEND, 1024)
+        self.to_stream = pdu.pdu_to_stream_b(pdu.EARLY_BURST_APPEND, 128)
 
     def wire_it(self):
         self.msg_connect(self.tun0, "pdus", self.to_stream, "pdus")
@@ -167,7 +167,7 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
         # Direct path
         self.connect(
             (self.throtle, 0),
-            (self.fadding_channel, 0),
+            #(self.fadding_channel, 0),
             (self.awgn_channel, 0),
             (self.rx, 0)
         )
@@ -179,13 +179,13 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
         self.connect((self.rx, 0), self.to_pdu)
         self.msg_connect(self.to_pdu, "pdus", self.tun1, "pdus")
         self.msg_connect(self.to_pdu, "pdus", blocks.message_debug(), "print")
-        #self.msg_connect(self.tun0, "pdus", blocks.message_debug(), "print")
+        self.msg_connect(self.tun0, "pdus", blocks.message_debug(), "print")
 
         self.connect((self.rx, 2), blocks.null_sink(gr.sizeof_char))
         self.connect((self.rx, 5), blocks.null_sink(gr.sizeof_gr_complex))
         self.msg_connect((self.rx, "monitor"),
                          (blocks.message_debug(True), "store"))
-        self.msg_connect((self.rx, "monitor"), (self.monitor_probe, "in"))
+        #self.msg_connect((self.rx, "monitor"), (self.monitor_probe, "in"))
         self.msg_connect((self.tx, "monitor"), (self.msg_debug, "store"))
 
         self.msg_connect(self.tun1, "pdus", self.tun0, "pdus")
@@ -194,7 +194,7 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
 
 
 def main(
-        top_block_cls=ofdm_adaptive_loopback_sim,
+        top_block_cls=ofdm_adaptive_loopback_src,
         config_dict=None,
         run_config_file="sim.run.json",):
 
