@@ -1,21 +1,22 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { monitor_data, pairs } from "../store";
-  import type { IPairs, IPair } from "../types";
+  import { API_COLLECTOR_BASE, collections } from "../store";
+  import type { ICollections, ICollector } from "../types";
 
-  var tx_url: string = "tcp://ip:port";
-  var rx_url: string = "tcp://ip:port";
-  var pair_id: string = "name";
-  let pair_list: IPair[];
+  interface ICollectorRow extends ICollector{
+    element: HTMLElement;
+  };
+
+  var probe_url: string = "tcp://ip:port";
+  var collection_name: string = "name";
+  let collectors: ICollectorRow[] = [];
 
   onMount(() => {
-    pairs.actions.fetch();
-  });
-
-  $: pairs.data.subscribe((data: IPairs) => {
-    pair_list = data.json_list;
-    console.log(pair_list);
-  });
+    collections.actions.fetch();
+    setInterval(async () => {
+        collections.actions.refresh_state();
+      }, 5000);
+    });
 
   const handle_submit = (e) => {
     let formData = new FormData(e.target);
@@ -24,43 +25,86 @@
         const [key, value] = field;
         request_params.append(key, value);
     }
-    fetch("http://127.0.0.1:5000/pair/subscribe", { method: "POST", body: request_params }).then((resp) => {
-        pairs.actions.fetch();
-    });
+    // fetch("http://127.0.0.1:5000/pair/subscribe", { method: "POST", body: request_params }).then((resp) => {
+    //     pairs.actions.fetch();
+    // });
   };
+
+  const collectorRowColor = (state: string) => {
+    if (state == "STARTED") {
+      return "green";
+    } else if (state == "PENDING") {
+      return "orange";
+    }
+    return "red";
+  }
+
+  $: collections.data.subscribe((data: ICollector[]) => {
+    collectors = data as ICollectorRow[];
+  });
 </script>
 
 <h1>DTL monitoring</h1>
 
-<h2>Subscribe to pair</h2>
+<h2>Create new collection</h2>
 
 <form id="subscribe_form" on:submit|preventDefault={handle_submit}>
-  <label for="tx_url" class="field_label">TX</label>
-  <input class="field_label" name="tx_url" placeholder="tcp://ip:port" value={tx_url} />
-  <label for="rx_url" class="field_label">RX</label>
-  <input class="field_label" name="rx_url" placeholder="tcp://ip:port" value={rx_url} />
-  <label for="pair_id" class="field_label">Pair ID</label>
-  <input class="field_label" name="pair_id" placeholder="pair" value={pair_id} />
-  <button type="submit"> Subscribe to pair </button>
+  <label for="collection_name" class="field_label">Collection name</label>
+  <input class="field_label" name="collection_name" placeholder="collection_name" value={collection_name} />
+  <label for="probe_url" class="field_label">Probe</label>
+  <input class="field_label" name="probe_url" placeholder="tcp://ip:port" value={probe_url} />
+  <button type="submit"> Create </button>
 </form>
 
-<h2>Pairs</h2>
+<h2>Collectors</h2>
 
 <table>
   <tr>
-    <th>Pair Id</th>
-    <th>Active</th>
-    <th>Tx subscriber Id</th>
-    <th>Rx subscriber Id</th>
+    <th>Collection</th>
+    <th>Last Insert</th>
+    <th>Collector Id</th>
+    <th>Collector Status</th>
+    <th>Probe url</th>
+    <th>Actions</th>
   </tr>
-  {#if pair_list !== undefined}
-    {#each pair_list as p}
-      <tr>
-        <td><a href={"pair/" + p.pair_id + "/monitor"}>{p.pair_id}</a></td>
-        <td>{p.is_active}</td>
-        <td>{p.tx_sub_id}</td>
-        <td>{p.rx_sub_id}</td>
+  {#if collectors !== undefined}
+    {#each collectors as c}
+      <tr style="background-color:{collectorRowColor(c.last_state)}">
+        <td>{c.collection_name}</td>
+        <td>{c.last_insert}</td>
+        <td>{c.collector_id}</td>
+        <td>{c.last_state}</td>
+        <td>{c.probe_url}</td>
+        <td>
+          <form action="{API_COLLECTOR_BASE}/{c.collection_name}/start" method="post">
+            <button type="submit" name="restart_btn" class="btn-link">Restart</button>
+          </form>
+          <form action="{API_COLLECTOR_BASE}/{c.collection_name}/stop" method="post">
+            <button type="submit" name="restart_btn" class="btn-link">Stop</button>
+          </form>
+        </td>
       </tr>
     {/each}
   {/if}
 </table>
+
+
+<style>
+  table {
+    width: 100%;
+  }
+  table th {
+    background-color: plum;
+  }
+  .btn-link {
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    color: #0000EE;
+    padding: 0;
+    text-decoration: underline;
+    font-family: inherit;
+    font-size: inherit;
+  }
+</style>
