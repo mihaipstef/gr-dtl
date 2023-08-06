@@ -11,15 +11,16 @@ interface IMonitorData {
     last_update?: Date;
 }
 
-interface IPair {
-    pair_id: string;
-    rx_sub_id?: string;
-    tx_sub_id?: string;
-    is_active: boolean;
+interface ICollector {
+    collection_name: string;
+    collector_id: string;
+    probe_url: string;
+    last_state: string;
+    last_insert: string;
 }
 
-interface IPairs {
+interface ICollections {
     json_list: [];
 }
 
-export type { IMonitorData, IPair, IPairs};
+export type { IMonitorData, ICollector, ICollections};
