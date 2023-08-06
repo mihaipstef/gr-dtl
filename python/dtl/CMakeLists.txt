@@ -23,6 +23,7 @@ GR_PYTHON_INSTALL(
     ofdm_adaptive_config.py
     ofdm_adaptive_rx.py
     ofdm_adaptive_tx.py
+    ofdm_adaptive.py
     DESTINATION ${GR_PYTHON_DIR}/gnuradio/dtl
 )
 
@@ -51,3 +52,4 @@ GR_ADD_TEST(qa_ofdm_adaptive_txrx ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DI
 GR_ADD_TEST(qa_ofdm_adaptive_config ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_config.py)
 GR_ADD_TEST(qa_ofdm_adaptive_feedback_decision ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_feedback_decision.py)
 GR_ADD_TEST(qa_ofdm_adaptive_constellation_metric_vcvf ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_constellation_metric_vcvf.py)
+GR_ADD_TEST(qa_ofdm_adaptive_fec ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_ofdm_adaptive_fec.py)

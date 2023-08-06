@@ -12,6 +12,7 @@
 #include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
 #include <random>
+#include "repack.h"
 
 namespace gr {
 namespace dtl {
@@ -29,7 +30,7 @@ public:
                                 size_t frame_len,
                                 size_t n_payload_carriers,
                                 std::string frames_fname,
-                                bool stop_no_input);
+                                int max_empty_frames);
 
     void process_feedback(pmt::pmt_t feedback);
 
@@ -39,6 +40,8 @@ public:
                      gr_vector_void_star& output_items) override;
     bool start() override;
     void set_constellation(constellation_type_t constellation) override;
+
+
 
 protected:
     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
@@ -51,6 +54,12 @@ private:
 
     void rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist);
 
+    int frame_out(const unsigned char* in,
+                   int nbytes_in,
+                   unsigned char* out,
+                   int nsyms_out,
+                   repack& repacker);
+
     constellation_type_t d_constellation;
     unsigned char d_fec_scheme;
     uint64_t d_tag_offset;
@@ -61,11 +70,13 @@ private:
     unsigned char d_bps;
     bool d_waiting_full_frame;
     bool d_waiting_for_input;
-    bool d_stop_no_input;
+    int d_max_empty_frames;
     crc_util d_crc;
     std::vector<unsigned char> d_frame_buffer;
     unsigned long d_frame_count;
     frame_file_store d_frame_store;
+    int d_frame_in_bytes;
+    int d_consecutive_empty_frames;
 };
 
 } // namespace dtl

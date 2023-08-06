@@ -27,6 +27,7 @@ try:
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
+        noise_tag_key,
     )
 except ImportError:
     import os
@@ -42,6 +43,7 @@ except ImportError:
         ofdm_adaptive_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
+        noise_tag_key,
     )
 
 
@@ -112,12 +114,14 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
             eq = ofdm_adaptive_frame_equalizer_vcvc(
                 equalizer.base(), ofdm_adaptive_feedback_decision(
-                    1, 3, ofdm_adaptive_config.ofdm_adaptive_config.constellations), 0, "tsb_key", True, True)
+                    1, 3, [(snr_th, (cnst, 0)) for (snr_th, (cnst, _)) in ofdm_adaptive_config.ofdm_adaptive_config.mcs]), 0, "tsb_key", True, True)
             self.tb.msg_connect(eq, 'feedback_port',
                                 feedback_decision_sink, 'store')
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")
             stream_to_tagged = blocks.stream_to_tagged_stream(
                 gr.sizeof_gr_complex, fft_len, len(tx_data) // fft_len, "tsb_key")
+            tag_sink = blocks.tag_debug(fft_len * gr.sizeof_gr_complex, "tags")
+            self.tb.connect(stream_to_tagged, tag_sink)
             self.tb.connect(
                 src,
                 stream_to_tagged,
@@ -136,15 +140,18 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             rx_data = demod(out_syms)
 
             self.assertEqual(tx_data, rx_data)
-            self.assertEqual(len(sink.tags()), 5)
+            print([pmt.symbol_to_string(t.key) for t in sink.tags()])
+            self.assertEqual(len(sink.tags()), 6)
             self.assertIn(get_constellation_tag_key(),
                           [t.key for t in sink.tags()])
             self.assertIn(estimated_snr_tag_key(), [
                           t.key for t in sink.tags()])
+            self.assertIn(noise_tag_key(), [
+                          t.key for t in sink.tags()])
             self.assertEqual(feedback_decision_sink.num_messages(), 1)
             feedback_msg = feedback_decision_sink.get_message(0)
             self.assertEqual(pmt.u8vector_elements(
-                pmt.cdr(feedback_msg)), [int(c), 0])
+                pmt.cdr(feedback_msg)), [1, 0])
 
 
 if __name__ == '__main__':

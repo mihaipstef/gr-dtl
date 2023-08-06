@@ -20,7 +20,7 @@ crc_util::crc_util(size_t len,
                    unsigned long poly,
                    unsigned long initial_value,
                    unsigned long final_xor)
-    : d_crc(len * 8, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, true),
+    : d_crc(len * 8, poly, initial_value, final_xor, true, true),
       d_crc_len(len),
       d_count(0),
       d_failed(0)
@@ -34,6 +34,7 @@ unsigned long crc_util::append_crc(unsigned char* buffer, std::size_t len)
     for (unsigned i = 0; i < d_crc_len; ++i) {
         buffer[len + i] = (crc_val >> (i * 8)) & 0xFF;
     }
+    DTL_LOG_BUFFER("crc_append=", &buffer[len], d_crc_len);
     return crc_val;
 }
 
@@ -41,6 +42,7 @@ bool crc_util::verify_crc(unsigned char* buffer, std::size_t len)
 {
     size_t payload_len = len - d_crc_len;
     unsigned long crc_val = d_crc.compute(buffer, payload_len);
+    DTL_LOG_BUFFER("crc_rcvd=", &buffer[payload_len], d_crc_len);
     bool crc_ok = true;
     for (unsigned i = 0; i < d_crc_len; ++i) {
         if (buffer[payload_len + i] != ((crc_val >> (i * 8)) & 0xFF)) {

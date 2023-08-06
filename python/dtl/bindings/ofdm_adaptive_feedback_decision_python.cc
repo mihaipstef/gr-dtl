@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_feedback_decision.h) */
-/* BINDTOOL_HEADER_FILE_HASH(0eb97173f445d70227117c7ad30fce49)                     */
+/* BINDTOOL_HEADER_FILE_HASH(286b3219885658a9f337caba1a3df48f)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -37,6 +37,7 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
 
     py::class_<
         ofdm_adaptive_feedback_decision_base,
+        //std::enable_shared_from_this<gr::dtl::ofdm_adaptive_feedback_decision_base>,
         std::shared_ptr<ofdm_adaptive_feedback_decision_base>>(
         m,
         "ofdm_adaptive_feedback_decision_base",
@@ -55,7 +56,6 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
 
         .def("get_feedback",
              &ofdm_adaptive_feedback_decision_base::get_feedback,
-             py::arg("current_cnst"),
              py::arg("estimated_snr"),
              D(ofdm_adaptive_feedback_decision_base, get_feedback))
 
@@ -71,12 +71,12 @@ void bind_ofdm_adaptive_feedback_decision(py::module& m)
              py::arg("hysterisis"),
              py::arg("decision_th"),
              py::arg("lut"),
+             py::arg("initial_mcs") = 0,
              D(ofdm_adaptive_feedback_decision, make))
 
 
         .def("get_feedback",
              &ofdm_adaptive_feedback_decision::get_feedback,
-             py::arg("current_cnst"),
              py::arg("estimated_snr"),
              D(ofdm_adaptive_feedback_decision, get_feedback))
 

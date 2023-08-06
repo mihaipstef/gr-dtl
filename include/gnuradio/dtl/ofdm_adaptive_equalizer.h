@@ -43,6 +43,8 @@ public:
 
     virtual double get_snr() = 0;
 
+    virtual double get_noise() = 0;
+
     virtual void
     equalize(gr_complex* frame,
              int n_sym,
@@ -97,6 +99,8 @@ public:
                   const std::vector<gr::tag_t>& tags = std::vector<gr::tag_t>()) override;
 
     double get_snr() override;
+
+    double get_noise() override;
 
     static sptr make(int fft_len,
                      const std::vector<constellation_type_t>& constellations,

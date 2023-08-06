@@ -7,7 +7,6 @@
 
 #include "logger.h"
 #include "ofdm_adaptive_frame_bb_impl.h"
-#include "repack.h"
 #include <algorithm>
 
 namespace gr {
@@ -27,10 +26,14 @@ ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
                              size_t frame_len,
                              size_t n_payload_carriers,
                              std::string frames_fname,
-                             bool stop_no_input)
+                             int max_empty_frames)
 {
-    return std::make_shared<ofdm_adaptive_frame_bb_impl>(
-        len_tag_key, constellations, frame_len, n_payload_carriers, frames_fname, stop_no_input);
+    return std::make_shared<ofdm_adaptive_frame_bb_impl>(len_tag_key,
+                                                         constellations,
+                                                         frame_len,
+                                                         n_payload_carriers,
+                                                         frames_fname,
+                                                         max_empty_frames);
 }
 
 
@@ -40,11 +43,11 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     size_t frame_len,
     size_t n_payload_carriers,
     string frames_fname,
-    bool stop_no_input)
+    int max_empty_frames)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
             io_signature::make(1, 1, sizeof(char))),
-      d_constellation(constellation_type_t::QAM16),
+      d_constellation(constellation_type_t::BPSK),
       d_fec_scheme(0),
       d_tag_offset(0),
       d_frame_len(frame_len),
@@ -52,9 +55,11 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
-      d_stop_no_input(stop_no_input),
+      d_max_empty_frames(max_empty_frames),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
-      d_frame_count(0)
+      d_frame_count(0),
+      d_frame_in_bytes(0),
+      d_consecutive_empty_frames(0)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -66,9 +71,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
         d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
     d_frame_buffer.resize(frame_buffer_max_len);
     message_port_register_out(MONITOR_PORT);
-    if (!frames_fname.empty()) {
-        d_frame_store = frame_file_store(frames_fname);
-    }
+    d_frame_store = frame_file_store(frames_fname);
 }
 
 
@@ -88,14 +91,9 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
                 d_bps = bps;
             }
         }
-        if (pmt::dict_has_key(feedback, feedback_fec_key())) {
-            d_fec_scheme = pmt::to_long(
-                pmt::dict_ref(feedback, feedback_fec_key(), pmt::from_long(0)));
-        }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}, d_fec_scheme={}",
-                  static_cast<int>(d_constellation),
-                  d_fec_scheme);
+    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+                  static_cast<int>(d_constellation));
 }
 
 
@@ -104,6 +102,45 @@ void ofdm_adaptive_frame_bb_impl::forecast(int noutput_items,
 {
     ninput_items_required[0] = 0;
 }
+
+int ofdm_adaptive_frame_bb_impl::frame_out(const unsigned char* in,
+                                            int nbytes_in,
+                                            unsigned char* out,
+                                            int nsyms_out,
+                                            repack& repacker)
+{
+
+    assert(nbytes_in <= d_frame_in_bytes);
+
+    std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
+
+    // Copy frame input bytes, ...
+    memcpy(&d_frame_buffer[0], in, nbytes_in);
+
+    int bytes_read = nbytes_in;
+
+    // Append CRC ...
+    d_crc.append_crc(&d_frame_buffer[0], nbytes_in);
+    bytes_read += d_crc.get_crc_len();
+
+    // If frame not full...
+    if (bytes_read < d_frame_in_bytes) {
+        // ... pad with random bytes.
+        rand_pad(
+            &d_frame_buffer[bytes_read], d_frame_in_bytes - bytes_read, rnd_bytes_dist);
+    }
+    // Repack frame buffer and output
+    int frame_out_symbols =
+        repacker.repack_lsb_first(const_cast<const unsigned char*>(&d_frame_buffer[0]),
+                                  d_frame_in_bytes + d_crc.get_crc_len(),
+                                  out);
+    //assert(frame_out_symbols == d_frame_in_bytes);
+    // update indexes
+    d_consecutive_empty_frames = 0;
+    DTL_LOG_DEBUG("frame_out payload_len={}, d_frame_in_bytes={}, frame_out_symbols={}", nbytes_in, d_frame_in_bytes, frame_out_symbols);
+    return frame_out_symbols;
+}
+
 
 int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                                               gr_vector_int& ninput_items,
@@ -117,8 +154,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
-    repack repacker;
-    int frame_out_symbols = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
@@ -130,105 +165,77 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                   nitems_written(0),
                   ninput_items[0]);
 
-    while (write_index < noutput_items) {
-        // keep constellation during one frame
+    bool wait_next_work = false;
+
+    while (write_index < noutput_items && !wait_next_work) {
+
+        int frame_payload = -1;
+
+
+        int frame_bits = 0;
+        vector<tag_t> fec_tags;
+
+        // keep constellation during one frame or one TB (depending if FEC is present)
         constellation_type_t cnst = d_constellation;
         unsigned char bps = get_bits_per_symbol(cnst);
-        std::uniform_int_distribution<> rnd_symbols_dist(0, pow(2, bps)-1);
 
-        int frame_payload = 0;
-
-        // Calculate input frame size.
-        // Number of bytes to be picked from input - each frame is carrying an integer
-        // number of bytes.
-        int frame_in_bytes =
+        // Leave room for CRC
+        d_frame_in_bytes =
             d_frame_len * d_payload_carriers * bps / 8 - d_crc.get_crc_len();
-        int frame_bits = frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
-        // expected output symbols, including CRC
+        frame_bits = d_frame_in_bytes * 8 + d_crc.get_crc_len() * 8;
+
+        if (cnst == constellation_type_t::UNKNOWN) {
+            throw runtime_error("constellation was not set correctly");
+        }
+
+        std::uniform_int_distribution<> rnd_symbols_dist(0, pow(2, bps) - 1);
+
+        // expected output symbols
         expected_frame_symbols = frame_bits / bps;
         if (frame_bits % bps) {
             ++expected_frame_symbols;
         }
-        repacker.set_indexes(0, 0);
+
+        // If there is not enough room in the output buffer...
+        if (write_index + expected_frame_symbols > noutput_items) {
+            // ...nothing we can do.
+            break;
+        }
+
+        repack repacker(8, bps);
 
         // If there is something to consume...
         if (read_index < ninput_items[0]) {
 
             d_waiting_for_input = false;
 
-            // ... and enough room for a frame in the output buffer
-            if (write_index + expected_frame_symbols <= noutput_items) {
-
-                // If we have enough input for a frame ...
-                if (read_index + frame_in_bytes <= ninput_items[0]) {
-                    // ... copy frame input bytes, ...
-                    memcpy(&d_frame_buffer[0], &in[read_index], frame_in_bytes);
-                    // ... append CRC ...
-                    d_crc.append_crc(&d_frame_buffer[0], frame_in_bytes);
-                    // ... and repack a full frame.
-                    frame_out_symbols = repacker.repack_lsb_first(
-                        const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                        frame_in_bytes + d_crc.get_crc_len(),
+            int next_frame_nbytes =
+                min({ d_frame_in_bytes, ninput_items[0] - read_index });
+            // ... output a frame.
+            int frame_out_symbols = frame_out(&in[read_index],
+                        next_frame_nbytes,
                         &out[write_index],
-                        bps,
-                        true);
-                    assert(frame_out_symbols == expected_frame_symbols);
-                    d_waiting_full_frame = false;
-                    // update indexes and offset
-                    frame_payload = frame_in_bytes;
-                    read_index += frame_payload;
-                    write_index += frame_out_symbols;
-                    // If we do not have enough input for a frame but there is enough
-                    // output...
-                } else {
-                    // ... wait for next cycle if new input available.
-                    // If we were waiting for new input in previous cycle...
-                    if (d_waiting_full_frame) {
-                        // ... copy frame input bytes, ...
-                        frame_payload = ninput_items[0] - read_index;
-                        DTL_LOG_DEBUG("pad payload_len={}", frame_payload);
-                        memcpy(&d_frame_buffer[0], &in[read_index], frame_payload);
-                        // ... append CRC ...
-                        d_crc.append_crc(&d_frame_buffer[0], frame_payload);
-                        rand_pad(&d_frame_buffer[frame_payload + d_crc.get_crc_len()],
-                                 expected_frame_symbols - frame_payload -
-                                     d_crc.get_crc_len(), rnd_bytes_dist);
-                        // ...repack what we have.
-                        frame_out_symbols = repacker.repack_lsb_first(
-                            const_cast<const unsigned char*>(&d_frame_buffer[0]),
-                            expected_frame_symbols,
-                            &out[write_index],
-                            bps,
-                            true);
-                        // update indexes
-                        read_index += frame_payload;
-                        write_index += expected_frame_symbols;
-                        // frame_out_symbols = expected_frame_symbols;
-                        d_waiting_full_frame = false;
-                    } else {
-                        d_waiting_full_frame = true;
-                    }
-                }
-                // If there is no room in the output buffer
-            } else {
-                break;
-            }
-            // If there is nothing to consume
+                        expected_frame_symbols,
+                        repacker);
+            d_waiting_full_frame = false;
+            frame_payload = next_frame_nbytes;
+            read_index += next_frame_nbytes;
+            write_index += frame_out_symbols;
+        // If there is nothing to consume
         } else {
-            if (d_waiting_for_input) {
-                if (d_stop_no_input) {
-                    return WORK_DONE;
-                } else {
-                    // Fill with empty frame
-                    DTL_LOG_DEBUG("empty frame");
-                    rand_pad(&out[write_index], expected_frame_symbols, rnd_symbols_dist);
-                    write_index += expected_frame_symbols;
-                    frame_out_symbols = expected_frame_symbols;
-                    d_waiting_for_input = false;
-                }
+            frame_payload = 0;
+            if (d_max_empty_frames >= 0 && d_consecutive_empty_frames == d_max_empty_frames) {
+                DTL_LOG_DEBUG("work done");
+                consume_each(read_index);
+                return WORK_DONE;
             } else {
-                d_waiting_for_input = true;
-                break;
+                // Fill with empty frame
+                DTL_LOG_DEBUG("empty frame");
+                rand_pad(
+                    &out[write_index], expected_frame_symbols, rnd_symbols_dist);
+                write_index += expected_frame_symbols;
+                ++d_consecutive_empty_frames;
+                wait_next_work = true;
             }
         }
 
@@ -240,7 +247,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                           "read_index={}, write_index={}, expected_frame={}, payload={}, "
                           "frame_count={}, constelation={}",
                           d_tag_offset,
-                          frame_in_bytes,
+                          d_frame_in_bytes,
                           read_index,
                           write_index,
                           expected_frame_symbols,
@@ -253,17 +260,18 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          d_tag_offset,
                          d_packet_len_tag,
                          pmt::from_long(expected_frame_symbols));
-            // Add transported payload tag - number of payload bytes carried by the frame
-            // (including CRC)
-            add_item_tag(0,
-                         d_tag_offset,
-                         payload_length_key(),
-                         pmt::from_long(frame_payload + d_crc.get_crc_len()));
+
             // Add constellation tag - constellation used for the frame
             add_item_tag(0,
                          d_tag_offset,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
+            // Add transported payload tag - number of payload bytes carried by the
+            // frame (including CRC)
+            add_item_tag(0,
+                            d_tag_offset,
+                            payload_length_key(),
+                            pmt::from_long(frame_payload + d_crc.get_crc_len()));
             d_tag_offset += expected_frame_symbols;
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,
@@ -281,10 +289,12 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     return write_index;
 }
 
-void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist)
+void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf,
+                                           size_t len,
+                                           std::uniform_int_distribution<>& dist)
 {
     std::mt19937 gen(std::random_device{}());
-    for (unsigned int i=0; i<len; ++i) {
+    for (unsigned int i = 0; i < len; ++i) {
         buf[i] = dist(gen);
     }
 }

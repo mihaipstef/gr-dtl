@@ -70,7 +70,7 @@ class qa_ofdm_adaptive_constellation_metric_vcvf(gr_unittest.TestCase):
         bpsk_stream_to_tagged = blocks.stream_to_tagged_stream(
                 gr.sizeof_gr_complex, self.fft_len, len(data) // self.fft_len, "length")
         metrics = ofdm_adaptive_constellation_metric_vcvf(self.fft_len, list(range(
-            self.fft_len)), list(zip(*ofdm_adaptive_config.ofdm_adaptive_config.constellations))[1], "length")
+            self.fft_len)), [constellation_type_t.PSK8], "length")
 
         sink = blocks.tsb_vector_sink_f(self.fft_len, tsb_key="length")
 

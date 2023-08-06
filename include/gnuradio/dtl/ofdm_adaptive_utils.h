@@ -52,11 +52,26 @@ pmt::pmt_t get_constellation_tag_key();
 
 pmt::pmt_t estimated_snr_tag_key();
 
+pmt::pmt_t noise_tag_key();
+
 pmt::pmt_t feedback_constellation_key();
 
-pmt::pmt_t feedback_fec_key();
-
 pmt::pmt_t payload_length_key();
+
+pmt::pmt_t fec_key();
+
+pmt::pmt_t fec_feedback_key();
+
+pmt::pmt_t fec_tb_key();
+
+pmt::pmt_t fec_offset_key();
+
+pmt::pmt_t fec_tb_payload_key();
+
+pmt::pmt_t fec_tb_len_key();
+
+pmt::pmt_t fec_tb_index_key();
+
 
 } // namespace dtl
 } // namespace gr

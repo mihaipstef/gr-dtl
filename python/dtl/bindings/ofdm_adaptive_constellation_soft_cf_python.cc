@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(zmq_msq_pub.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(fbd16629ab51b6df155a7d2749320081)                     */
+/* BINDTOOL_HEADER_FILE(ofdm_adaptive_constellation_soft_cf.h) */
+/* BINDTOOL_HEADER_FILE_HASH(956b698056cde3df741e606a646fa3d0)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,23 +23,27 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/zmq_msq_pub.h>
+#include <gnuradio/dtl/ofdm_adaptive_constellation_soft_cf.h>
 // pydoc.h is automatically generated in the build directory
-#include <zmq_msq_pub_pydoc.h>
+#include <ofdm_adaptive_constellation_soft_cf_pydoc.h>
 
-void bind_zmq_msq_pub(py::module& m)
+void bind_ofdm_adaptive_constellation_soft_cf(py::module& m)
 {
 
-    using zmq_msq_pub = ::gr::dtl::zmq_msq_pub;
+    using ofdm_adaptive_constellation_soft_cf =
+        ::gr::dtl::ofdm_adaptive_constellation_soft_cf;
 
 
-    py::class_<zmq_msq_pub, gr::block, gr::basic_block, std::shared_ptr<zmq_msq_pub>>(
-        m, "zmq_msq_pub", D(zmq_msq_pub))
+    py::class_<ofdm_adaptive_constellation_soft_cf,
+               gr::block,
+               gr::basic_block,
+               std::shared_ptr<ofdm_adaptive_constellation_soft_cf>>(
+        m, "ofdm_adaptive_constellation_soft_cf", D(ofdm_adaptive_constellation_soft_cf))
 
-        .def(py::init(&zmq_msq_pub::make),
-             py::arg("address"),
-             py::arg("bind") = true,
-             D(zmq_msq_pub, make))
+        .def(py::init(&ofdm_adaptive_constellation_soft_cf::make),
+             py::arg("constellations"),
+             py::arg("len_key"),
+             D(ofdm_adaptive_constellation_soft_cf, make))
 
 
         ;

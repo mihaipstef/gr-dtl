@@ -15,10 +15,11 @@
  */
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_fec_decoder = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub_zmq_msq_pub = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_fec_decoder_ofdm_adaptive_fec_decoder =
+    R"doc()doc";
 
 
-static const char* __doc_gr_dtl_zmq_msq_pub_make = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_fec_decoder_make = R"doc()doc";
