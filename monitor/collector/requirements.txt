@@ -1,8 +1,0 @@
-pyzmq
-Flask
-werkzeug
-flask-migrate
-flask-script
-celery
-Flask-CeleryExt==0.4.3
-pymongo
