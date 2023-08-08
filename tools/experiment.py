@@ -80,6 +80,7 @@ for i, e in enumerate(experiments):
     monitor_process = None
     monitor_process_pid = None
     if probe_url and db_url:
+        print(db_url)
         db_client = pymongo.MongoClient(db_url)
         db = db_client["probe_data"]
         monitor_process = multiprocessing.Process(
