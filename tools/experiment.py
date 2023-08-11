@@ -47,7 +47,7 @@ args = parser.parse_args()
 
 logs_folder = args.logs
 experiments_file = args.config
-sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_loopback_src)
+sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_sim_src)
 
 logs_store = f"{logs_folder}"
 current_log = f"{logs_folder}/sim.log"

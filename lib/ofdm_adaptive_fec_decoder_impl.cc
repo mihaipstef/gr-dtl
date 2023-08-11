@@ -136,7 +136,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
         }
 
         // If empty frame received...
-        if (fec_info->d_tb_payload_len == 0) {
+        if (fec_info->d_frame_payload == 0) {
             // ... only update consumed samples.
             read_index += frame_len;
         // Otherwise...

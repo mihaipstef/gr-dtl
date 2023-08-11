@@ -28,6 +28,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
 
         self.message_port_register_hier_out("monitor")
 
+        self.sample_rate = config.sample_rate
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
         self.packet_length_tag_key = config.packet_length_tag_key
@@ -44,7 +45,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
         cnsts = list(zip(*self.mc_schemes))[0]
         self.constellations = list(set(cnsts))
         self.frame_store_fname = f"{config.frame_store_folder}/tx.dat"
-        self.stop_no_input = config.stop_no_input
         self.fec = len(config.fec_codes)
         self.codes_alist = []
         if self.fec:
@@ -60,6 +60,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.scramble_seed = 0x7f
         else:
             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
+        self.max_empty_frames = config.max_empty_frames
 
         self._setup_direct_tx()
 
@@ -75,6 +76,10 @@ class ofdm_adaptive_tx(gr.hier_block2):
         header_len = 1
         if self.fec:
             header_len = 2
+
+        frame_capacity = dtl.ofdm_adaptive.frame_capacity(
+                self.frame_length, self.occupied_carriers)
+        frame_rate = self.sample_rate / ((self.frame_length + header_len + len(self.sync_words)) * (self.fft_len + self.cp_len))
 
         header = dtl.ofdm_adaptive_packet_header(
             [self.occupied_carriers[0]
@@ -113,14 +118,14 @@ class ofdm_adaptive_tx(gr.hier_block2):
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
             repack = blocks.repack_bits_bb(8, 1)
             self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
-                                                             dtl.ofdm_adaptive.frame_capacity(
-                                                                 self.frame_length, self.occupied_carriers),
+                                                             frame_capacity,
+                                                             frame_rate,
                                                              dtl.ofdm_adaptive.max_bps(
                                                                  self.constellations),
+                                                             self.max_empty_frames,
                                                              self.packet_length_tag_key)
 
-            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(dtl.ofdm_adaptive.frame_capacity(
-                self.frame_length, self.occupied_carriers), self.packet_length_tag_key)
+            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
 
             # set initial MCS scheme
             self.set_feedback(self.initial_mcs[0], self.initial_mcs[1])
@@ -144,8 +149,8 @@ class ofdm_adaptive_tx(gr.hier_block2):
         else:
             self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
                 self.packet_length_tag_key,
-                self.constellations, self.frame_length,
-                len(self.occupied_carriers[0]), self.frame_store_fname, -1)
+                self.constellations, self.frame_length, frame_rate,
+                len(self.occupied_carriers[0]), self.frame_store_fname, self.max_empty_frames)
             self.set_feedback(self.initial_mcs[0])
             self.connect(
                 self.frame_unpack,

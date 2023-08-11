@@ -8,11 +8,12 @@
 #ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FEC_FRAME_BVB_IMPL_H
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FEC_FRAME_BVB_IMPL_H
 
-#include "tb_encoder.h"
+#include "crc_util.h"
+#include <chrono>
 #include <gnuradio/dtl/fec.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_frame_bvb.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
-#include "crc_util.h"
+#include "tb_encoder.h"
 
 
 namespace gr {
@@ -56,11 +57,17 @@ private:
     std::vector<unsigned char> d_tb_payload;
     std::vector<unsigned char> d_crc_buffer;
     crc_util d_crc;
+    std::chrono::time_point<std::chrono::steady_clock> d_start_time;
+    unsigned long d_total_frames;
+    std::chrono::duration<double> d_frame_duration;
+    int d_max_empty_frames;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,
                                      int frame_capacity,
+                                     double frame_rate,
                                      int max_bps,
+                                     int max_empty_frames,
                                      const std::string& len_key);
     ~ofdm_adaptive_fec_frame_bvb_impl();
 
@@ -73,6 +80,8 @@ public:
                      gr_vector_int& ninput_items,
                      gr_vector_const_void_star& input_items,
                      gr_vector_void_star& output_items);
+
+    bool start() override;
 };
 
 } // namespace dtl

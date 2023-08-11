@@ -28,7 +28,9 @@ public:
 
     static sptr make(const std::vector<fec_enc::sptr>& encoders,
                      int frame_capacity,
+                     double frame_rate,
                      int max_bps,
+                     int max_empty_frames,
                      const std::string& len_key);
 
     virtual void process_feedback(pmt::pmt_t feedback) = 0;
