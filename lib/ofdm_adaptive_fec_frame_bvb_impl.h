@@ -66,6 +66,8 @@ public:
 
     void process_feedback(pmt::pmt_t feedback) override;
 
+    void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+
     // Where all the action really happens
     int general_work(int noutput_items,
                      gr_vector_int& ninput_items,
