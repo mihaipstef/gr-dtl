@@ -151,6 +151,13 @@ void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
 }
 
 
+void ofdm_adaptive_fec_frame_bvb_impl::forecast(int noutput_items,
+                                           gr_vector_int& ninput_items_required)
+{
+    ninput_items_required[0] = 0;
+}
+
+
 void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
 {
 
