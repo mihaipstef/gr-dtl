@@ -5,9 +5,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+
+#include <algorithm>
 #include "logger.h"
 #include "ofdm_adaptive_frame_bb_impl.h"
-#include <algorithm>
+#include <thread>
 
 namespace gr {
 namespace dtl {
@@ -24,6 +26,7 @@ ofdm_adaptive_frame_bb::sptr
 ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
                              const std::vector<constellation_type_t>& constellations,
                              size_t frame_len,
+                             double frame_rate,
                              size_t n_payload_carriers,
                              std::string frames_fname,
                              int max_empty_frames)
@@ -31,6 +34,7 @@ ofdm_adaptive_frame_bb::make(const std::string& len_tag_key,
     return std::make_shared<ofdm_adaptive_frame_bb_impl>(len_tag_key,
                                                          constellations,
                                                          frame_len,
+                                                         frame_rate,
                                                          n_payload_carriers,
                                                          frames_fname,
                                                          max_empty_frames);
@@ -41,6 +45,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     const std::string& len_tag_key,
     const std::vector<constellation_type_t>& constellations,
     size_t frame_len,
+    double frame_rate,
     size_t n_payload_carriers,
     string frames_fname,
     int max_empty_frames)
@@ -59,7 +64,8 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_frame_count(0),
       d_frame_in_bytes(0),
-      d_consecutive_empty_frames(0)
+      d_consecutive_empty_frames(0),
+      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate))
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
@@ -276,6 +282,11 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,
                                 reinterpret_cast<char*>(&d_frame_buffer[0]));
+            auto now = std::chrono::steady_clock::now();
+            auto expected_time = d_start_time + d_frame_count * d_frame_duration;
+            if (now < expected_time) {
+                std::this_thread::sleep_until(expected_time);
+            }
             ++d_frame_count;
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(
@@ -302,7 +313,9 @@ void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf,
 bool ofdm_adaptive_frame_bb_impl::start()
 {
     d_tag_offset = 0;
-    return true;
+    d_start_time = std::chrono::steady_clock::now();
+    d_frame_count = 0;
+    return block::start();
 }
 
 size_t ofdm_adaptive_frame_bb_impl::frame_length()

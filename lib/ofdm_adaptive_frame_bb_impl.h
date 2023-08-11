@@ -8,6 +8,7 @@
 #ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_IMPL_H
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_IMPL_H
 
+#include <chrono>
 #include "crc_util.h"
 #include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
@@ -28,6 +29,7 @@ public:
     ofdm_adaptive_frame_bb_impl(const std::string& len_tag_key,
                                 const std::vector<constellation_type_t>& constellations,
                                 size_t frame_len,
+                                double frame_rate,
                                 size_t n_payload_carriers,
                                 std::string frames_fname,
                                 int max_empty_frames);
@@ -40,8 +42,6 @@ public:
                      gr_vector_void_star& output_items) override;
     bool start() override;
     void set_constellation(constellation_type_t constellation) override;
-
-
 
 protected:
     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
@@ -77,6 +77,8 @@ private:
     frame_file_store d_frame_store;
     int d_frame_in_bytes;
     int d_consecutive_empty_frames;
+    std::chrono::time_point<std::chrono::steady_clock> d_start_time;
+    std::chrono::duration<double> d_frame_duration;
 };
 
 } // namespace dtl

@@ -28,6 +28,7 @@ public:
     static sptr make(const std::string& len_tag_key,
                      const std::vector<constellation_type_t>& constellations,
                      size_t frame_len,
+                     double frame_rate,
                      size_t n_payload_carriers,
                      std::string frames_fname = "",
                      int max_empty_frames = -1);

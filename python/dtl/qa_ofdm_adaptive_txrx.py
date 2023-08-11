@@ -61,7 +61,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(frame_length=self.frame_len, mcs=mcs, stop_no_input=True, fec_codes=[]))
+            tx_cfg(frame_length=self.frame_len, mcs=mcs, max_empty_frames=3, fec_codes=[]))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
@@ -200,7 +200,7 @@ class qa_ofdm_adaptive(gr_unittest.TestCase):
         src = blocks.vector_source_b(test_data)
         feedback_src = blocks.vector_source_c([0 for _ in range(50)])
         tx = ofdm_adaptive_tx(
-            tx_cfg(fec=True, frame_length=self.frame_len, mcs=mcs, stop_no_input=True, fec_codes=fec_codes))
+            tx_cfg(fec=True, frame_length=self.frame_len, mcs=mcs, max_empty_frames=3, fec_codes=fec_codes))
         sink = blocks.vector_sink_c()
         self.tb.connect(src, (tx, 0), sink)
         self.tb.connect(feedback_src, (tx, 1))
