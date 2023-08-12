@@ -172,6 +172,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     for (int k = 0; k < d_fft_len; k++) {
         d_channel_state[k] *= phase_correction;
     }
+
     // Propagate tags (except for the channel state and the TSB tag)
     for (size_t i = 0; i < tags.size(); i++) {
         if (tags[i].key != CHAN_TAPS_KEY &&
@@ -187,7 +188,6 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                      CHAN_TAPS_KEY,
                      pmt::init_c32vector(d_fft_len, d_channel_state));
     }
-
 
     // Publish decided constellation to decision feedback port.
     ofdm_adaptive_feedback_t feedback = d_decision_feedback->get_feedback(d_eq->get_snr());
@@ -216,7 +216,6 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
                     nitems_written(0),
                     noise_tag_key(),
                     pmt::from_double(d_eq->get_noise()));
-    DTL_LOG_DEBUG("aici2");
     // Propagate feedback via tags
     if (d_propagate_feedback_tags) {
         add_item_tag(0,
