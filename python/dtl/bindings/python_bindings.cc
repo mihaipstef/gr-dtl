@@ -41,6 +41,7 @@ namespace py = pybind11;
     void bind_fec(py::module& m);
     void bind_ofdm_adaptive_frame_to_stream_vbb(py::module& m);
     void bind_ofdm_adaptive_constellation_soft_cf(py::module& m);
+    void bind_ofdm_adaptive_fec_pack_bb(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -89,5 +90,6 @@ PYBIND11_MODULE(dtl_python, m)
     bind_fec(m);
     bind_ofdm_adaptive_frame_to_stream_vbb(m);
     bind_ofdm_adaptive_constellation_soft_cf(m);
+    bind_ofdm_adaptive_fec_pack_bb(m);
     // ) END BINDING_FUNCTION_CALLS
 }
