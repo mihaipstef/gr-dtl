@@ -37,6 +37,7 @@ endif
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
 #include "repack.h"
+#include <thread>
 
 namespace gr {
 namespace dtl {
@@ -48,11 +49,13 @@ INIT_DTL_LOGGER("ofdm_adaptive_fec_frame_bvb");
 ofdm_adaptive_fec_frame_bvb::sptr
 ofdm_adaptive_fec_frame_bvb::make(const vector<fec_enc::sptr>& encoders,
                                   int frame_capacity,
+                                  double frame_rate,
                                   int max_bps,
+                                  int max_empty_frames,
                                   const string& len_key)
 {
     return gnuradio::make_block_sptr<ofdm_adaptive_fec_frame_bvb_impl>(
-        encoders, frame_capacity, max_bps, len_key);
+        encoders, frame_capacity, frame_rate, max_bps, max_empty_frames, len_key);
 }
 
 /*
@@ -61,7 +64,9 @@ ofdm_adaptive_fec_frame_bvb::make(const vector<fec_enc::sptr>& encoders,
 ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
     const vector<fec_enc::sptr>& encoders,
     int frame_capacity,
+    double frame_rate,
     int max_bps,
+    int max_empty_frames,
     const string& len_key)
     : gr::block("ofdm_adaptive_fec_frame_bvb",
                 gr::io_signature::make(
@@ -87,7 +92,10 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_used_frames_count(0),
       d_frame_used_capacity(0),
       d_consecutive_empty_frames(0),
-      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF)
+      d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
+      d_total_frames(0),
+      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
+      d_max_empty_frames(max_empty_frames)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
@@ -125,6 +133,13 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
  */
 ofdm_adaptive_fec_frame_bvb_impl::~ofdm_adaptive_fec_frame_bvb_impl() {}
 
+bool ofdm_adaptive_fec_frame_bvb_impl::start()
+{
+    d_start_time = std::chrono::steady_clock::now();
+    d_total_frames = 0;
+    return block::start();
+}
+
 void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
 {
     if (pmt::is_dict(feedback)) {
@@ -151,6 +166,13 @@ void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
 }
 
 
+void ofdm_adaptive_fec_frame_bvb_impl::forecast(int noutput_items,
+                                           gr_vector_int& ninput_items_required)
+{
+    ninput_items_required[0] = 0;
+}
+
+
 void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
 {
 
@@ -173,7 +195,16 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  pmt::from_long(d_current_frame_offset & 0xfff));
 
     add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
-    d_tag_offset += 1;
+    ++d_tag_offset;
+
+    auto now = std::chrono::steady_clock::now();
+    auto expected_time = d_start_time + d_total_frames * d_frame_duration;
+
+    if (now < expected_time) {
+        std::this_thread::sleep_until(expected_time);
+    }
+
+    ++d_total_frames;
     DTL_LOG_DEBUG("frame_out: tb_no={}", d_tb_count);
 }
 
@@ -235,7 +266,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     if (ninput_items[0] == 0 && noutput_items > 0) {
         int frame_payload = tb_offset_to_bytes();
         if (output_available >= 1) {
-            if (++d_consecutive_empty_frames == 3) {
+            if (d_max_empty_frames >= 0 &&  ++d_consecutive_empty_frames >= d_max_empty_frames) {
                 DTL_LOG_DEBUG("work_done: consecutive_empty_frames={}",
                               d_consecutive_empty_frames);
                 return WORK_DONE;

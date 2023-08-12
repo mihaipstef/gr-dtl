@@ -55,7 +55,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
     def tearDown(self):
         self.tb = None
 
-    def test_happy_flow(self):
+    def test_equalizer(self):
         consts = {
             constellation_type_t.QPSK: digital.constellation_qpsk(),
             constellation_type_t.PSK8: digital.constellation_8psk(),
@@ -102,6 +102,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             chan_tag.key = pmt.string_to_symbol("ofdm_sync_chan_taps")
             chan_tag.value = pmt.init_c32vector(fft_len, channel[:fft_len])
             const_tag = gr.tag_t()
+            const_tag.offset = 0
             const_tag.key = get_constellation_tag_key()
             const_tag.value = pmt.from_long(c)
             rx_signal = numpy.multiply(tx_signal, channel) + [x if y != 0 else 0 for (

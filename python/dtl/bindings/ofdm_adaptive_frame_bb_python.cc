@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_frame_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(e8939ca1e1b4caee88ee433218f21c19)                     */
+/* BINDTOOL_HEADER_FILE_HASH(35940feb5b49084fd389f12469c919ed)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -43,6 +43,7 @@ void bind_ofdm_adaptive_frame_bb(py::module& m)
              py::arg("len_tag_key"),
              py::arg("constellations"),
              py::arg("frame_len"),
+             py::arg("frame_rate"),
              py::arg("n_payload_carriers"),
              py::arg("frames_fname") = "",
              py::arg("max_empty_frames") = -1,

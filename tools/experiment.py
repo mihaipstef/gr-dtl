@@ -47,7 +47,7 @@ args = parser.parse_args()
 
 logs_folder = args.logs
 experiments_file = args.config
-sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_loopback_src)
+sim_cls = getattr(sim, args.sim_cls, sim.ofdm_adaptive_sim_src)
 
 logs_store = f"{logs_folder}"
 current_log = f"{logs_folder}/sim.log"
@@ -80,6 +80,7 @@ for i, e in enumerate(experiments):
     monitor_process = None
     monitor_process_pid = None
     if probe_url and db_url:
+        print(db_url)
         db_client = pymongo.MongoClient(db_url)
         db = db_client["probe_data"]
         monitor_process = multiprocessing.Process(

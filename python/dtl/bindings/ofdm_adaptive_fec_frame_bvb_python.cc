@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_fec_frame_bvb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(aebfb5ccf12e57f8e2d61cdd6d6e133e)                     */
+/* BINDTOOL_HEADER_FILE_HASH(02015b4165d9de8b0efb577b1897bd2f)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,7 +42,9 @@ void bind_ofdm_adaptive_fec_frame_bvb(py::module& m)
         .def(py::init(&ofdm_adaptive_fec_frame_bvb::make),
              py::arg("encoders"),
              py::arg("frame_capacity"),
+             py::arg("frame_rate"),
              py::arg("max_bps"),
+             py::arg("max_empty_frames"),
              py::arg("len_key"),
              D(ofdm_adaptive_fec_frame_bvb, make))
 

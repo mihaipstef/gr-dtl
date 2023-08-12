@@ -111,8 +111,6 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 test |= 2;
                 // remove_item_tag(0, tag);
             }
-            DTL_LOG_DEBUG("tag {}, {}", pmt::symbol_to_string(tag.key), test);
-
             if (test == 3) {
                 break;
             }
@@ -137,86 +135,92 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             throw runtime_error("FEC tags missing");
         }
 
-        fec_info->d_tb_offset *= 8;
-        int code_n = fec_info->get_n();
-        int ncws = compute_tb_len(code_n, 8 * align_bits_to_bytes(d_frame_capacity * bps));
+        // If empty frame received...
+        if (fec_info->d_frame_payload == 0) {
+            // ... only update consumed samples.
+            read_index += frame_len;
+        // Otherwise...
+        } else {
+            // ... proceed with the frame.
+            fec_info->d_tb_offset *= 8;
+            int code_n = fec_info->get_n();
+            int ncws = compute_tb_len(code_n, 8 * align_bits_to_bytes(d_frame_capacity * bps));
 
 
-        // Make sure we consume input only if we'll be able to produce the output
-        if ((d_tb_dec->receive_buffer_empty() &&
-             noutput_items < fec_info->d_tb_payload_len) ||
-            (!d_tb_dec->receive_buffer_empty() &&
-             noutput_items < d_tb_dec->get_current_tb_payload())) {
-            break;
+            // Make sure we consume input only if we'll be able to produce the output
+            if ((d_tb_dec->receive_buffer_empty() &&
+                noutput_items < fec_info->d_tb_payload_len) ||
+                (!d_tb_dec->receive_buffer_empty() &&
+                noutput_items < d_tb_dec->get_current_tb_payload())) {
+                break;
+            }
+
+            // When transport block is decoded copy user data to the output buffer
+            auto on_data_ready = [this, &write_index, &out, &bps, &code_n, &ncws](
+                                    const std::vector<unsigned char>& data_buffer,
+                                    fec_info_t::sptr tb_fec_info) {
+                int user_data_len = data_buffer.size() - d_crc.get_crc_len() * 8;
+                int crc_buf_len = d_to_bytes.repack_lsb_first(
+                    &data_buffer[0], user_data_len, &d_crc_buffer[0]);
+                d_to_bytes.repack_lsb_first(&data_buffer[user_data_len],
+                                            d_crc.get_crc_len() * 8,
+                                            &d_crc_buffer[crc_buf_len]);
+                bool crc_ok =
+                    d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
+
+                memcpy(&out[write_index], &data_buffer[0], user_data_len);
+                // int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
+                // assert(data_bytes == user_data_len/8);
+
+                add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(user_data_len));
+
+                write_index += user_data_len;
+
+                pmt::pmt_t monitor_msg =
+                    pmt::dict_add(pmt::make_dict(),
+                                pmt::string_to_symbol("tb_no"),
+                                pmt::from_long(tb_fec_info->d_tb_number));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("tb_payload"),
+                            pmt::from_long(tb_fec_info->d_tb_payload_len));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("tb_code_k"),
+                            pmt::from_long(tb_fec_info->get_k()));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("tb_code_n"),
+                            pmt::from_long(code_n));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("tb_codewords"),
+                            pmt::from_long(ncws));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("frame_payload"),
+                            pmt::from_long(tb_fec_info->d_frame_payload));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("bps"),
+                            pmt::from_long(bps));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("crc_ok_count"),
+                            pmt::from_long(d_crc.get_success()));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("crc_fail_count"),
+                            pmt::from_long(d_crc.get_failed()));
+                message_port_pub(MONITOR_PORT, monitor_msg);
+
+                DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}",
+                            crc_ok,
+                            tb_fec_info->d_tb_number,
+                            tb_fec_info->d_tb_payload_len,
+                            bps,
+                            user_data_len);
+            };
+
+            d_tb_dec->process_frame(&in[read_index],
+                                    8 * align_bits_to_bytes(d_frame_capacity * bps),
+                                    bps,
+                                    fec_info,
+                                    on_data_ready);
+            read_index += frame_len;
         }
-
-        // When transport block is decoded copy user data to the output buffer
-        auto on_data_ready = [this, &write_index, &out, &bps, &code_n, &ncws](
-                                 const std::vector<unsigned char>& data_buffer,
-                                 fec_info_t::sptr tb_fec_info) {
-            int user_data_len = data_buffer.size() - d_crc.get_crc_len() * 8;
-            int crc_buf_len = d_to_bytes.repack_lsb_first(
-                &data_buffer[0], user_data_len, &d_crc_buffer[0]);
-            d_to_bytes.repack_lsb_first(&data_buffer[user_data_len],
-                                        d_crc.get_crc_len() * 8,
-                                        &d_crc_buffer[crc_buf_len]);
-            bool crc_ok =
-                d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
-            //memcpy(&out[write_index], &data_buffer[0], user_data_len);
-            int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
-
-            assert(data_bytes == user_data_len/8);
-
-            add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(data_bytes));
-
-            write_index += data_bytes;
-
-            pmt::pmt_t monitor_msg =
-                pmt::dict_add(pmt::make_dict(),
-                              pmt::string_to_symbol("tb_no"),
-                              pmt::from_long(tb_fec_info->d_tb_number));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("tb_payload"),
-                          pmt::from_long(tb_fec_info->d_tb_payload_len));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("tb_code_k"),
-                          pmt::from_long(tb_fec_info->get_k()));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("tb_code_n"),
-                          pmt::from_long(code_n));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("tb_codewords"),
-                          pmt::from_long(ncws));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("frame_payload"),
-                          pmt::from_long(tb_fec_info->d_frame_payload));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("bps"),
-                          pmt::from_long(bps));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("crc_ok_count"),
-                          pmt::from_long(d_crc.get_success()));
-            monitor_msg = pmt::dict_add(monitor_msg,
-                          pmt::string_to_symbol("crc_fail_count"),
-                          pmt::from_long(d_crc.get_failed()));
-            message_port_pub(MONITOR_PORT, monitor_msg);
-
-            DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}",
-                          crc_ok,
-                          tb_fec_info->d_tb_number,
-                          tb_fec_info->d_tb_payload_len,
-                          bps,
-                          user_data_len);
-        };
-
-        d_tb_dec->process_frame(&in[read_index],
-                                8 * align_bits_to_bytes(d_frame_capacity * bps),
-                                bps,
-                                fec_info,
-                                on_data_ready);
-
-
-        read_index += frame_len;
     }
     DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
     consume_each(read_index);

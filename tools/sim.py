@@ -12,11 +12,11 @@ import os
 import signal
 
 
-class ofdm_adaptive_loopback(gr.top_block):
+class _ofdm_adaptive_sim(gr.top_block):
 
     def __new__(cls, *args, **kwargs):
         # Incomplete - don't allow instantiation
-        if cls is ofdm_adaptive_loopback:
+        if cls is _ofdm_adaptive_sim:
             raise TypeError(
                 f"only children of '{cls.__name__}' may be instantiated")
         return object.__new__(cls)
@@ -51,7 +51,6 @@ class ofdm_adaptive_loopback(gr.top_block):
             cp_len=self.cp_len,
             rolloff=0,
             scramble_bits=False,
-            stop_no_input=False,
             frame_length=self.frame_length,
         )
         self.rx = dtl.ofdm_adaptive_rx.from_parameters(
@@ -111,21 +110,11 @@ class ofdm_adaptive_loopback(gr.top_block):
         self.fadding_channel.set_fDTs(self.max_doppler)
 
 
-class ofdm_adaptive_loopback_src(ofdm_adaptive_loopback):
-
-    def __init__(self, config_dict, run_config_file):
-        super().__init__(config_dict, run_config_file)
-        self.src = analog.sig_source_b(
-            10000, analog.GR_SIN_WAVE, 100, 95, 0, 0)
-
     def wire_it(self):
-        if self.data_bytes is None:
-            self.connect((self.src, 0), (self.tx, 0), (self.throtle, 0))
-        else:
-            self.connect((self.src, 0), blocks.head(
-                gr.sizeof_char, self.data_bytes), (self.tx, 0), (self.throtle, 0))
+
         # Direct path
         self.connect(
+            (self.tx, 0),
             (self.throtle, 0),
             (self.fadding_channel, 0),
             (self.awgn_channel, 0),
@@ -146,7 +135,27 @@ class ofdm_adaptive_loopback_src(ofdm_adaptive_loopback):
         return self
 
 
-class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
+
+class ofdm_adaptive_sim_src(_ofdm_adaptive_sim):
+
+
+    def __init__(self, config_dict, run_config_file):
+        super().__init__(config_dict, run_config_file)
+        self.src = analog.sig_source_b(
+            10000, analog.GR_SIN_WAVE, 100, 95, 0, 0)
+
+
+    def wire_it(self):
+        super().wire_it()
+        if self.data_bytes is None:
+            self.connect((self.src, 0), (self.tx, 0))
+        else:
+            self.connect((self.src, 0), blocks.head(
+                gr.sizeof_char, self.data_bytes), (self.tx, 0))
+        return self
+
+
+class ofdm_adaptive_sim_tun(_ofdm_adaptive_sim):
 
     def __init__(self, config_dict, run_config_file):
         super().__init__(config_dict, run_config_file)
@@ -155,46 +164,28 @@ class ofdm_adaptive_loopback_tap(ofdm_adaptive_loopback):
         # self.reverse_recv = network.tuntap_pdu("tun1", 10000, True)
         # self.reverse_send = network.tuntap_pdu("tun0", 10000, True)
         self.to_pdu = pdu.tagged_stream_to_pdu(gr.types.byte_t, self.rx.packet_length_tag_key)
-        self.to_stream = pdu.pdu_to_stream_b(pdu.EARLY_BURST_APPEND, 128)
+        self.to_stream = pdu.pdu_to_stream_b(pdu.EARLY_BURST_DROP, 128)
 
     def wire_it(self):
+        super().wire_it()
+
         self.msg_connect(self.tun0, "pdus", self.to_stream, "pdus")
         if self.data_bytes is None:
-            self.connect((self.to_stream, 0), (self.tx, 0), (self.throtle, 0))
+            self.connect((self.to_stream, 0), (self.tx, 0))
         else:
             self.connect((self.to_stream, 0), blocks.head(
-                gr.sizeof_char, self.data_bytes), (self.tx, 0), (self.throtle, 0))
-        # Direct path
-        self.connect(
-            (self.throtle, 0),
-            #(self.fadding_channel, 0),
-            (self.awgn_channel, 0),
-            (self.rx, 0)
-        )
-        # Feedback path
-        self.connect(
-            (self.rx, 1),
-            (self.tx, 1)
-        )
+                gr.sizeof_char, self.data_bytes), (self.tx, 0))
         self.connect((self.rx, 0), self.to_pdu)
         self.msg_connect(self.to_pdu, "pdus", self.tun1, "pdus")
         self.msg_connect(self.to_pdu, "pdus", blocks.message_debug(), "print")
         self.msg_connect(self.tun0, "pdus", blocks.message_debug(), "print")
-
-        self.connect((self.rx, 2), blocks.null_sink(gr.sizeof_char))
-        self.connect((self.rx, 5), blocks.null_sink(gr.sizeof_gr_complex))
-        self.msg_connect((self.rx, "monitor"),
-                         (blocks.message_debug(True), "store"))
-        #self.msg_connect((self.rx, "monitor"), (self.monitor_probe, "in"))
-        self.msg_connect((self.tx, "monitor"), (self.msg_debug, "store"))
-
         self.msg_connect(self.tun1, "pdus", self.tun0, "pdus")
 
         return self
 
 
 def main(
-        top_block_cls=ofdm_adaptive_loopback_src,
+        top_block_cls=ofdm_adaptive_sim_src,
         config_dict=None,
         run_config_file="sim.run.json",):
 
@@ -207,7 +198,7 @@ def main(
         tb.wait()
 
     # To update parameters on the fly:
-    # - define attribute to ofdm_adaptive_loopback, eg new_attr
+    # - define attribute to ofdm_adaptive_sim, eg new_attr
     # - implement setter, eg. set_new_attr
     def config_update(sig=None, frame=None):
         try:

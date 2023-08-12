@@ -60,6 +60,8 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         codes = [f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"]
         self.ldpc_encs = make_ldpc_encoders(codes)
         self.ldpc_decs = make_ldpc_decoders(codes)
+        self.max_empty_frames = 30
+        self.frame_rate = 1000000
 
 
     def tearDown(self):
@@ -85,7 +87,9 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         enc = ofdm_adaptive_fec_frame_bvb(
             self.ldpc_encs,
             self.frame_len * self.ofdm_sym_capacity,
+            self.frame_rate,
             self.max_bps,
+            self.max_empty_frames,
             self.len_key
         )
         enc.process_feedback(feedback)
@@ -130,9 +134,9 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         self.tb.run()
         # check data
         print(data)
+        print(len(sink_b_dec.data()), len(data))
         print(sink_b_dec.data())
 
-        print(len(sink_b_dec.data()), len(data))
         assert len(data) == len(sink_b_dec.data())
         assert data == sink_b_dec.data()
 
