@@ -30,7 +30,8 @@ void repack::set_bits_per_byte(unsigned char bits_in_byte, unsigned char bits_ou
 
 int repack::repack_lsb_first(unsigned char const* in,
                              size_t n_in,
-                             unsigned char* out)
+                             unsigned char* out,
+                             bool full_output_symbols)
 {
     int bits_per_in_byte = d_bits_in_byte;
     int bits_per_out_byte = d_bits_out_byte;
@@ -38,7 +39,7 @@ int repack::repack_lsb_first(unsigned char const* in,
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;
 
     if (((n_in * bits_per_in_byte) % bits_per_out_byte) != 0) {
-        bytes_to_write += 1;//static_cast<int>(unpack);
+        bytes_to_write += static_cast<int>(!full_output_symbols);//static_cast<int>(unpack);
     }
 
     size_t n_read = 0;
@@ -71,19 +72,15 @@ int repack::repack_lsb_first(unsigned char const* in,
 int repack::repack_msb_first(unsigned char const* in,
                              size_t n_in,
                              unsigned char* out,
-                             bool unpack)
+                             bool full_output_symbols)
 {
     int bits_per_in_byte = d_bits_in_byte;
     int bits_per_out_byte = d_bits_out_byte;
-    if (unpack) {
-        bits_per_in_byte = d_bits_out_byte;
-        bits_per_out_byte = d_bits_in_byte;
-    }
 
     size_t bytes_to_write = n_in * bits_per_in_byte / bits_per_out_byte;
 
     if (((n_in * bits_per_in_byte) % bits_per_out_byte) != 0) {
-        bytes_to_write += static_cast<int>(unpack);
+        bytes_to_write += static_cast<int>(!full_output_symbols);
     }
 
     size_t n_read = 0;

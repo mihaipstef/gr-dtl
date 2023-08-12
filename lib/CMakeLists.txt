@@ -37,7 +37,8 @@ list(APPEND dtl_sources
     tb_decoder.cc
     ofdm_adaptive_frame_to_stream_vbb_impl.cc
     fec_utils.cc
-    ofdm_adaptive_constellation_soft_cf_impl.cc)
+    ofdm_adaptive_constellation_soft_cf_impl.cc
+    ofdm_adaptive_fec_pack_bb_impl.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

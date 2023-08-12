@@ -199,13 +199,13 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 dtl.ofdm_adaptive.max_bps(self.constellations),
                 self.packet_length_tag_key
             )
-            repack = blocks.repack_bits_bb(1, 8)
+            fec_pack =dtl.ofdm_adaptive_fec_pack_bb(self.packet_length_tag_key)
             self.connect(payload_demod, blocks.tag_debug(gr.sizeof_float, "payload_demod"))
             self.connect(
                 payload_serializer,
                 payload_demod,
                 fec_dec,
-                #repack,
+                fec_pack,
                 # self.payload_descrambler,
                 (self, 0)
             )

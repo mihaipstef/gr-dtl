@@ -60,7 +60,7 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         codes = [f"{self.test_codes_dir}/n_0100_k_0023_gap_10.alist",f"{self.test_codes_dir}/n_0100_k_0027_gap_04.alist"]
         self.ldpc_encs = make_ldpc_encoders(codes)
         self.ldpc_decs = make_ldpc_decoders(codes)
-        self.max_empty_frames = 10
+        self.max_empty_frames = 30
         self.frame_rate = 1000000
 
 
@@ -108,8 +108,6 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
             self.len_key
         )
 
-        unpack = blocks.repack_bits_bb(8, 1)
-
         sink_b = blocks.vector_sink_b()
         sink_vb = blocks.vector_sink_b(self.frame_len * self.ofdm_sym_capacity)
 
@@ -130,7 +128,6 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
             mod,
             cnst_dec,
             dec,
-            unpack,
             sink_b_dec
         )
 
@@ -144,7 +141,7 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         assert data == sink_b_dec.data()
 
     def test_001_encode_qam16(self):
-        return
+        #return
         self.run_flow(cnst = constellation_type_t.QAM16, fec=1, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QAM16, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QAM16, fec=1, frame_len=10, ofdm_sym_capacity=48)
@@ -153,14 +150,14 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
         # pass
 
     def test_002_encode_psk8(self):
-        return
+        #return
         self.run_flow(cnst = constellation_type_t.PSK8, fec=1, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.PSK8, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.PSK8, fec=1, frame_len=10, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.PSK8, fec=2, frame_len=10, ofdm_sym_capacity=48)
 
     def test_003_encode_qpsk(self):
-        return
+        #return
         self.run_flow(cnst = constellation_type_t.QPSK, fec=1, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QPSK, fec=2, frame_len=3, ofdm_sym_capacity=48)
         self.run_flow(cnst = constellation_type_t.QPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
@@ -169,9 +166,9 @@ class qa_ofdm_adaptive_fec(gr_unittest.TestCase):
     def test_004_encode_bpsk(self):
         #return
         self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=3, ofdm_sym_capacity=48)
-        # self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=3, ofdm_sym_capacity=48)
-        # self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
-        # self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=3, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.BPSK, fec=1, frame_len=10, ofdm_sym_capacity=48)
+        self.run_flow(cnst = constellation_type_t.BPSK, fec=2, frame_len=10, ofdm_sym_capacity=48)
 
 if __name__ == '__main__':
     gr_unittest.run(qa_ofdm_adaptive_fec)

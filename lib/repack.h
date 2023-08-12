@@ -23,12 +23,13 @@ public:
 
     int repack_lsb_first(unsigned char const* in,
                          size_t n_in,
-                         unsigned char* out);
+                         unsigned char* out,
+                         bool full_output_symbols = false);
 
     int repack_msb_first(unsigned char const* in,
                          size_t n_in,
                          unsigned char* out,
-                         bool unpack);
+                         bool full_output_symbols = false);
 
     void set_indexes(unsigned char in_index, unsigned char out_index);
 
