@@ -66,7 +66,7 @@ if(APPLE)
     )
 endif(APPLE)
 
-target_compile_definitions(gnuradio-dtl PRIVATE DTL_LOGGING_ENABLE=true)
+target_compile_definitions(gnuradio-dtl PRIVATE DTL_LOGGING_ENABLE=${DTL_LOGGING_ENABLE})
 
 
 ########################################################################
