@@ -82,6 +82,7 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_feedback_fec_idx(1),
       d_feedback_cnst(constellation_type_t::BPSK),
       d_current_enc(nullptr),
+      d_current_fec_idx(1),
       d_current_cnst(constellation_type_t::BPSK),
       d_current_bps(1),
       d_current_frame_len(0),
