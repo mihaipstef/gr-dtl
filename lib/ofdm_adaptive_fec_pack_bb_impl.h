@@ -23,6 +23,9 @@ public:
     ofdm_adaptive_fec_pack_bb_impl(const std::string& len_key);
     ~ofdm_adaptive_fec_pack_bb_impl();
 
+    void forecast(int noutput_items,
+                                   gr_vector_int& ninput_items_required) override;
+
     int general_work(int noutput_items,
                      gr_vector_int& ninput_items,
                      gr_vector_const_void_star& input_items,
