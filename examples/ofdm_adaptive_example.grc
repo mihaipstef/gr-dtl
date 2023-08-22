@@ -41,9 +41,7 @@ blocks:
     label: Direct channel frequency offset
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '0'
     step: '0.000001'
     stop: '0.25'
@@ -53,7 +51,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [944, 4.0]
+    coordinate: [832, 20.0]
     rotation: 0
     state: true
 - name: direct_channel_noise_level
@@ -64,9 +62,7 @@ blocks:
     label: Direct channel noise level
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '0'
     step: '0.0001'
     stop: '3.7'
@@ -76,7 +72,21 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [744, 4.0]
+    coordinate: [656, 20.0]
+    rotation: 0
+    state: true
+- name: json_config
+  id: json_config
+  parameters:
+    alias: ''
+    comment: ''
+    config_file: /home/tflab/gr-dtl/examples/config.json
+    schema_file: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1016, 20.0]
     rotation: 0
     state: true
 - name: n_bytes
@@ -116,6 +126,7 @@ blocks:
     offset: '0'
     phase: '0'
     samp_rate: '10000'
+    showports: 'False'
     type: byte
     waveform: analog.GR_SIN_WAVE
   states:
@@ -237,6 +248,7 @@ blocks:
     alias: ''
     comment: ''
     en_uvec: 'True'
+    log_level: info
   states:
     bus_sink: false
     bus_source: false
@@ -336,16 +348,10 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    cp_len: '16'
-    fft_len: '64'
+    len_tag_key: len_tag_key
     maxoutbuf: '0'
     minoutbuf: '0'
-    occupied_carriers: ''
-    pilot_carriers: ''
-    pilot_symbols: ''
-    rolloff: '0'
-    scramble_bits: 'False'
-    use_sync_correct: 'True'
+    ofdm_adaptive_config: '{}'
   states:
     bus_sink: false
     bus_source: false
@@ -359,15 +365,11 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    cp_len: '16'
-    fft_len: '64'
+    len_tag_key: len_tag_key
     maxoutbuf: '0'
     minoutbuf: '0'
-    occupied_carriers: ''
-    pilot_carriers: ''
-    pilot_symbols: ''
-    rolloff: '0'
-    scramble_bits: 'False'
+    ofdm_adaptive_config: '{}'
+    sample_rate: '700000'
   states:
     bus_sink: false
     bus_source: false
@@ -1091,4 +1093,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.4.0
+  grc_version: 3.10.7.0

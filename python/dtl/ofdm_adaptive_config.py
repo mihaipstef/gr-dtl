@@ -48,7 +48,7 @@ class ofdm_adaptive_config:
 @dc.dataclass
 class ofdm_adaptive_tx_config(ofdm_adaptive_config):
     max_empty_frames: int = -1
-    sample_rate: int = 900000
+    sample_rate: int = 700000
 
 
 @dc.dataclass

@@ -24,7 +24,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
     def __init__(self, config):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
-                                gr.io_signature.makev(7, 7, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_gr_complex, gr.sizeof_float]))
+                                gr.io_signature.makev(7, 7, [gr.sizeof_char, gr.sizeof_gr_complex, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex * config.fft_len, gr.sizeof_gr_complex, gr.sizeof_float]))
         self.message_port_register_hier_out("monitor")
 
         self.fft_len = config.fft_len

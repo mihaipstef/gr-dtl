@@ -33,20 +33,56 @@ options:
     state: enabled
 
 blocks:
+- name: direct_carrier
+  id: variable
+  parameters:
+    comment: ''
+    value: json_config.get("direct_carrier", 2100000000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [488, 12.0]
+    rotation: 0
+    state: enabled
+- name: feedback_carrier
+  id: variable
+  parameters:
+    comment: ''
+    value: json_config.get("feedback_carrier", 850000000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [368, 12.0]
+    rotation: 0
+    state: enabled
 - name: json_config
   id: json_config
   parameters:
     alias: ''
     comment: ''
-    config_file: /home/ubuntu-lab/dtl-flows/gr-dtl/examples/ofdm_adaptive_pluto.run.json
+    config_file: /home/tflab/gr-dtl/examples/config_fec.json
     schema_file: ''
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [728, 12.0]
+    coordinate: [1048, 12.0]
     rotation: 0
     state: true
+- name: pluto_uri
+  id: variable
+  parameters:
+    comment: ''
+    value: '"ip:192.168.2.1"'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [592, 12.0]
+    rotation: 0
+    state: enabled
 - name: resampling
   id: variable
   parameters:
@@ -56,19 +92,19 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 12.0]
+    coordinate: [176, 12.0]
     rotation: 0
     state: enabled
 - name: samp_rate
   id: variable
   parameters:
     comment: ''
-    value: json_config["sample_rate"]
+    value: json_config.get("sample_rate", 700000)
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 12]
+    coordinate: [272, 12.0]
     rotation: 0
     state: enabled
 - name: tx_amp
@@ -79,19 +115,17 @@ blocks:
     label: Anti clipping factor
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '0.001'
     step: '0.02'
     stop: '2'
-    value: json_config["direct_anticlipping"]
+    value: '0.02'
     widget: counter
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [560, 12.0]
+    coordinate: [728, 12.0]
     rotation: 0
     state: true
 - name: tx_at
@@ -102,19 +136,17 @@ blocks:
     label: Pluto TX attenuation
     min_len: '200'
     orient: QtCore.Qt.Horizontal
-    outputmsgname: value
     rangeType: float
-    showports: 'False'
     start: '0'
     step: '1'
     stop: '50'
-    value: json_config["direct_att"]
+    value: '20'
     widget: counter
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 12.0]
+    coordinate: [880, 12.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -129,14 +161,15 @@ blocks:
     minoutbuf: '0'
     offset: '0'
     phase: '0'
-    samp_rate: '25000'
+    samp_rate: '2500'
+    showports: 'False'
     type: byte
     waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [80, 92.0]
+    coordinate: [48, 148.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_0
@@ -146,6 +179,7 @@ blocks:
     alias: ''
     comment: ''
     en_uvec: 'True'
+    log_level: info
   states:
     bus_sink: false
     bus_source: false
@@ -168,7 +202,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [888, 196.0]
+    coordinate: [880, 188.0]
     rotation: 0
     state: true
 - name: dtl_ofdm_adaptive_tx_0
@@ -177,20 +211,16 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    cp_len: '16'
-    fft_len: '64'
+    len_tag_key: len_tag_key
     maxoutbuf: '0'
     minoutbuf: '0'
-    occupied_carriers: ''
-    pilot_carriers: ''
-    pilot_symbols: ''
-    rolloff: '0'
-    scramble_bits: 'False'
+    ofdm_config: json_config.get("ofdm_config", {})
+    sample_rate: samp_rate
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [536, 180.0]
+    coordinate: [552, 192.0]
     rotation: 0
     state: true
 - name: iio_pluto_sink_0
@@ -206,12 +236,12 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: json_config["direct_carrier"]
+    frequency: direct_carrier
     fstop: '0'
     len_tag_key: ''
     samplerate: samp_rate
     type: fc32
-    uri: ip:192.168.2.1
+    uri: pluto_uri
   states:
     bus_sink: false
     bus_source: false
@@ -231,7 +261,7 @@ blocks:
     filter: ''
     filter_source: '''Auto'''
     fpass: '0'
-    frequency: json_config["feedback_carrier"]
+    frequency: feedback_carrier
     fstop: '0'
     gain1: '''manual'''
     len_tag_key: packet_len
@@ -242,7 +272,7 @@ blocks:
     rfdc: 'True'
     samplerate: samp_rate
     type: fc32
-    uri: ip:192.168.2.1
+    uri: pluto_uri
   states:
     bus_sink: false
     bus_source: false
@@ -250,29 +280,6 @@ blocks:
     coordinate: [40, 340.0]
     rotation: 0
     state: enabled
-- name: network_udp_source_0
-  id: network_udp_source
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    header: '0'
-    ipv6: 'False'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    notify_missed: 'False'
-    payloadsize: '10'
-    port: '9000'
-    src_zeros: 'False'
-    type: byte
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [120, 220.0]
-    rotation: 0
-    state: disabled
 - name: qtgui_freq_sink_x_0
   id: qtgui_freq_sink_x
   parameters:
@@ -432,7 +439,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [320, 444.0]
+    coordinate: [304, 476.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_1
@@ -549,7 +556,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 172.0]
+    coordinate: [1096, 164.0]
     rotation: 0
     state: true
 - name: rational_resampler_xxx_0_0
@@ -580,7 +587,6 @@ connections:
 - [dtl_ofdm_adaptive_tx_0, monitor, blocks_message_debug_0, store]
 - [iio_pluto_source_0, '0', qtgui_freq_sink_x_1, '0']
 - [iio_pluto_source_0, '0', rational_resampler_xxx_0_0, '0']
-- [network_udp_source_0, '0', dtl_ofdm_adaptive_tx_0, '0']
 - [rational_resampler_xxx_0, '0', iio_pluto_sink_0, '0']
 - [rational_resampler_xxx_0, '0', qtgui_freq_sink_x_0, '0']
 - [rational_resampler_xxx_0, '0', qtgui_time_sink_x_1, '0']
@@ -588,4 +594,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.4.0
+  grc_version: 3.10.7.0
