@@ -4,51 +4,20 @@ flags: [ python ]
 category: '[DTL]'
 
 parameters:
--   id: fft_len
-    label: FFT Length
-    dtype: int
-    default: '64'
--   id: cp_len
-    label: Cyclic Prefix Length
-    dtype: int
-    default: '16'
--   id: occupied_carriers
-    label: Occupied Carriers
+-   id: ofdm_config
+    label: OFDM Adaptive Configuration
     dtype: raw
-    default: ()
-    hide: ${ 'none' if occupied_carriers else 'part' }
--   id: pilot_carriers
-    label: Pilot Carriers
-    dtype: raw
-    default: ()
-    hide: ${ 'none' if pilot_carriers else 'part' }
--   id: pilot_symbols
-    label: Pilot Symbols
-    dtype: raw
-    default: ()
-    hide: ${ 'none' if pilot_symbols else 'part' }
--   id: rolloff
-    label: Rolloff length (samples)
-    dtype: int
-    default: '0'
--   id: scramble_bits
-    label: Scramble Bits
-    dtype: enum
-    default: 'False'
-    options: ['False', 'True']
-    option_labels: ['No', 'Yes']
--   id: use_sync_correct
-    label: Use sync correction
-    dtype: enum
-    default: 'True'
-    options: ['False', 'True']
-    option_labels: ['No', 'Yes']
+    hide: ${"part" if bool(ofdm_config) else "none"}
+    default: {}
+-   id: len_tag_key
+    label: Length tag key
+    dtype: string
+    default: "len_tag_key"
+
 
 asserts:
-- ${ fft_len > 0 }
-- ${ cp_len > 0 }
-- ${ cp_len < fft_len }
-- ${ rolloff >= 0 }
+- ${ofdm_config["fft_len"] > 0 if "fft_len" in ofdm_config else True}
+- ${ofdm_config["cp_len"] > 0 if "cp_len" in ofdm_config else True}
 
 inputs:
 -   domain: stream
@@ -65,6 +34,7 @@ outputs:
     dtype: byte
 -   domain: stream
     dtype: complex
+    vlen: ${ofdm_config.get("fft_len", default_config.fft_len)}
 -   domain: stream
     dtype: complex
 -   domain: stream
@@ -73,23 +43,13 @@ outputs:
     id: monitor
 
 templates:
-    imports: from gnuradio import dtl
+    imports: |-
+        from gnuradio.dtl.ofdm_adaptive_config import ofdm_adaptive_config as default_config
+        from gnuradio.dtl import ofdm_adaptive_rx
+
     make: |-
-        dtl.ofdm_adaptive_rx.from_parameters(
-            fft_len=${fft_len},
-            cp_len=${cp_len},
-            % if occupied_carriers:
-            occupied_carriers=${occupied_carriers},
-            % endif
-            % if pilot_carriers:
-            pilot_carriers=${pilot_carriers},
-            % endif
-            % if pilot_carriers:
-            pilot_symbols=${pilot_symbols},
-            % endif
-            rolloff=${rolloff}, 
-            scramble_bits=${scramble_bits},
-            use_sync_correct=${use_sync_correct}
-        )
+        ofdm_adaptive_rx.from_parameters(
+            config_dict=${ofdm_config},
+            packet_length_tag_key=${len_tag_key})
 
 file_format: 1
