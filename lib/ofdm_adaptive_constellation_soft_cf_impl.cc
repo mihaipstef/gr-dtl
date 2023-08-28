@@ -116,7 +116,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         d_constellation = d_constellations[cnst];
         int bps = d_constellation->bits_per_symbol();
 
-        DTL_LOG_DEBUG("len_key={}, val={}, offset={}", pmt::symbol_to_string(d_len_key), pmt::from_long(len * bps), nitems_written(0) + write_index);
+        DTL_LOG_DEBUG("len_key={}, val={}, offset={}", pmt::symbol_to_string(d_len_key), len * bps, nitems_written(0) + write_index);
 
         set_relative_rate(bps, 1);
         set_output_multiple(len * bps);

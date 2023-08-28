@@ -1,0 +1,12 @@
+{
+    "sample_rate": 400000,
+    "ofdm_config": {
+        "mcs": [[-100000, ["bpsk", "fec_1"]],
+                [11, ["qpsk", "fec_1"]],
+                [16, ["psk8", "fec_1"]],
+                [21, ["qam16", "fec_1"]]],
+        "initial_mcs_id": 1,
+        "fec_codes": [
+            ["fec_1", "n_0300_k_0152_gap_03.alist"]]
+    }
+}

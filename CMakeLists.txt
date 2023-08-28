@@ -24,6 +24,12 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
    message(STATUS "Build type not specified: defaulting to release.")
 endif(NOT CMAKE_BUILD_TYPE)
+
+if(NOT DEFINED DTL_LOGGING_ENABLE)
+   set(DTL_LOGGING_ENABLE true)
+endif(NOT DEFINED DTL_LOGGING_ENABLE)
+message(STATUS "DTL logging: ${DTL_LOGGING_ENABLE}")
+
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 
 # Make sure our local CMake Modules path comes first

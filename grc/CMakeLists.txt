@@ -6,14 +6,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 install(FILES
-    dtl_ofdm_adaptive_frame_equalizer_vcvc.block.yml
-    dtl_ofdm_adaptive_chunks_to_symbols_bc.block.yml
-    dtl_ofdm_adaptive_constellation_decoder_cb.block.yml
     dtl_ofdm_adaptive_tx.block.yml
-    dtl_ofdm_adaptive_rx.block.yml
-    dtl_zmq_probe.block.yml
-    dtl_ofdm_adaptive_constellation_metric_vcvf.block.yml
-    dtl_ofdm_adaptive_fec_decoder.block.yml
-    dtl_ofdm_adaptive_frame_to_stream_vbb.block.yml
-    dtl_ofdm_adaptive_constellation_soft_cf.block.yml DESTINATION share/gnuradio/grc/blocks
+    dtl_ofdm_adaptive_rx.block.yml DESTINATION share/gnuradio/grc/blocks
 )
