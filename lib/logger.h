@@ -49,11 +49,10 @@ struct dtl_logger_wrapper {
 #define INIT_DTL_LOGGER(name) static dtl_logger_wrapper _logger(name);
 
 // HACK: This is not standard.
-#define VA_ARGS(...) , ##__VA_ARGS__
-
-#define DTL_LOG_INFO(msg, ...) _logger.logger->info(msg VA_ARGS(__VA_ARGS__));
-#define DTL_LOG_DEBUG(msg, ...) _logger.logger->debug(msg VA_ARGS(__VA_ARGS__));
-#define DTL_LOG_ERROR(msg, ...) _logger.logger->error(msg VA_ARGS(__VA_ARGS__));
+// See VA_OPTS(,) introduced C++20
+#define DTL_LOG_INFO(msg, ...) _logger.logger->info(msg, ## __VA_ARGS__);
+#define DTL_LOG_DEBUG(msg, ...) _logger.logger->debug(msg, ## __VA_ARGS__);
+#define DTL_LOG_ERROR(msg, ...) _logger.logger->error(msg, ## __VA_ARGS__);
 
 #define DTL_LOG_TAGS(title, tags)                                           \
     _logger.logger->debug(title);                                           \
