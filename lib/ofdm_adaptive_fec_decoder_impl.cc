@@ -148,12 +148,12 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
 
             // Make sure we consume input only if we'll be able to produce the output
-            if ((d_tb_dec->receive_buffer_empty() &&
-                noutput_items < fec_info->d_tb_payload_len) ||
-                (!d_tb_dec->receive_buffer_empty() &&
-                noutput_items < d_tb_dec->get_current_tb_payload())) {
-                break;
-            }
+            // if ((d_tb_dec->receive_buffer_empty() &&
+            //     noutput_items < fec_info->d_tb_payload_len) ||
+            //     (!d_tb_dec->receive_buffer_empty() &&
+            //     noutput_items < d_tb_dec->get_current_tb_payload())) {
+            //     break;
+            // }
 
             // When transport block is decoded copy user data to the output buffer
             auto on_data_ready = [this, &write_index, &out, &bps, &code_n, &ncws](
