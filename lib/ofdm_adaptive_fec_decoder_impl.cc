@@ -90,7 +90,6 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
     DTL_LOG_DEBUG("work: ninput={}, noutput={}", ninput_items[0], noutput_items);
 
     while (read_index < ninput_items[0]) {
-        DTL_LOG_DEBUG("nitems_read={}, read_index={}", nitems_read(0), read_index);
         vector<tag_t> tags;
         get_tags_in_range(
             tags, 0, nitems_read(0) + read_index, nitems_read(0) + read_index + 1);
@@ -115,6 +114,9 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 break;
             }
         }
+
+        DTL_LOG_DEBUG("nitems_read={}, read_index={}, frame_len={}", nitems_read(0), read_index, len);
+
 
         if (test != 3) {
             DTL_LOG_ERROR("Tags missing: check_bitmap={}, lookup_offset={}",
@@ -158,7 +160,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
             // When transport block is decoded copy user data to the output buffer
             auto on_data_ready = [this, &write_index, &out, &bps, &code_n, &ncws](
                                     const std::vector<unsigned char>& data_buffer,
-                                    fec_info_t::sptr tb_fec_info) {
+                                    fec_info_t::sptr tb_fec_info, int avg_it) {
                 int user_data_len = data_buffer.size() - d_crc.get_crc_len() * 8;
                 int crc_buf_len = d_to_bytes.repack_lsb_first(
                     &data_buffer[0], user_data_len, &d_crc_buffer[0]);
@@ -204,14 +206,17 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 monitor_msg = pmt::dict_add(monitor_msg,
                             pmt::string_to_symbol("crc_fail_count"),
                             pmt::from_long(d_crc.get_failed()));
+                monitor_msg = pmt::dict_add(monitor_msg,
+                            pmt::string_to_symbol("agg_n_it"),
+                            pmt::from_long(avg_it));
                 message_port_pub(MONITOR_PORT, monitor_msg);
 
-                DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}",
+                DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}, avg_it={}",
                             crc_ok,
                             tb_fec_info->d_tb_number,
                             tb_fec_info->d_tb_payload_len,
                             bps,
-                            user_data_len);
+                            user_data_len, avg_it);
             };
 
             d_tb_dec->process_frame(&in[read_index],

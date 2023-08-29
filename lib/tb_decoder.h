@@ -35,7 +35,7 @@ private:
     int d_tb_len;
     fec_info_t::sptr d_fec_info;
 
-    int decode(int tb_len);
+    int decode(int tb_len, int& avg_it);
 
     std::size_t expected_tb_len(fec_info_t::sptr fec_info, int ncws);
 
@@ -47,7 +47,7 @@ public:
                        int bps,
                        fec_info_t::sptr fec_info,
                        std::function<void(const std::vector<unsigned char>&,
-                                          fec_info_t::sptr)> on_data_ready);
+                                          fec_info_t::sptr, int)> on_data_ready);
 
     int get_current_tb_payload() { return d_fec_info->d_tb_payload_len; };
 
