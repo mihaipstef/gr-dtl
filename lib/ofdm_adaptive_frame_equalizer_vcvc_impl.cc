@@ -11,6 +11,7 @@
 #include <gnuradio/expj.h>
 #include <gnuradio/io_signature.h>
 #include <gnuradio/math.h>
+#include "monitor_msg.h"
 
 
 namespace gr {
@@ -200,21 +201,13 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
     message_port_pub(FEEDBACK_PORT, feedback_msg);
 
-    pmt::pmt_t monitor_msg = pmt::make_dict();
-    monitor_msg = pmt::dict_add(monitor_msg,
-                                 feedback_constellation_key(),
-                                 pmt::from_long(static_cast<unsigned char>(feedback.first)));
-    monitor_msg = pmt::dict_add(monitor_msg,
-                                 fec_key(),
-                                 pmt::from_long(feedback.second));
-    monitor_msg = pmt::dict_add(monitor_msg,
-                                 estimated_snr_tag_key(),
-                                 pmt::from_float(d_eq->get_snr()));
-    monitor_msg = pmt::dict_add(monitor_msg,
-                                 noise_tag_key(),
-                                 pmt::from_float(d_eq->get_snr()));
+    pmt::pmt_t msg = monitor_msg(
+        make_pair(feedback_constellation_key(), static_cast<unsigned char>(feedback.first)),
+        make_pair(fec_key(), feedback.second),
+        make_pair(estimated_snr_tag_key(), d_eq->get_snr()),
+        make_pair(noise_tag_key(), d_eq->get_noise()));
+    message_port_pub(MONITOR_PORT, msg);
 
-    message_port_pub(MONITOR_PORT, monitor_msg);
     add_item_tag(0,
                     nitems_written(0),
                     noise_tag_key(),

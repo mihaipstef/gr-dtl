@@ -7,6 +7,7 @@
 
 #include "fec_utils.h"
 #include "logger.h"
+#include "monitor_msg.h"
 #include "ofdm_adaptive_fec_decoder_impl.h"
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
@@ -178,38 +179,18 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
                 write_index += user_data_len;
 
-                pmt::pmt_t monitor_msg =
-                    pmt::dict_add(pmt::make_dict(),
-                                pmt::string_to_symbol("tb_no"),
-                                pmt::from_long(tb_fec_info->d_tb_number));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("tb_payload"),
-                            pmt::from_long(tb_fec_info->d_tb_payload_len));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("tb_code_k"),
-                            pmt::from_long(tb_fec_info->get_k()));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("tb_code_n"),
-                            pmt::from_long(code_n));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("tb_codewords"),
-                            pmt::from_long(ncws));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("frame_payload"),
-                            pmt::from_long(tb_fec_info->d_frame_payload));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("bps"),
-                            pmt::from_long(bps));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("crc_ok_count"),
-                            pmt::from_long(d_crc.get_success()));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("crc_fail_count"),
-                            pmt::from_long(d_crc.get_failed()));
-                monitor_msg = pmt::dict_add(monitor_msg,
-                            pmt::string_to_symbol("agg_n_it"),
-                            pmt::from_long(avg_it));
-                message_port_pub(MONITOR_PORT, monitor_msg);
+                pmt::pmt_t msg = monitor_msg(
+                    make_pair("tb_no", tb_fec_info->d_tb_number),
+                    make_pair("tb_payload", tb_fec_info->d_tb_payload_len),
+                    make_pair("tb_code_k", tb_fec_info->get_k()),
+                    make_pair("tb_code_n", tb_fec_info->get_n()),
+                    make_pair("tb_codewords", ncws),
+                    make_pair("frame_payload", tb_fec_info->d_frame_payload),
+                    make_pair("bps", bps),
+                    make_pair("crc_ok_count", d_crc.get_success()),
+                    make_pair("crc_fail_count", d_crc.get_failed()),
+                    make_pair("avg_it", avg_it));
+                message_port_pub(MONITOR_PORT, msg);
 
                 DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}, avg_it={}",
                             crc_ok,
