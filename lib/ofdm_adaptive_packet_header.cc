@@ -225,7 +225,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
 {
 
     size_t payload_len = 0;
-    size_t packet_number = 0;
+    size_t frame_no = 0;
     unsigned char constellation_type = 0;
 
     int k = 0;
@@ -233,7 +233,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
         payload_len |= (((int)in[k]) & d_mask) << i;
     }
     for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
-        packet_number |= (((int)in[k]) & d_mask) << i;
+        frame_no |= (((int)in[k]) & d_mask) << i;
     }
     for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
         constellation_type |= (((int)in[k]) & d_mask) << i;
@@ -274,7 +274,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     DTL_LOG_DEBUG("header_parser: cnst={}, payload_len={}, frame_no={}, crc=ok",
                   (int)d_constellation,
                   no_of_symbols,
-                  packet_number);
+                  frame_no);
 
     // Add tags
     tag_t tag;
@@ -285,7 +285,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     tag.value = pmt::from_long(no_of_symbols);
     tags.push_back(tag);
     tag.key = d_num_tag_key;
-    tag.value = pmt::from_long(packet_number);
+    tag.value = pmt::from_long(frame_no);
     tags.push_back(tag);
     tag.key = get_constellation_tag_key();
     tag.value = pmt::from_long(static_cast<int>(d_constellation));

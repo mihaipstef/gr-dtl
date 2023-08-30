@@ -30,10 +30,10 @@ public:
     static sptr make(::gr::dtl::ofdm_adaptive_equalizer_base::sptr equalizer,
                      ofdm_adaptive_feedback_decision_base::sptr feedback_decision,
                      int cp_len,
-                     const std::string& tsb_key = "frame_len",
+                     const std::string& len_tag_key = "len_key",
+                     const std::string& frame_no_key = "frame_no_key",
                      bool propagate_channel_state = false,
-                     bool propagate_feedback_tags = false,
-                     int fixed_frame_len = 0);
+                     bool propagate_feedback_tags = false);
 };
 
 } // namespace dtl

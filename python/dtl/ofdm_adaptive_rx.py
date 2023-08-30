@@ -31,7 +31,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.cp_len = config.cp_len
         self.frame_length_tag_key = config.frame_length_tag_key
         self.packet_length_tag_key = config.packet_length_tag_key
-        self.packet_num_tag_key = config.packet_num_tag_key
+        self.frame_no_tag_key = config.frame_no_tag_key
         self.occupied_carriers = config.occupied_carriers
         self.pilot_carriers = config.pilot_carriers
         self.pilot_symbols = config.pilot_symbols
@@ -134,7 +134,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             [self.occupied_carriers[0] for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
-            self.packet_num_tag_key,
+            self.frame_no_tag_key,
             1,  # BPSK
             scramble_header=self.scramble_bits,
             has_fec=self.fec
@@ -171,6 +171,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
             dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs, self.initial_mcs_id),
             self.cp_len,
             self.frame_length_tag_key,
+            self.frame_no_tag_key,
             False,
             0,
         )
@@ -225,7 +226,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 reset_tag_key=self.packet_length_tag_key
             )
             payload_pack = dtl.ofdm_adaptive_frame_pack_bb(
-                self.packet_length_tag_key, self.packet_num_tag_key, self.frame_store_fname)
+                self.packet_length_tag_key, self.frame_no_tag_key, self.frame_store_fname)
             # self.connect(payload_demod, blocks.file_sink(gr.sizeof_char, "/tmp/rx_demod_frames.dat"))
             # self.connect(payload_demod, blocks.tag_debug(gr.sizeof_char, "demod"))
             #self.crc = digital.crc32_bb(True, self.packet_length_tag_key)
