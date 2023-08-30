@@ -115,7 +115,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
             eq = ofdm_adaptive_frame_equalizer_vcvc(
                 equalizer.base(), ofdm_adaptive_feedback_decision(
-                    1, 3, [(snr_th, (cnst, 0)) for (snr_th, (cnst, _)) in ofdm_adaptive_config.ofdm_adaptive_config.mcs]), 0, "tsb_key", True, True)
+                    1, 3, [(snr_th, (cnst, 0)) for (snr_th, (cnst, _)) in ofdm_adaptive_config.ofdm_adaptive_config.mcs]), 0, "tsb_key", "frame_no_key", True, True)
             self.tb.msg_connect(eq, 'feedback_port',
                                 feedback_decision_sink, 'store')
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")

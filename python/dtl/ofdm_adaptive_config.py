@@ -13,7 +13,7 @@ class ofdm_adaptive_config:
     cp_len: int = 16
     frame_length_tag_key: str = "frame_length"
     packet_length_tag_key: str = "packet_length"
-    packet_num_tag_key: str = "packet_num"
+    frame_no_tag_key: str = "frame_no"
     occupied_carriers: t.Tuple[t.List[int]] = (list(range(-26, -21)) + list(range(-20, -7)) + list(
         range(-6, 0)) + list(range(1, 7)) + list(range(8, 21)) + list(range(22, 27)),)
     pilot_carriers: t.Tuple[t.Tuple[int]] = (

@@ -33,7 +33,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         self.cp_len = config.cp_len
         self.packet_length_tag_key = config.packet_length_tag_key
         self.frame_length_tag_key = config.frame_length_tag_key
-        self.packet_num_tag_key = config.packet_num_tag_key
+        self.frame_no_tag_key = config.frame_no_tag_key
         self.occupied_carriers = config.occupied_carriers
         self.pilot_carriers = config.pilot_carriers
         self.pilot_symbols = config.pilot_symbols
@@ -86,7 +86,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 for _ in range(header_len)], header_len, self.frame_length,
             self.packet_length_tag_key,
             self.frame_length_tag_key,
-            self.packet_num_tag_key,
+            self.frame_no_tag_key,
             bits_per_header_sym=1,  # BPSK
             scramble_header=self.scramble_bits,
             has_fec=self.fec
