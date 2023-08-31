@@ -178,7 +178,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                     add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(user_data_len));
                     write_index += user_data_len;
                 }
-                double tber = 100 * d_crc.get_failed() / (d_crc.get_failed() + d_crc.get_success());
+                double tber = 100 * d_crc.get_failed() / static_cast<double>(d_crc.get_failed() + d_crc.get_success());
 
                 pmt::pmt_t msg = monitor_msg(
                     make_pair("tb_no", tb_fec_info->d_tb_number),
