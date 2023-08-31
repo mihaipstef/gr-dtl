@@ -179,6 +179,8 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
                 write_index += user_data_len;
 
+                double tber = 100 * d_crc.get_failed() / (d_crc.get_failed() + d_crc.get_success());
+
                 pmt::pmt_t msg = monitor_msg(
                     make_pair("tb_no", tb_fec_info->d_tb_number),
                     make_pair("tb_payload", tb_fec_info->d_tb_payload_len),
@@ -189,6 +191,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                     make_pair("bps", bps),
                     make_pair("crc_ok_count", d_crc.get_success()),
                     make_pair("crc_fail_count", d_crc.get_failed()),
+                    make_pair("tber", tber),
                     make_pair("avg_it", avg_it));
                 message_port_pub(MONITOR_PORT, msg);
 
