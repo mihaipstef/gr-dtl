@@ -171,14 +171,13 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 bool crc_ok =
                     d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
 
-                memcpy(&out[write_index], &data_buffer[0], user_data_len);
-                // int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
-                // assert(data_bytes == user_data_len/8);
-
-                add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(user_data_len));
-
-                write_index += user_data_len;
-
+                if (crc_ok) {
+                    memcpy(&out[write_index], &data_buffer[0], user_data_len);
+                    // int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
+                    // assert(data_bytes == user_data_len/8);
+                    add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(user_data_len));
+                    write_index += user_data_len;
+                }
                 double tber = 100 * d_crc.get_failed() / (d_crc.get_failed() + d_crc.get_success());
 
                 pmt::pmt_t msg = monitor_msg(
