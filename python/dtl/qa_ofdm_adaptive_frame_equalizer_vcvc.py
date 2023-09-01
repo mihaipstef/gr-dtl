@@ -24,7 +24,7 @@ try:
         estimated_snr_tag_key,
         ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
-        ofdm_adaptive_equalizer,
+        ofdm_adaptive_payload_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
         noise_tag_key,
@@ -40,7 +40,7 @@ except ImportError:
         estimated_snr_tag_key,
         ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
-        ofdm_adaptive_equalizer,
+        ofdm_adaptive_payload_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
         noise_tag_key,
@@ -76,7 +76,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             pilot_symbols = (
                 [], [], [cnst.map_to_points_v(x)[0] for x in (1, 0, 3, 0)], []
             )
-            equalizer = ofdm_adaptive_equalizer(
+            equalizer = ofdm_adaptive_payload_equalizer(
                 fft_len,
                 [k for k in consts],
                 ofdm_adaptive_frame_snr_simple(float(0.1)),
