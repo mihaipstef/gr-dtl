@@ -273,11 +273,18 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
             // Add transported payload tag - number of payload bytes carried by the
-            // frame (including CRC)
-            add_item_tag(0,
-                            d_tag_offset,
-                            payload_length_key(),
-                            pmt::from_long(frame_payload + d_crc.get_crc_len()));
+            // frame (including CRC) - if there are any
+            if (frame_payload) {
+                add_item_tag(0,
+                                d_tag_offset,
+                                payload_length_key(),
+                                pmt::from_long(frame_payload + d_crc.get_crc_len()));
+            } else {
+                add_item_tag(0,
+                                d_tag_offset,
+                                payload_length_key(),
+                                pmt::from_long(0));
+            }
             d_tag_offset += expected_frame_symbols;
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,

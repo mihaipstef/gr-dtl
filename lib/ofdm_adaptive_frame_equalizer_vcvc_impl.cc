@@ -108,10 +108,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     int carrier_offset = 0;
 
     int n_ofdm_sym = ninput_items[0];
+    int payload = 0;
 
     std::vector<tag_t> tags;
     get_tags_in_window(tags, 0, 0, 1);
-    for (unsigned i = 0, test = 0; i < tags.size() && test != 7; i++) {
+    for (unsigned i = 0, test = 0; i < tags.size() && test != 15; i++) {
         if (tags[i].key == CHAN_TAPS_KEY) {
             d_channel_state = pmt::c32vector_elements(tags[i].value);
             test |= 1;
@@ -133,8 +134,12 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
             d_lost_frames += lost_frames;
             d_frames_count += lost_frames + 1;
             d_expected_frame_no = (current_frame_no + 1) % 4096;
-            test |= 6;
+            test |= 4;
+        } else if (tags[i].key == payload_length_key()) {
+            payload = pmt::to_long(tags[i].value);
+            test |= 8;
         }
+
     }
 
     auto cnst_tag_it = find_constellation_tag(tags);
@@ -237,7 +242,12 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(feedback.second));
     }
 
-    return n_ofdm_sym;
+    DTL_LOG_DEBUG("payload={}", payload);
+
+    if (payload) {
+        return n_ofdm_sym;
+    }
+    return 0;
 }
 
 } /* namespace dtl */
