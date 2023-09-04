@@ -40,27 +40,39 @@ static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_base_equalize_0 = R"doc(
 static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_base_equalize_1 = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_payload_equalizer = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_ofdm_adaptive_equalizer_0 =
-    R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_payload_equalizer_ofdm_adaptive_payload_equalizer_0 =
+        R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_ofdm_adaptive_equalizer_1 =
-    R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_payload_equalizer_ofdm_adaptive_payload_equalizer_1 =
+        R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize_0 = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_payload_equalizer_equalize = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_equalize_1 = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_payload_equalizer_make = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_get_snr = R"doc()doc";
+static const char* __doc_gr_dtl_ofdm_adaptive_header_equalizer = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_get_noise = R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_header_equalizer_ofdm_adaptive_header_equalizer_0 =
+        R"doc()doc";
 
 
-static const char* __doc_gr_dtl_ofdm_adaptive_equalizer_make = R"doc()doc";
+static const char*
+    __doc_gr_dtl_ofdm_adaptive_header_equalizer_ofdm_adaptive_header_equalizer_1 =
+        R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_header_equalizer_equalize = R"doc()doc";
+
+
+static const char* __doc_gr_dtl_ofdm_adaptive_header_equalizer_make = R"doc()doc";

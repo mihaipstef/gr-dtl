@@ -77,6 +77,11 @@ size_t crc_util::get_success() const
     return d_count - d_failed;
 }
 
+double crc_util::get_fail_rate() const
+{
+    return 100.0*d_failed/d_count;
+}
+
 size_t crc_util::get_crc_len() const { return d_crc_len; }
 
 } // namespace dtl

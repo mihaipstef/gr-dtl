@@ -108,13 +108,15 @@ class ofdm_adaptive_rx(gr.hier_block2):
         chanest = digital.ofdm_chanest_vcvc(
             self.sync_words[0], self.sync_words[1], header_len)
         header_constellation = digital.bpsk_constellation()
-        header_equalizer = digital.ofdm_equalizer_simpledfe(
+        header_equalizer = dtl.ofdm_adaptive_header_equalizer(
             self.fft_len,
-            header_constellation.base(),
+            header_constellation,
+            dtl.ofdm_adaptive_frame_snr_simple(0.1),
             self.occupied_carriers,
             self.pilot_carriers,
             self.pilot_symbols,
             symbols_skipped=0,
+            alpha=0.1,
         )
         header_eq = digital.ofdm_frame_equalizer_vcvc(
             header_equalizer.base(),
@@ -156,7 +158,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
         # Payload path
         payload_fft = fft.fft_vcc(self.fft_len, True, (), True)
 
-        payload_equalizer = dtl.ofdm_adaptive_equalizer(
+        payload_equalizer = dtl.ofdm_adaptive_payload_equalizer(
             self.fft_len,
             self.constellations,
             dtl.ofdm_adaptive_frame_snr_simple(0.1),
@@ -237,6 +239,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 # self.payload_descrambler,
                 (self, 0)
             )
+            self.msg_connect(payload_pack, "monitor", self, "monitor")
 
         self.connect((self.payload_eq, 0), (self, 4))
         self.connect((self.payload_eq, 1), (self, 5))

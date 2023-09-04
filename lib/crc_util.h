@@ -35,6 +35,7 @@ public:
     void reset_monitoring();
     std::size_t get_failed() const;
     std::size_t get_success() const;
+    double get_fail_rate() const;
     std::size_t get_crc_len() const;
 };
 
