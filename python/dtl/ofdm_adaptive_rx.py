@@ -239,6 +239,7 @@ class ofdm_adaptive_rx(gr.hier_block2):
                 # self.payload_descrambler,
                 (self, 0)
             )
+            self.msg_connect(payload_pack, "monitor", self, "monitor")
 
         self.connect((self.payload_eq, 0), (self, 4))
         self.connect((self.payload_eq, 1), (self, 5))

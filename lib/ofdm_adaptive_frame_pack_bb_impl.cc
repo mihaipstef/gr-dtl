@@ -18,7 +18,7 @@ namespace dtl {
 
 static const pmt::pmt_t PAYLOAD_CRC_FAILED_KEY = pmt::mp("crc_fail_count");
 static const pmt::pmt_t PAYLOAD_CRC_SUCCESS_KEY = pmt::mp("crc_ok_count");
-static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor_port");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_pack_bb");
 
