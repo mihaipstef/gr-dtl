@@ -51,7 +51,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     int max_empty_frames)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
-            io_signature::make(1, 1, sizeof(char))),
+            io_signature::make(1, 1, n_payload_carriers * frame_len * sizeof(char))),
       d_constellation(constellation_type_t::BPSK),
       d_fec_scheme(0),
       d_tag_offset(0),
@@ -71,7 +71,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
     d_bps = get_bits_per_symbol(d_constellation);
-    set_min_noutput_items(frame_length());
+    set_min_noutput_items(1);
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
     size_t frame_buffer_max_len =
         d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
@@ -160,6 +160,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
+    int produced = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
@@ -203,7 +204,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
 
         // If there is not enough room in the output buffer...
-        if (write_index + expected_frame_symbols > noutput_items) {
+        if (write_index + expected_frame_symbols > noutput_items * d_frame_len * d_payload_carriers) {
             // ...nothing we can do.
             break;
         }
@@ -223,6 +224,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                         &out[write_index],
                         expected_frame_symbols,
                         repacker);
+            assert(frame_out_symbols == expected_frame_symbols);
             d_waiting_full_frame = false;
             frame_payload = next_frame_nbytes;
             read_index += next_frame_nbytes;
@@ -246,7 +248,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
 
         // add tags
-        if (d_tag_offset + expected_frame_symbols <= nitems_written(0) + write_index) {
+        if (d_tag_offset + 1 == nitems_written(0) + write_index/expected_frame_symbols) {
 
             DTL_LOG_DEBUG("add tags: offset={}, "
                           "frame_in_bytes={}, "
@@ -285,7 +287,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                                 payload_length_key(),
                                 pmt::from_long(0));
             }
-            d_tag_offset += expected_frame_symbols;
+            ++d_tag_offset;
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,
                                 reinterpret_cast<char*>(&d_frame_buffer[0]));
@@ -295,6 +297,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                 std::this_thread::sleep_until(expected_time);
             }
             ++d_frame_count;
+            ++produced;
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(
                 monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
@@ -302,9 +305,9 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
     }
 
-    DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}, write_index={}", read_index, produced, write_index);
     consume_each(read_index);
-    return write_index;
+    return produced;
 }
 
 void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf,
