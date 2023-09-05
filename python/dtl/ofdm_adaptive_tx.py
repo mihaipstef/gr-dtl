@@ -113,7 +113,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
         #     bits_per_byte=8,  # This is before unpacking
         #     reset_tag_key=self.packet_length_tag_key
         # )
-
+        self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
         if self.fec:
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
             repack = blocks.repack_bits_bb(8, 1)
@@ -124,8 +124,6 @@ class ofdm_adaptive_tx(gr.hier_block2):
                                                                  self.constellations),
                                                              self.max_empty_frames,
                                                              self.packet_length_tag_key)
-
-            self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
 
             # set initial MCS scheme
             self.set_feedback(self.initial_mcs[0], self.initial_mcs[1])
@@ -153,7 +151,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 len(self.occupied_carriers[0]), self.frame_store_fname, self.max_empty_frames)
             self.set_feedback(self.initial_mcs[0])
             self.connect(
-                self.frame_unpack,
+                self.to_stream,
                 header_gen,
                 header_mod,
                 (header_payload_mux, 0)
@@ -162,6 +160,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 (self, 0),
                 # payload_scrambler,
                 self.frame_unpack,
+                self.to_stream,
                 payload_mod,
                 (header_payload_mux, 1)
             )
