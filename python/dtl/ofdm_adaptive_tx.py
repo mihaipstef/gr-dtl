@@ -145,6 +145,9 @@ class ofdm_adaptive_tx(gr.hier_block2):
                 (header_payload_mux, 0)
             )
         else:
+            # HACK: Adding a repack just before frame builder improves scheduler performance (not sure why)
+            repack = blocks.repack_bits_bb(8, 8)
+
             self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
                 self.packet_length_tag_key,
                 self.constellations, self.frame_length, frame_rate,
@@ -158,7 +161,7 @@ class ofdm_adaptive_tx(gr.hier_block2):
             )
             self.connect(
                 (self, 0),
-                # payload_scrambler,
+                repack,
                 self.frame_unpack,
                 self.to_stream,
                 payload_mod,
