@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(ofdm_adaptive_utils.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(92ecda33719f9757d90244f05db9215a)                     */
+/* BINDTOOL_HEADER_FILE_HASH(107c48ca46160111facdfe35320fce05)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -124,4 +124,14 @@ void bind_ofdm_adaptive_utils(py::module& m)
 
 
     m.def("fec_tb_index_key", &::gr::dtl::fec_tb_index_key, D(fec_tb_index_key));
+
+
+    m.def("reverse_feedback_cnst_key",
+          &::gr::dtl::reverse_feedback_cnst_key,
+          D(reverse_feedback_cnst_key));
+
+
+    m.def("reverse_feedback_fec_key",
+          &::gr::dtl::reverse_feedback_fec_key,
+          D(reverse_feedback_fec_key));
 }

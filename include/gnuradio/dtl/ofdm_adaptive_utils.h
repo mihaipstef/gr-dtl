@@ -72,6 +72,9 @@ pmt::pmt_t fec_tb_len_key();
 
 pmt::pmt_t fec_tb_index_key();
 
+pmt::pmt_t reverse_feedback_cnst_key();
+
+pmt::pmt_t reverse_feedback_fec_key();
 
 } // namespace dtl
 } // namespace gr

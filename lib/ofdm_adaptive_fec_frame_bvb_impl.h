@@ -61,6 +61,8 @@ private:
     unsigned long d_total_frames;
     std::chrono::duration<double> d_frame_duration;
     int d_max_empty_frames;
+    unsigned char d_reverse_feedback_fec_idx;
+    constellation_type_t d_reverse_feedback_cnst;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,
@@ -71,7 +73,9 @@ public:
                                      const std::string& len_key);
     ~ofdm_adaptive_fec_frame_bvb_impl();
 
-    void process_feedback(pmt::pmt_t feedback) override;
+    void process_feedback(pmt::pmt_t feedback);
+
+    void process_reverse_feedback(pmt::pmt_t reverse_feedback);
 
     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
 

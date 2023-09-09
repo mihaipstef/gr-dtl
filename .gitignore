@@ -5,3 +5,4 @@ examples/*.py
 Testing/
 *.sqlite
 *.run.json
+.vscode

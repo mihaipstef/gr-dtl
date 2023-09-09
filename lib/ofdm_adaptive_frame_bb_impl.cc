@@ -65,11 +65,15 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_frame_count(0),
       d_frame_in_bytes(0),
       d_consecutive_empty_frames(0),
-      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate))
+      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
+      d_reverse_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
+    this->message_port_register_in(pmt::mp("reverse_feedback"));
+    this->set_msg_handler(pmt::mp("reverse_feedback"),
+                          [this](pmt::pmt_t msg) { this->process_reverse_feedback(msg); });
     d_bps = get_bits_per_symbol(d_constellation);
     set_min_noutput_items(1);
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
@@ -80,6 +84,25 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     d_frame_store = frame_file_store(frames_fname);
 }
 
+void ofdm_adaptive_frame_bb_impl::process_reverse_feedback(pmt::pmt_t reverse_feedback)
+{
+    if (pmt::is_dict(reverse_feedback)) {
+        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_cnst_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    reverse_feedback,
+                    reverse_feedback_cnst_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            // Update constellation only if valid data received
+            if (bps) {
+                d_reverse_feedback_cnst = constellation;
+            }
+        }
+    }
+    DTL_LOG_DEBUG("process_reverse_feedback: d_constellation={}",
+                  static_cast<int>(d_reverse_feedback_cnst));
+}
 
 void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 {
@@ -274,6 +297,10 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          d_tag_offset,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
+            add_item_tag(0,
+                        d_tag_offset,
+                        reverse_feedback_cnst_key(),
+                        pmt::from_long(static_cast<int>(d_reverse_feedback_cnst) & 0xf));
             // Add transported payload tag - number of payload bytes carried by the
             // frame (including CRC) - if there are any
             if (frame_payload) {

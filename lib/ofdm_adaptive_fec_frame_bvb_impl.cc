@@ -96,7 +96,9 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_total_frames(0),
       d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
-      d_max_empty_frames(max_empty_frames)
+      d_max_empty_frames(max_empty_frames),
+      d_reverse_feedback_fec_idx(0),
+      d_reverse_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
@@ -125,6 +127,9 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
+    this->message_port_register_in(pmt::mp("reverse_feedback"));
+    this->set_msg_handler(pmt::mp("reverse_feedback"),
+                          [this](pmt::pmt_t msg) { this->process_reverse_feedback(msg); });
     message_port_register_out(pmt::mp("monitor"));
     DTL_LOG_DEBUG("frame_capacity={}, max_bps={}", frame_capacity, max_bps);
 }
@@ -140,6 +145,32 @@ bool ofdm_adaptive_fec_frame_bvb_impl::start()
     d_total_frames = 0;
     return block::start();
 }
+
+void ofdm_adaptive_fec_frame_bvb_impl::process_reverse_feedback(pmt::pmt_t reverse_feedback)
+{
+    if (pmt::is_dict(reverse_feedback)) {
+        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_cnst_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    reverse_feedback,
+                    reverse_feedback_cnst_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            // Update constellation only if valid data received
+            if (bps) {
+                d_reverse_feedback_cnst = constellation;
+            }
+        }
+        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_fec_key())) {
+            d_reverse_feedback_fec_idx = pmt::to_long(
+                pmt::dict_ref(reverse_feedback, reverse_feedback_fec_key(), pmt::from_long(0)));
+        }
+    }
+    DTL_LOG_DEBUG("process_reverse_feedback: d_constellation={}, d_fec_scheme={}",
+                  static_cast<int>(d_reverse_feedback_cnst),
+                  d_reverse_feedback_fec_idx);
+}
+
 
 void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
 {
@@ -196,6 +227,14 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  pmt::from_long(d_current_frame_offset & 0xfff));
 
     add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
+    add_item_tag(0,
+                 d_tag_offset,
+                 reverse_feedback_cnst_key(),
+                 pmt::from_long(static_cast<int>(d_reverse_feedback_cnst) & 0xf));
+    add_item_tag(0,
+                 d_tag_offset,
+                 reverse_feedback_fec_key(),
+                 pmt::from_long(d_reverse_feedback_fec_idx & 0xf));
     ++d_tag_offset;
 
     auto now = std::chrono::steady_clock::now();
