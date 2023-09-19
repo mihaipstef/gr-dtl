@@ -7,6 +7,26 @@ from gnuradio import (
     gr,
     pdu,
 )
+import pmt
+
+
+class feedback_adapter(gr.basic_block):
+
+    def __init__(self):
+        gr.basic_block.__init__(self,
+                                name="feedback_adapter",
+                                in_sig=[], out_sig=[])
+        self.message_port_register_in(pmt.intern("dict"))
+        self.message_port_register_out(pmt.intern("vec"))
+        self.set_msg_handler(pmt.intern("dict"), self.handle_msg)
+
+    def handle_msg(self, msg):
+
+        vec = pmt.make_u8vector(2,0)
+        pmt.u8vector_set(vec, 0, pmt.to_long(pmt.dict_ref(msg, dtl.feedback_constellation_key(), pmt.from_long(0))))
+        pmt.u8vector_set(vec, 1, pmt.to_long(pmt.dict_ref(msg, dtl.fec_feedback_key(), pmt.from_long(0))))
+        msg_vec = pmt.cons(pmt.PMT_NIL, vec)
+        self.message_port_pub(pmt.intern("vec"), msg_vec)
 
 
 class ofdm_adaptive_rx(gr.hier_block2):
@@ -75,8 +95,11 @@ class ofdm_adaptive_rx(gr.hier_block2):
         self.feedback_resampler.declare_sample_delay(self.feedback_filt_delay)
         self.feedback_multiply_length_tag = blocks.tagged_stream_multiply_length(
             gr.sizeof_gr_complex*1, "packet_len", self.feedback_sps)
+        self.adapter = feedback_adapter()
 
         self.msg_connect(self.direct_rx, "feedback",
+                         self.adapter, "dict")
+        self.msg_connect(self.adapter, "vec",
                          self.feedback_formatter, "in")
         self.msg_connect(self.feedback_formatter, "header",
                          self.feedback_to_tagged_stream, "pdus")

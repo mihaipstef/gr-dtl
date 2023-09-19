@@ -253,8 +253,8 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     pmt.symbol_to_string(fec_key()): fec[i][2],
                     pmt.symbol_to_string(fec_tb_payload_key()): fec[i][3],
                     pmt.symbol_to_string(payload_length_key()): len(packets[i]),
-                    pmt.symbol_to_string(reverse_feedback_cnst_key()): 0,
-                    pmt.symbol_to_string(reverse_feedback_fec_key()): 0,
+                    pmt.symbol_to_string(feedback_constellation_key()): 0,
+                    pmt.symbol_to_string(fec_feedback_key()): 0,
                 }
             )
 
