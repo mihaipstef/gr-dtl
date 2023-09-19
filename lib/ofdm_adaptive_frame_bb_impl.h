@@ -36,6 +36,8 @@ public:
 
     void process_feedback(pmt::pmt_t feedback);
 
+    void process_feedback_header(pmt::pmt_t header_data);
+
     int general_work(int noutput_items,
                      gr_vector_int& ninput_items,
                      gr_vector_const_void_star& input_items,
@@ -79,6 +81,7 @@ private:
     int d_consecutive_empty_frames;
     std::chrono::time_point<std::chrono::steady_clock> d_start_time;
     std::chrono::duration<double> d_frame_duration;
+    constellation_type_t d_feedback_cnst;
 };
 
 } // namespace dtl

@@ -30,6 +30,8 @@ try:
         fec_tb_key,
         fec_offset_key,
         fec_tb_payload_key,
+        feedback_constellation_key,
+        fec_feedback_key,
     )
 except ImportError:
     import os
@@ -44,6 +46,8 @@ except ImportError:
         fec_tb_key,
         fec_offset_key,
         fec_tb_payload_key,
+        feedback_constellation_key,
+        fec_feedback_key,
     )
 
 
@@ -66,7 +70,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
         self.tb = None
 
 
-    def test_pass_constellation_through_header_no_fec(self):
+    def test_no_fec(self):
         packets = ((1, 2, 3, 4), (1, 2), (1, 2, 3, 4))
         constellations = ((4, 4), (3, 3), (2, 2))
         packet_lenghts_in_symbols = []
@@ -81,6 +85,11 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tag.offset = offset
             tag.key = get_constellation_tag_key()
             tag.value = pmt.from_long(c[0])
+            tags.append(tag)
+            tag = tag_t()
+            tag.offset = offset
+            tag.key = feedback_constellation_key()
+            tag.value = pmt.from_long(0)
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
@@ -134,11 +143,12 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     "head_num": i,
                     pmt.symbol_to_string(get_constellation_tag_key()): constellations[i][0],
                     "frame_len_key": 1,
-                    pmt.symbol_to_string(payload_length_key()): len(packets[i])
+                    pmt.symbol_to_string(payload_length_key()): len(packets[i]),
+                    pmt.symbol_to_string(feedback_constellation_key()): 0,
                 }
             )
 
-    def test_pass_constellation_through_header_fec(self):
+    def test_header_fec(self):
         packets = ((1, 2, 3, 4), (1, 2), (1, 2, 3, 4))
         constellations = ((4, 4), (3, 3), (2, 2))
         fec = ((1, 0xff, 1, 0xaa), (1, 0, 0, 0), (1, 0, 2, 0xaa))
@@ -154,6 +164,16 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tag.offset = offset
             tag.key = get_constellation_tag_key()
             tag.value = pmt.from_long(c[0])
+            tags.append(tag)
+            tag = tag_t()
+            tag.offset = offset
+            tag.key = feedback_constellation_key()
+            tag.value = pmt.from_long(0)
+            tags.append(tag)
+            tag = tag_t()
+            tag.offset = offset
+            tag.key = fec_feedback_key()
+            tag.value = pmt.from_long(0)
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
@@ -232,7 +252,9 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     pmt.symbol_to_string(fec_offset_key()): fec[i][1],
                     pmt.symbol_to_string(fec_key()): fec[i][2],
                     pmt.symbol_to_string(fec_tb_payload_key()): fec[i][3],
-                    pmt.symbol_to_string(payload_length_key()): len(packets[i])
+                    pmt.symbol_to_string(payload_length_key()): len(packets[i]),
+                    pmt.symbol_to_string(reverse_feedback_cnst_key()): 0,
+                    pmt.symbol_to_string(reverse_feedback_fec_key()): 0,
                 }
             )
 

@@ -57,6 +57,14 @@ class ofdm_adaptive_rx_config(ofdm_adaptive_config):
     use_sync_correct: bool = True
 
 
+@dc.dataclass
+class ofdm_adaptive_full_duplex_config(ofdm_adaptive_config):
+    sync_threshold: float = 0.95
+    use_sync_correct: bool = True
+    max_empty_frames: int = -1
+    sample_rate: int = 700000
+
+
 def _make_config(cfg, json_dict, parser):
 
     class _default_parser:
@@ -92,3 +100,8 @@ def make_rx_config(json_dict):
         pass
     return _make_config(ofdm_adaptive_rx_config(), json_dict, _parser)
 
+
+def make_full_duplex_config(json_dict):
+    class _parser:
+        pass
+    return _make_config(ofdm_adaptive_full_duplex_config(), json_dict, _parser)

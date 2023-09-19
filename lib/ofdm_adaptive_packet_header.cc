@@ -12,6 +12,7 @@
 #include <gnuradio/io_signature.h>
 #include <algorithm>
 #include <cassert>
+#include "tag_utilities.h"
 
 
 namespace gr {
@@ -21,8 +22,6 @@ using namespace gr::digital;
 using namespace std;
 
 INIT_DTL_LOGGER("ofdm_adaptive_packet_header")
-
-static const int FEC_HEADER_LEN = 7;
 
 ofdm_adaptive_packet_header::sptr
 ofdm_adaptive_packet_header::make(const std::vector<std::vector<int>>& occupied_carriers,
@@ -113,7 +112,9 @@ int ofdm_adaptive_packet_header::add_fec_header(const std::vector<tag_t>& tags,
 
     static std::map<pmt::pmt_t, tuple<int, int>> _fec_tags_to_header = {
         { fec_tb_key(),
-          make_tuple(0, 16) },                          // TB id numbers (bit 32-47: 16 bits)
+          make_tuple(0, 12) },                          // TB id numbers (bit 32-43: 12 bits)
+        { fec_feedback_key(),
+          make_tuple(12, 4) },                           // FEC feedback scheme (bit 44-47: 4 bits)
         { fec_offset_key(),
           make_tuple(16, 12) },                         // TB offset (bit 48-59: 12 bits)
         { fec_key(), make_tuple(28, 4) },               // FEC scheme (bit 60-63: 4 bits)
@@ -141,20 +142,24 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
                                                    unsigned char* out,
                                                    const std::vector<tag_t>& tags)
 {
+    std::map<pmt::pmt_t, tag_t> my_tags = get_tags(
+        tags,
+        get_constellation_tag_key(),
+        payload_length_key(),
+        feedback_constellation_key()
+    );
 
-    auto it = find_constellation_tag(tags);
-    if (it == tags.end()) {
-        throw std::invalid_argument("Missing constellation tag.");
+    if (my_tags.size() != 3) {
+        //throw std::invalid_argument
+        DTL_LOG_DEBUG("Missing tags.");
     }
-    unsigned char constellation_type_tag_value = pmt::to_long(it->value) & 0xFF;
-    it = find_tag(tags, payload_length_key());
-    if (it == tags.end()) {
-        throw std::invalid_argument("Missing payload length tag.");
-    }
-    size_t payload_length = pmt::to_long(it->value) & 0xFFF;
+
+    unsigned char cnst = pmt::to_long(my_tags[get_constellation_tag_key()].value) & 0xF;
+    unsigned char feedback_cnst = pmt::to_long(my_tags[feedback_constellation_key()].value) & 0xF;
+    size_t payload_length = pmt::to_long(my_tags[payload_length_key()].value) & 0xFFF;
 
     DTL_LOG_DEBUG("header_formatter: cnst={}, payload_len={}, frame_no={}",
-                  (int)constellation_type_tag_value,
+                  (int)cnst,
                   payload_length,
                   d_header_number);
 
@@ -164,8 +169,10 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     k = add_header_field(out, k, payload_length, 12);
     // Frame number (bit 12-23: 12 bits)
     k = add_header_field(out, k, d_header_number, 12);
-    // Constellation (bit 24-31: 8 bits)
-    k = add_header_field(out, k, constellation_type_tag_value, 8);
+    // Constellation (bit 24-27: 4 bits)
+    k = add_header_field(out, k, cnst, 4);
+    // Reverse feedback (bit 28-21: 4 bits)
+    k = add_header_field(out, k, feedback_cnst, 4);
 
     if (d_has_fec) {
         // Add FEC tags to header (6 bytes) and return next position for CRC
@@ -187,7 +194,7 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
     for (int i = 0; i < d_header_len; i++) {
         out[i] ^= d_scramble_mask[i];
     }
-     DTL_LOG_DEBUG("header_formatter: out");
+    DTL_LOG_DEBUG("header_formatter: out");
     return true;
 }
 
@@ -197,7 +204,8 @@ int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
                                                   std::vector<tag_t>& tags)
 {
     static vector<tuple<int, int, pmt::pmt_t>> fec_header_to_tags = {
-        make_tuple(0, 16, fec_tb_key()),
+        make_tuple(0, 12, fec_tb_key()),
+        make_tuple(12, 4, fec_feedback_key()),
         make_tuple(16, 12, fec_offset_key()),
         make_tuple(28, 4, fec_key()),
         make_tuple(32, 16, fec_tb_payload_key()),
@@ -226,7 +234,8 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
 
     size_t payload_len = 0;
     size_t frame_no = 0;
-    unsigned char constellation_type = 0;
+    unsigned char cnst = 0;
+    unsigned char feedback_cnst = 0;
 
     int k = 0;
     for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
@@ -235,8 +244,11 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     for (int i = 0; i < 12 && k < d_header_len; i += d_bits_per_byte, k++) {
         frame_no |= (((int)in[k]) & d_mask) << i;
     }
-    for (int i = 0; i < 8 && k < d_header_len; i += d_bits_per_byte, k++) {
-        constellation_type |= (((int)in[k]) & d_mask) << i;
+    for (int i = 0; i < 4 && k < d_header_len; i += d_bits_per_byte, k++) {
+        cnst |= (((int)in[k]) & d_mask) << i;
+    }
+    for (int i = 0; i < 4 && k < d_header_len; i += d_bits_per_byte, k++) {
+        feedback_cnst |= (((int)in[k]) & d_mask) << i;
     }
 
     if (d_has_fec) {
@@ -255,9 +267,9 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     }
 
     // Update constellation only if CRC ok
-    if (constellation_type &&
-        constellation_type <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
-        d_constellation = static_cast<constellation_type_t>(constellation_type);
+    if (cnst &&
+        cnst <= static_cast<unsigned char>(constellation_type_t::QAM16)) {
+        d_constellation = static_cast<constellation_type_t>(cnst);
     }
 
     d_bits_per_payload_sym =
@@ -292,6 +304,9 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     tags.push_back(tag);
     tag.key = d_frame_len_tag_key;
     tag.value = pmt::from_long(d_payload_syms);
+    tags.push_back(tag);
+    tag.key = feedback_constellation_key();
+    tag.value = pmt::from_long(feedback_cnst);
     tags.push_back(tag);
     return true;
 }
