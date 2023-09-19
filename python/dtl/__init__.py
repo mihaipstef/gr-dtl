@@ -23,6 +23,7 @@ except ModuleNotFoundError:
 from .ofdm_adaptive_config import (
     ofdm_adaptive_rx_config,
     ofdm_adaptive_tx_config,
+    ofdm_adaptive_full_duplex_config,
 )
 
 from .ofdm_adaptive import *
@@ -30,3 +31,4 @@ from .ofdm_adaptive_rx import *
 from .ofdm_adaptive_tx import *
 from .ofdm_receiver import *
 from .ofdm_transmitter import *
+from .ofdm_adaptive_full_duplex import *

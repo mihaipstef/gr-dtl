@@ -30,8 +30,8 @@ try:
         fec_tb_key,
         fec_offset_key,
         fec_tb_payload_key,
-        reverse_feedback_cnst_key,
-        reverse_feedback_fec_key,
+        feedback_constellation_key,
+        fec_feedback_key,
     )
 except ImportError:
     import os
@@ -46,8 +46,8 @@ except ImportError:
         fec_tb_key,
         fec_offset_key,
         fec_tb_payload_key,
-        reverse_feedback_cnst_key,
-        reverse_feedback_fec_key,
+        feedback_constellation_key,
+        fec_feedback_key,
     )
 
 
@@ -88,7 +88,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = reverse_feedback_cnst_key()
+            tag.key = feedback_constellation_key()
             tag.value = pmt.from_long(0)
             tags.append(tag)
             tag = tag_t()
@@ -144,7 +144,7 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
                     pmt.symbol_to_string(get_constellation_tag_key()): constellations[i][0],
                     "frame_len_key": 1,
                     pmt.symbol_to_string(payload_length_key()): len(packets[i]),
-                    pmt.symbol_to_string(reverse_feedback_cnst_key()): 0,
+                    pmt.symbol_to_string(feedback_constellation_key()): 0,
                 }
             )
 
@@ -167,12 +167,12 @@ class qa_ofdm_adaptive_packet_header(gr_unittest.TestCase):
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = reverse_feedback_cnst_key()
+            tag.key = feedback_constellation_key()
             tag.value = pmt.from_long(0)
             tags.append(tag)
             tag = tag_t()
             tag.offset = offset
-            tag.key = reverse_feedback_fec_key()
+            tag.key = fec_feedback_key()
             tag.value = pmt.from_long(0)
             tags.append(tag)
             tag = tag_t()

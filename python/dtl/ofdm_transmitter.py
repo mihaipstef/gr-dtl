@@ -54,7 +54,7 @@ class ofdm_transmitter(gr.hier_block2):
 
         self.message_port_register_hier_out("monitor")
         self.message_port_register_hier_in("feedback")
-        self.message_port_register_hier_in("reverse_feedback")
+        self.message_port_register_hier_in("header")
 
         self._setup()
 
@@ -187,14 +187,14 @@ class ofdm_transmitter(gr.hier_block2):
         if self.fec:
             self.msg_connect(self, "feedback",
                              self.fec_frame, "feedback")
-            self.msg_connect(self, "reverse_feedback",
-                             self.fec_frame, "reverse_feedback")
+            self.msg_connect(self, "header",
+                             self.fec_frame, "header")
             self.msg_connect(self.fec_frame, "monitor", self, "monitor")
         else:
             self.msg_connect(self, "feedback",
                              self.frame_unpack, "feedback")
-            self.msg_connect(self, "reverse_feedback",
-                             self.frame_unpack, "reverse_feedback")
+            self.msg_connect(self, "header",
+                             self.frame_unpack, "header")
             self.msg_connect(self.frame_unpack, "monitor", self, "monitor")
 
 

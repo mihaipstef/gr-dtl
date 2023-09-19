@@ -19,7 +19,7 @@ class ofdm_receiver(gr.hier_block2):
 
         self.message_port_register_hier_out("monitor")
         self.message_port_register_hier_out("feedback")
-        self.message_port_register_hier_out("reverse_feedback")
+        self.message_port_register_hier_out("header")
 
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
@@ -239,6 +239,6 @@ class ofdm_receiver(gr.hier_block2):
         self.connect((self.sync_detect, 0), (self, 5))
         self.msg_connect(self.payload_eq, "monitor", self, "monitor")
         self.msg_connect(self.payload_eq, "feedback_port", self, "feedback")
-        self.msg_connect(header_parser, "header_data", self, "reverse_feedback")
+        self.msg_connect(header_parser, "header_data", self, "header")
 
 

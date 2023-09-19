@@ -38,10 +38,6 @@ static const pmt::pmt_t FEC_TB_PAYLOAD_KEY = pmt::string_to_symbol("fec_tb_paylo
 static const pmt::pmt_t FEC_TB_LEN_KEY = pmt::string_to_symbol("fec_tb_len_key");
 static const pmt::pmt_t FEC_TB_INDEX_KEY = pmt::string_to_symbol("fec_tb_index_key");
 
-static const pmt::pmt_t REVERSE_FEEDBACK_MSG_KEY = pmt::string_to_symbol("reverse_feedback");
-static const pmt::pmt_t REVERSE_FEEDBACK_CNST_KEY = pmt::string_to_symbol("reverse_feedback_cnst");
-static const pmt::pmt_t REVERSE_FEEDBACK_FEC_KEY = pmt::string_to_symbol("reverse_feedback_fec");
-
 
 template <class T>
 struct constellation_helper {
@@ -174,12 +170,6 @@ pmt::pmt_t DTL_API fec_offset_key() { return FEC_OFFSET_KEY; }
 pmt::pmt_t DTL_API fec_tb_payload_key() { return FEC_TB_PAYLOAD_KEY; }
 
 pmt::pmt_t DTL_API fec_tb_len_key() { return FEC_TB_LEN_KEY; }
-
-pmt::pmt_t DTL_API reverse_feedback_msg_key() { return REVERSE_FEEDBACK_MSG_KEY; }
-
-pmt::pmt_t DTL_API reverse_feedback_cnst_key() { return REVERSE_FEEDBACK_CNST_KEY; }
-
-pmt::pmt_t DTL_API reverse_feedback_fec_key() { return REVERSE_FEEDBACK_FEC_KEY; }
 
 } /* namespace dtl */
 } /* namespace gr */

@@ -113,7 +113,7 @@ int ofdm_adaptive_packet_header::add_fec_header(const std::vector<tag_t>& tags,
     static std::map<pmt::pmt_t, tuple<int, int>> _fec_tags_to_header = {
         { fec_tb_key(),
           make_tuple(0, 12) },                          // TB id numbers (bit 32-43: 12 bits)
-        { reverse_feedback_fec_key(),
+        { fec_feedback_key(),
           make_tuple(12, 4) },                           // FEC feedback scheme (bit 44-47: 4 bits)
         { fec_offset_key(),
           make_tuple(16, 12) },                         // TB offset (bit 48-59: 12 bits)
@@ -146,15 +146,16 @@ bool ofdm_adaptive_packet_header::header_formatter(long packet_len,
         tags,
         get_constellation_tag_key(),
         payload_length_key(),
-        reverse_feedback_cnst_key()
+        feedback_constellation_key()
     );
 
     if (my_tags.size() != 3) {
-        throw std::invalid_argument("Missing tags.");
+        //throw std::invalid_argument
+        DTL_LOG_DEBUG("Missing tags.");
     }
 
     unsigned char cnst = pmt::to_long(my_tags[get_constellation_tag_key()].value) & 0xF;
-    unsigned char feedback_cnst = pmt::to_long(my_tags[reverse_feedback_cnst_key()].value) & 0xF;
+    unsigned char feedback_cnst = pmt::to_long(my_tags[feedback_constellation_key()].value) & 0xF;
     size_t payload_length = pmt::to_long(my_tags[payload_length_key()].value) & 0xFFF;
 
     DTL_LOG_DEBUG("header_formatter: cnst={}, payload_len={}, frame_no={}",
@@ -204,7 +205,7 @@ int ofdm_adaptive_packet_header::parse_fec_header(const unsigned char* in,
 {
     static vector<tuple<int, int, pmt::pmt_t>> fec_header_to_tags = {
         make_tuple(0, 12, fec_tb_key()),
-        make_tuple(12, 4, reverse_feedback_fec_key()),
+        make_tuple(12, 4, fec_feedback_key()),
         make_tuple(16, 12, fec_offset_key()),
         make_tuple(28, 4, fec_key()),
         make_tuple(32, 16, fec_tb_payload_key()),
@@ -304,7 +305,7 @@ bool ofdm_adaptive_packet_header::header_parser(const unsigned char* in,
     tag.key = d_frame_len_tag_key;
     tag.value = pmt::from_long(d_payload_syms);
     tags.push_back(tag);
-    tag.key = reverse_feedback_cnst_key();
+    tag.key = feedback_constellation_key();
     tag.value = pmt::from_long(feedback_cnst);
     tags.push_back(tag);
     return true;

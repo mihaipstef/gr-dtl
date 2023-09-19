@@ -73,9 +73,3 @@ static const char* __doc_gr_dtl_fec_tb_len_key = R"doc()doc";
 
 
 static const char* __doc_gr_dtl_fec_tb_index_key = R"doc()doc";
-
-
-static const char* __doc_gr_dtl_reverse_feedback_cnst_key = R"doc()doc";
-
-
-static const char* __doc_gr_dtl_reverse_feedback_fec_key = R"doc()doc";

@@ -26,7 +26,7 @@ GR_PYTHON_INSTALL(
     ofdm_adaptive.py
     ofdm_receiver.py
     ofdm_transmitter.py
-    ofdm_adaptive_duplex.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/dtl
+    ofdm_adaptive_full_duplex.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/dtl
 )
 
 add_subdirectory(bindings)

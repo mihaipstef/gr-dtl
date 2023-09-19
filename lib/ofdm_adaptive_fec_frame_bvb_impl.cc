@@ -79,8 +79,8 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_tb_len(0),
       d_tb_count(0),
       d_cw_count(0),
-      d_feedback_fec_idx(1),
-      d_feedback_cnst(constellation_type_t::BPSK),
+      d_header_fec_idx(1),
+      d_header_cnst(constellation_type_t::BPSK),
       d_current_enc(nullptr),
       d_current_fec_idx(1),
       d_current_cnst(constellation_type_t::BPSK),
@@ -97,8 +97,8 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_total_frames(0),
       d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
       d_max_empty_frames(max_empty_frames),
-      d_reverse_feedback_fec_idx(0),
-      d_reverse_feedback_cnst(constellation_type_t::UNKNOWN)
+      d_feedback_fec_idx(0),
+      d_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
@@ -127,9 +127,9 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
-    this->message_port_register_in(pmt::mp("reverse_feedback"));
-    this->set_msg_handler(pmt::mp("reverse_feedback"),
-                          [this](pmt::pmt_t msg) { this->process_reverse_feedback(msg); });
+    this->message_port_register_in(pmt::mp("header"));
+    this->set_msg_handler(pmt::mp("header"),
+                          [this](pmt::pmt_t msg) { this->process_feedback_header(msg); });
     message_port_register_out(pmt::mp("monitor"));
     DTL_LOG_DEBUG("frame_capacity={}, max_bps={}", frame_capacity, max_bps);
 }
@@ -145,32 +145,6 @@ bool ofdm_adaptive_fec_frame_bvb_impl::start()
     d_total_frames = 0;
     return block::start();
 }
-
-void ofdm_adaptive_fec_frame_bvb_impl::process_reverse_feedback(pmt::pmt_t reverse_feedback)
-{
-    if (pmt::is_dict(reverse_feedback)) {
-        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_cnst_key())) {
-            constellation_type_t constellation =
-                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
-                    reverse_feedback,
-                    reverse_feedback_cnst_key(),
-                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
-            int bps = get_bits_per_symbol(constellation);
-            // Update constellation only if valid data received
-            if (bps) {
-                d_reverse_feedback_cnst = constellation;
-            }
-        }
-        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_fec_key())) {
-            d_reverse_feedback_fec_idx = pmt::to_long(
-                pmt::dict_ref(reverse_feedback, reverse_feedback_fec_key(), pmt::from_long(0)));
-        }
-    }
-    DTL_LOG_DEBUG("process_reverse_feedback: d_constellation={}, d_fec_scheme={}",
-                  static_cast<int>(d_reverse_feedback_cnst),
-                  d_reverse_feedback_fec_idx);
-}
-
 
 void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
 {
@@ -192,9 +166,35 @@ void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
                 pmt::dict_ref(feedback, fec_feedback_key(), pmt::from_long(0)));
         }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}, d_fec_scheme={}",
+    DTL_LOG_DEBUG("process_feedback: d_feedback_cnst={}, d_feedback_fec_idx={}",
                   static_cast<int>(d_feedback_cnst),
                   d_feedback_fec_idx);
+}
+
+
+void ofdm_adaptive_fec_frame_bvb_impl::process_feedback_header(pmt::pmt_t header_data)
+{
+    if (pmt::is_dict(header_data)) {
+        if (pmt::dict_has_key(header_data, feedback_constellation_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    header_data,
+                    feedback_constellation_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            // Update constellation only if valid data received
+            if (bps) {
+                d_header_cnst = constellation;
+            }
+        }
+        if (pmt::dict_has_key(header_data, fec_feedback_key())) {
+            d_header_fec_idx = pmt::to_long(
+                pmt::dict_ref(header_data, fec_feedback_key(), pmt::from_long(0)));
+        }
+    }
+    DTL_LOG_DEBUG("process_feedback_header: d_header_cnst={}, d_header_fec_idx={}",
+                  static_cast<int>(d_header_cnst),
+                  d_header_fec_idx);
 }
 
 
@@ -229,12 +229,12 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
     add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
     add_item_tag(0,
                  d_tag_offset,
-                 reverse_feedback_cnst_key(),
-                 pmt::from_long(static_cast<int>(d_reverse_feedback_cnst) & 0xf));
+                 feedback_constellation_key(),
+                 pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
     add_item_tag(0,
                  d_tag_offset,
-                 reverse_feedback_fec_key(),
-                 pmt::from_long(d_reverse_feedback_fec_idx & 0xf));
+                 fec_feedback_key(),
+                 pmt::from_long(d_feedback_fec_idx & 0xf));
     ++d_tag_offset;
 
     auto now = std::chrono::steady_clock::now();
@@ -333,14 +333,14 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         case Action::PROCESS_INPUT: {
 
             // Update constellation and FEC
-            if (d_feedback_cnst != d_current_cnst && d_current_frame_offset > 0) {
+            if (d_header_cnst != d_current_cnst && d_current_frame_offset > 0) {
                 d_action = Action::FINALIZE_FRAME;
                 continue;
             }
 
-            d_current_fec_idx = d_feedback_fec_idx;
+            d_current_fec_idx = d_header_fec_idx;
             d_current_enc = d_encoders[d_current_fec_idx];
-            d_current_cnst = d_feedback_cnst;
+            d_current_cnst = d_header_cnst;
             d_current_bps = get_bits_per_symbol(d_current_cnst);
 
             // Frame carries an integer number of bytes

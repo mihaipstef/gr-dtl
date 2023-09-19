@@ -38,8 +38,8 @@ private:
     unsigned long d_tb_count;
     unsigned long d_cw_count;
 
-    unsigned char d_feedback_fec_idx;
-    constellation_type_t d_feedback_cnst;
+    unsigned char d_header_fec_idx;
+    constellation_type_t d_header_cnst;
     fec_enc::sptr d_current_enc;
     unsigned char d_current_fec_idx;
     constellation_type_t d_current_cnst;
@@ -61,8 +61,8 @@ private:
     unsigned long d_total_frames;
     std::chrono::duration<double> d_frame_duration;
     int d_max_empty_frames;
-    unsigned char d_reverse_feedback_fec_idx;
-    constellation_type_t d_reverse_feedback_cnst;
+    unsigned char d_feedback_fec_idx;
+    constellation_type_t d_feedback_cnst;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,
@@ -75,7 +75,7 @@ public:
 
     void process_feedback(pmt::pmt_t feedback);
 
-    void process_reverse_feedback(pmt::pmt_t reverse_feedback);
+    void process_feedback_header(pmt::pmt_t header_data);
 
     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
 

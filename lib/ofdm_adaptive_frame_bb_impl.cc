@@ -66,14 +66,14 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_frame_in_bytes(0),
       d_consecutive_empty_frames(0),
       d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
-      d_reverse_feedback_cnst(constellation_type_t::UNKNOWN)
+      d_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
-    this->message_port_register_in(pmt::mp("reverse_feedback"));
-    this->set_msg_handler(pmt::mp("reverse_feedback"),
-                          [this](pmt::pmt_t msg) { this->process_reverse_feedback(msg); });
+    this->message_port_register_in(pmt::mp("header"));
+    this->set_msg_handler(pmt::mp("header"),
+                          [this](pmt::pmt_t msg) { this->process_feedback_header(msg); });
     d_bps = get_bits_per_symbol(d_constellation);
     set_min_noutput_items(1);
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
@@ -84,33 +84,36 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     d_frame_store = frame_file_store(frames_fname);
 }
 
-void ofdm_adaptive_frame_bb_impl::process_reverse_feedback(pmt::pmt_t reverse_feedback)
-{
-    if (pmt::is_dict(reverse_feedback)) {
-        if (pmt::dict_has_key(reverse_feedback, reverse_feedback_cnst_key())) {
-            constellation_type_t constellation =
-                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
-                    reverse_feedback,
-                    reverse_feedback_cnst_key(),
-                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
-            int bps = get_bits_per_symbol(constellation);
-            // Update constellation only if valid data received
-            if (bps) {
-                d_reverse_feedback_cnst = constellation;
-            }
-        }
-    }
-    DTL_LOG_DEBUG("process_reverse_feedback: d_constellation={}",
-                  static_cast<int>(d_reverse_feedback_cnst));
-}
-
 void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 {
     if (pmt::is_dict(feedback)) {
+        DTL_LOG_DEBUG("process_feedback: is dict");
         if (pmt::dict_has_key(feedback, feedback_constellation_key())) {
             constellation_type_t constellation =
                 static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
                     feedback,
+                    feedback_constellation_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            DTL_LOG_DEBUG("process_feedback: has key {}", (int)constellation);
+
+            // Update constellation only if valid data received
+            if (bps) {
+                d_feedback_cnst = constellation;
+            }
+        }
+    }
+    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+                  static_cast<int>(d_feedback_cnst));
+}
+
+void ofdm_adaptive_frame_bb_impl::process_feedback_header(pmt::pmt_t header_data)
+{
+    if (pmt::is_dict(header_data)) {
+        if (pmt::dict_has_key(header_data, feedback_constellation_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    header_data,
                     feedback_constellation_key(),
                     pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
             int bps = get_bits_per_symbol(constellation);
@@ -121,7 +124,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
             }
         }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+    DTL_LOG_DEBUG("process_feedback_header: d_constellation={}",
                   static_cast<int>(d_constellation));
 }
 
@@ -200,7 +203,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     while (write_index < noutput_items && !wait_next_work) {
 
         int frame_payload = -1;
-
 
         int frame_bits = 0;
         vector<tag_t> fec_tags;
@@ -299,8 +301,8 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          pmt::from_long(static_cast<int>(cnst)));
             add_item_tag(0,
                         d_tag_offset,
-                        reverse_feedback_cnst_key(),
-                        pmt::from_long(static_cast<int>(d_reverse_feedback_cnst) & 0xf));
+                        feedback_constellation_key(),
+                        pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
             // Add transported payload tag - number of payload bytes carried by the
             // frame (including CRC) - if there are any
             if (frame_payload) {
