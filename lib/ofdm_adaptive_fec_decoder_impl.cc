@@ -194,12 +194,12 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                     make_pair("avg_it", avg_it));
                 message_port_pub(MONITOR_PORT, msg);
 
-                DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}, avg_it={}",
+                DTL_LOG_DEBUG("tb_payload_ready: crc_ok={}, tb_no={}, tb_payload={}, bps={}, user_data_len={}, avg_it={}, crc_fail_count={}",
                             crc_ok,
                             tb_fec_info->d_tb_number,
                             tb_fec_info->d_tb_payload_len,
                             bps,
-                            user_data_len, avg_it);
+                            user_data_len, avg_it, d_crc.get_failed());
             };
 
             d_tb_dec->process_frame(&in[read_index],

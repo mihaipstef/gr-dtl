@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+message monitor_dec_msg {
+    int32 tb_no = 1;
+    int32 tb_payload = 2;
+    int32 tb_code_k = 3;
+    int32 tb_code_n = 4;
+    int32 tb_codewords = 5;
+    int32 frame_payload = 6;
+    int32 bps = 7;
+    int32 crc_ok_count = 8;
+    int32 crc_fail_count = 9;
+    int32 tber = 10;
+    double avg_it = 11;
+}
