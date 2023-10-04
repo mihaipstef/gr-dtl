@@ -6,10 +6,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+
 ########################################################################
 # Setup library
 ########################################################################
 include(GrPlatform) #define LIB_SUFFIX
+
+find_package(Protobuf REQUIRED)
+include(FindProtobuf)
+add_subdirectory(proto)
+
 list(APPEND dtl_sources
     ofdm_adaptive_equalizer.cc
     ofdm_adaptive_frame_equalizer_vcvc_impl.cc
@@ -39,7 +45,8 @@ list(APPEND dtl_sources
     fec_utils.cc
     ofdm_adaptive_constellation_soft_cf_impl.cc
     ofdm_adaptive_fec_pack_bb_impl.cc
-    monitor_msg.cc)
+    monitor_msg.cc
+    )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -47,18 +54,25 @@ if(NOT dtl_sources)
     return()
 endif(NOT dtl_sources)
 
-find_package(ZeroMQ)
+find_package(ZeroMQ REQUIRED)
 
 add_library(gnuradio-dtl SHARED ${dtl_sources})
+
 target_link_libraries(gnuradio-dtl gnuradio::gnuradio-runtime)
 target_link_libraries(gnuradio-dtl gnuradio-digital)
 target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 target_link_libraries(gnuradio-dtl gnuradio-fec)
+#target_link_libraries(gnuradio-dtl $<TARGET_OBJECTS:proto> ${Protobuf_LIBRARIES})
+target_link_libraries(gnuradio-dtl proto ${Protobuf_LIBRARIES})
+
 
 target_include_directories(gnuradio-dtl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
   )
+message(CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR})
+
 set_target_properties(gnuradio-dtl PROPERTIES DEFINE_SYMBOL "gnuradio_dtl_EXPORTS")
 
 if(APPLE)
@@ -91,17 +105,18 @@ include(GrTest)
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
 list(APPEND test_dtl_sources
-)
-# Anything we need to link to for the unit tests go here
-list(APPEND GR_TEST_TARGET_DEPS gnuradio-dtl)
+    qa_monitor_proto.cc)
 
 if(NOT test_dtl_sources)
     MESSAGE(STATUS "No C++ unit tests... skipping")
     return()
 endif(NOT test_dtl_sources)
 
+list(APPEND GR_TEST_TARGET_DEPS gnuradio-dtl proto ${Protobuf_LIBRARIES})
 foreach(qa_file ${test_dtl_sources})
-    GR_ADD_CPP_TEST("dtl_${qa_file}"
-        ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file}
-    )
+    set(target_name "dtl_${qa_file}")
+    gr_add_cpp_test(${target_name} ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file})
+    target_include_directories(${target_name}
+        PRIVATE ${PROTOBUF_INCLUDE_DIR}
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 endforeach(qa_file)

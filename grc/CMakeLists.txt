@@ -7,5 +7,6 @@
 #
 install(FILES
     dtl_ofdm_adaptive_tx.block.yml
-    dtl_ofdm_adaptive_rx.block.yml DESTINATION share/gnuradio/grc/blocks
+    dtl_ofdm_adaptive_rx.block.yml
+    DESTINATION share/gnuradio/grc/blocks
 )
