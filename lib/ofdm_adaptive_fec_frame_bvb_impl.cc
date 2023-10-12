@@ -87,6 +87,7 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_current_bps(1),
       d_current_frame_len(0),
       d_current_frame_offset(0),
+      d_current_frame_payload(0),
       d_len_key(pmt::intern(len_key)),
       d_tag_offset(0),
       d_action(Action::PROCESS_INPUT),
@@ -399,7 +400,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 //...skip to next scheduled work.
                 wait_next_work = true;
             } else {
-
                 // Output the TB frame by frame
                 while (!d_tb_enc->ready() && produced_frames < noutput_items) {
 
@@ -419,20 +419,31 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                         d_current_bps);
 
                     // If we fill out the current frame ...
-                    if (out_frame_bytes == current_frame_available_bytes()) {
+                    int avail_bytes = current_frame_available_bytes();
+                    if (out_frame_bytes == avail_bytes) {
                         // add tags
                         add_frame_tags(d_frame_used_capacity * d_current_bps / 8 +
                                        out_frame_bytes);
                         d_current_frame_offset = 0;
+                        d_current_frame_payload = 0;
                         ++produced_frames;
                         write_index += (d_frame_capacity - d_frame_used_capacity);
                         d_frame_used_capacity = 0;
                     } else {
-                        d_current_frame_offset += out_frame_bytes;
-                        d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
-                        write_index += d_frame_used_capacity;
+                        if (d_current_frame_offset == 0) {
+                            d_current_frame_offset = out_frame_bytes;
+                            d_current_frame_payload += out_frame_bytes;
+                            d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
+                            write_index += d_frame_used_capacity;
+                        } else {
+                            d_frame_used_capacity = d_current_frame_offset + align_bytes_to_syms(out_frame_bytes);
+                            d_current_frame_payload += out_frame_bytes;
+                            write_index += d_frame_used_capacity;
+                        }
+
                     }
                     ++d_used_frames_count;
+
                 }
 
                 // If TB buffer empty check if we can start another TB in current frame
@@ -463,15 +474,16 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                           d_current_frame_offset);
         } break;
         case Action::FINALIZE_FRAME: {
-            DTL_LOG_DEBUG("finalize_frame: payload={}", d_current_frame_offset);
-            padded_frame_out(d_current_frame_offset);
+            DTL_LOG_DEBUG("finalize_frame: payload={}", d_current_frame_payload);
+            padded_frame_out(d_current_frame_payload);
             d_frame_used_capacity = 0;
             d_current_frame_offset = 0;
+            d_current_frame_payload = 0;
             d_action = Action::PROCESS_INPUT;
             ++produced_frames;
         } break;
         } // action switch
-    }     // input loop
+    } // input loop
 
     DTL_LOG_DEBUG("work_finish: d_frame_capacity={}, noutput={}, ninput={}, "
                   "read_index={}, write_index={}, tb_len={}, frame_offset={}, "
