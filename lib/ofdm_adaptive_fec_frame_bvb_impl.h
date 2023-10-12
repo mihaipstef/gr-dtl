@@ -47,6 +47,7 @@ private:
     tb_encoder::sptr d_tb_enc;
     int d_current_frame_len;
     int d_current_frame_offset;
+    int d_current_frame_payload;
     pmt::pmt_t d_len_key;
     uint64_t d_tag_offset;
     Action d_action;
