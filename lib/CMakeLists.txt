@@ -46,7 +46,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_constellation_soft_cf_impl.cc
     ofdm_adaptive_fec_pack_bb_impl.cc
     monitor_msg.cc
-    )
+    ip_packet_impl.cc )
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -71,7 +71,6 @@ target_include_directories(gnuradio-dtl
     PUBLIC $<INSTALL_INTERFACE:include>
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
   )
-message(CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR})
 
 set_target_properties(gnuradio-dtl PROPERTIES DEFINE_SYMBOL "gnuradio_dtl_EXPORTS")
 
