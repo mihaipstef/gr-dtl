@@ -29,5 +29,5 @@ install(FILES
     ofdm_adaptive_frame_to_stream_vbb.h
     ofdm_adaptive_constellation_soft_cf.h
     ofdm_adaptive_fec_pack_bb.h
-    DESTINATION include/gnuradio/dtl
+    ip_packet.h DESTINATION include/gnuradio/dtl
 )

@@ -48,7 +48,8 @@ list(APPEND dtl_python_files
     fec_python.cc
     ofdm_adaptive_frame_to_stream_vbb_python.cc
     ofdm_adaptive_constellation_soft_cf_python.cc
-    ofdm_adaptive_fec_pack_bb_python.cc python_bindings.cc)
+    ofdm_adaptive_fec_pack_bb_python.cc
+    ip_packet_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..
