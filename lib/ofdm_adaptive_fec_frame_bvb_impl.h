@@ -64,6 +64,7 @@ private:
     int d_max_empty_frames;
     unsigned char d_feedback_fec_idx;
     constellation_type_t d_feedback_cnst;
+    std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> d_expected_time;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,

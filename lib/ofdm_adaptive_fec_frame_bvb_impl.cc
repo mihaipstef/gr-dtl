@@ -142,7 +142,7 @@ ofdm_adaptive_fec_frame_bvb_impl::~ofdm_adaptive_fec_frame_bvb_impl() {}
 
 bool ofdm_adaptive_fec_frame_bvb_impl::start()
 {
-    d_start_time = std::chrono::steady_clock::now();
+    //d_start_time = std::chrono::steady_clock::now();
     d_total_frames = 0;
     return block::start();
 }
@@ -237,16 +237,10 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  fec_feedback_key(),
                  pmt::from_long(d_feedback_fec_idx & 0xf));
     ++d_tag_offset;
-
-    auto now = std::chrono::steady_clock::now();
-    auto expected_time = d_start_time + d_total_frames * d_frame_duration;
-
-    if (now < expected_time) {
-        std::this_thread::sleep_until(expected_time);
-    }
-
     ++d_total_frames;
-    DTL_LOG_DEBUG("frame_out: tb_no={}", d_tb_count);
+
+    d_expected_time = d_start_time + d_total_frames * d_frame_duration;
+    DTL_LOG_DEBUG("frame_out: tb_no={}, frame_payaload={}", d_tb_count, frame_payload);
 }
 
 
@@ -302,6 +296,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                   output_available,
                   ninput_items[0],
                   (int)d_action);
+
+    if (d_total_frames == 0) {
+        d_start_time = std::chrono::steady_clock::now();
+    } else {
+        auto now = std::chrono::steady_clock::now();
+        if (now < d_expected_time) {
+            std::this_thread::sleep_until(d_expected_time);
+        }
+    }
 
     // If no input but enough space in output buffer, generate an empty frame
     if (ninput_items[0] == 0 && noutput_items > 0) {
