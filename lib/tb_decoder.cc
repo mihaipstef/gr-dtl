@@ -122,6 +122,16 @@ bool tb_decoder::process_frame(
                  in + frame_payload_len + extra_bits,
                  back_inserter(d_tb_buffers[RCV_BUF]));
             d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
+
+            int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
+            int tb_size = 8 * align_bits_to_bytes(tb_len * fec_info->d_ncheck + fec_info->d_tb_payload_len);
+            if (frame_payload_len - fec_info->d_tb_offset == tb_size) {
+                decode(tb_len, avg_it);
+                on_data_ready(d_data_buffer, d_fec_info, avg_it);
+                d_buf_idx = 0;
+                d_tb_buffers[RCV_BUF].clear();
+            }
+
             DTL_LOG_DEBUG("rcv_buf_size={}, append={}",
                           d_tb_buffers[RCV_BUF].size(),
                           frame_payload_len + extra_bits - new_tb_offset);
