@@ -15,6 +15,21 @@ namespace dtl {
 
 #if DTL_LOGGING_ENABLE
 
+dtl_logging_backend_wrapper::dtl_logging_backend_wrapper()
+    : backend(std::make_shared<spdlog::sinks::dist_sink_mt>())
+{
+    backend->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_st>());
+}
+
+
+dtl_logger_wrapper::dtl_logger_wrapper(const std::string& name)
+{
+    logger = std::make_shared<spdlog::logger>(name, dtl_logging_backend());
+    logger->set_level(logging::singleton().default_level());
+    logger->set_pattern("%D %H:%M:%S.%f %P %t %n:%v");
+    register_logger(logger);
+}
+
 std::shared_ptr<spdlog::sinks::dist_sink_mt> dtl_logging_backend()
 {
     static dtl_logging_backend_wrapper backend;
