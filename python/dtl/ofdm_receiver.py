@@ -178,8 +178,6 @@ class ofdm_receiver(gr.hier_block2):
             1  # Skip 1 symbol (that was already in the header)
         )
 
-        ip = dtl.ip_packet(self.packet_length_tag_key)
-
         self.connect(
             (hpd, 1),
             payload_fft,
@@ -204,7 +202,6 @@ class ofdm_receiver(gr.hier_block2):
                 payload_demod,
                 fec_dec,
                 fec_pack,
-                ip,
                 # self.payload_descrambler,
                 (self, 0)
             )
