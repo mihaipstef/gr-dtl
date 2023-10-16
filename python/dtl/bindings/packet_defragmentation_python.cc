@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(ip_packet.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(f55cd1bcfb83abbf8b3a31fa0a1c0590)                     */
+/* BINDTOOL_HEADER_FILE(packet_defragmentation.h) */
+/* BINDTOOL_HEADER_FILE_HASH(9fb1f5aa7f187052f785bd5a4a906c19)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,23 +23,27 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/ip_packet.h>
+#include <gnuradio/dtl/packet_defragmentation.h>
 // pydoc.h is automatically generated in the build directory
-#include <ip_packet_pydoc.h>
+#include <packet_defragmentation_pydoc.h>
 
-void bind_ip_packet(py::module& m)
+void bind_packet_defragmentation(py::module& m)
 {
 
-    using ip_packet = ::gr::dtl::ip_packet;
+    using packet_defragmentation = ::gr::dtl::packet_defragmentation;
 
 
-    py::class_<ip_packet,
+    py::class_<packet_defragmentation,
                gr::tagged_stream_block,
                gr::block,
                gr::basic_block,
-               std::shared_ptr<ip_packet>>(m, "ip_packet", D(ip_packet))
+               std::shared_ptr<packet_defragmentation>>(
+        m, "packet_defragmentation", D(packet_defragmentation))
 
-        .def(py::init(&ip_packet::make), py::arg("len_key"), D(ip_packet, make))
+        .def(py::init(&packet_defragmentation::make),
+             py::arg("validator"),
+             py::arg("len_key"),
+             D(packet_defragmentation, make))
 
 
         ;

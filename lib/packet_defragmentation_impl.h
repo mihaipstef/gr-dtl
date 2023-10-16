@@ -8,25 +8,23 @@
 #ifndef INCLUDED_DTL_IP_PACKET_IMPL_H
 #define INCLUDED_DTL_IP_PACKET_IMPL_H
 
-#include <gnuradio/dtl/ip_packet.h>
-#include <netinet/ip.h>
+#include <gnuradio/dtl/packet_defragmentation.h>
 
 
 namespace gr {
 namespace dtl {
 
-class ip_packet_impl : public ip_packet
+class packet_defragmentation_impl : public packet_defragmentation
 {
 private:
     size_t d_current_packet_len;
     size_t d_expected_len;
     pmt::pmt_t d_len_key;
-
-    bool valid_ip_header(struct ip *iph);
+    packet_validator::sptr d_validator;
 
 public:
-    ip_packet_impl(const std::string& len_key);
-    ~ip_packet_impl();
+    packet_defragmentation_impl(packet_validator::sptr validator, const std::string& len_key);
+    ~packet_defragmentation_impl();
 
     // Where all the action really happens
     int work(int noutput_items,

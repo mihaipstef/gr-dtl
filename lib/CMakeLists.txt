@@ -46,7 +46,8 @@ list(APPEND dtl_sources
     ofdm_adaptive_constellation_soft_cf_impl.cc
     ofdm_adaptive_fec_pack_bb_impl.cc
     monitor_msg.cc
-    ip_packet_impl.cc )
+    packet_defragmentation_impl.cc
+    packet_validator.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
