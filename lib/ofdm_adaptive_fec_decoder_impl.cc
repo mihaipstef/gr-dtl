@@ -7,7 +7,7 @@
 
 #include "fec_utils.h"
 #include "logger.h"
-#include "monitor_msg.h"
+#include <gnuradio/dtl/monitor_msg.h>
 #include "ofdm_adaptive_fec_decoder_impl.h"
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
@@ -172,7 +172,9 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                     d_crc.verify_crc(&d_crc_buffer[0], crc_buf_len + d_crc.get_crc_len());
 
                 if (crc_ok) {
+                    struct iphdr *iph = (struct iphdr *)&data_buffer[0];
                     memcpy(&out[write_index], &data_buffer[0], user_data_len);
+
                     // int data_bytes = d_to_bytes.repack_lsb_first(&data_buffer[0], user_data_len, &out[write_index]);
                     // assert(data_bytes == user_data_len/8);
                     add_item_tag(0, nitems_written(0)+write_index, d_len_key, pmt::from_long(user_data_len));

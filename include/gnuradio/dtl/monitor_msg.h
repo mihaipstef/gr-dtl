@@ -9,6 +9,7 @@
 #define INCLUDED_DTL_MONITOR_MSG_H
 
 #include <pmt/pmt.h>
+#include <iostream>
 
 namespace gr {
 namespace dtl {
@@ -79,6 +80,17 @@ pmt::pmt_t monitor_msg(P ...pairs) {
     (add_kv(pairs), ...);
     return msg;
 }
+
+
+// template <class... P>
+// pmt::pmt_t monitor_msg_b(P ...pairs) {
+//     pmt::pmt_t msg = monitor_msg(pairs...);
+//     std::stringbuf sb;
+//     pmt::serialize(msg, sb);
+//     std::string s = sb.str();
+//     return pmt::init_u8vector(s.size(), (uint8_t*)s.c_str());
+// }
+
 
 } // namespace dtl
 } // namespace gr
