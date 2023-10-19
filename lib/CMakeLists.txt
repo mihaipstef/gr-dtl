@@ -32,7 +32,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_detect_bb_impl.cc
     constellation.cc
     crc_util.cc
-    zmq_probe_impl.cc
+    monitor_probe_impl.cc
     frame_file_store.cc
     ofdm_adaptive_constellation_metric_vcvf_impl.cc
     ofdm_adaptive_fec_frame_bvb_impl.cc
@@ -64,7 +64,7 @@ target_link_libraries(gnuradio-dtl gnuradio-digital)
 target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 target_link_libraries(gnuradio-dtl gnuradio-fec)
 #target_link_libraries(gnuradio-dtl $<TARGET_OBJECTS:proto> ${Protobuf_LIBRARIES})
-target_link_libraries(gnuradio-dtl proto ${Protobuf_LIBRARIES})
+target_link_libraries(gnuradio-dtl dtl-proto ${Protobuf_LIBRARIES})
 
 
 target_include_directories(gnuradio-dtl

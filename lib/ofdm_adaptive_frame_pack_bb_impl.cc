@@ -9,7 +9,7 @@
 #include "ofdm_adaptive_frame_pack_bb_impl.h"
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
-#include "monitor_msg.h"
+#include <gnuradio/dtl/monitor_msg.h>
 #include <utility>
 
 namespace gr {
