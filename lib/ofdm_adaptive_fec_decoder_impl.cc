@@ -8,9 +8,9 @@
 #include "fec_utils.h"
 #include "logger.h"
 #include <gnuradio/dtl/monitor_msg.h>
-#include "ofdm_adaptive_fec_decoder_impl.h"
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
+#include "ofdm_adaptive_fec_decoder_impl.h"
 
 namespace gr {
 namespace dtl {
@@ -182,7 +182,7 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
                 }
                 double tber = 100 * d_crc.get_failed() / static_cast<double>(d_crc.get_failed() + d_crc.get_success());
 
-                pmt::pmt_t msg = monitor_msg(
+                pmt::pmt_t msg = monitor_msg_builder.build_any(
                     make_pair("tb_no", tb_fec_info->d_tb_number),
                     make_pair("tb_payload", tb_fec_info->d_tb_payload_len),
                     make_pair("tb_code_k", tb_fec_info->get_k()),

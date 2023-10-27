@@ -16,8 +16,6 @@ namespace gr {
 namespace dtl {
 
 
-#define TAG_PROTO 0x5c
-
 class DTL_API message_sender_base {
 public:
     typedef std::shared_ptr<message_sender_base> sptr;
@@ -42,7 +40,7 @@ class DTL_API monitor_probe : virtual public gr::block
 public:
     typedef std::shared_ptr<monitor_probe> sptr;
     static sptr make(const std::string& name, message_sender_base::sptr sender);
-    virtual void monitor_msg_handler(pmt::pmt_t msg) = 0;
+    virtual size_t monitor_msg_handler(pmt::pmt_t msg) = 0;
 };
 
 

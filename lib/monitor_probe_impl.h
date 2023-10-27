@@ -31,12 +31,11 @@ class monitor_probe_impl : public monitor_probe
 private:
     std::string d_probe_name;
     message_sender_base::sptr d_sender;
-    pmt::pmt_t d_meta_msg;
 public:
     monitor_probe_impl(const std::string& name, message_sender_base::sptr sender);
     ~monitor_probe_impl() override;
 
-    void monitor_msg_handler(pmt::pmt_t msg) override;
+    size_t monitor_msg_handler(pmt::pmt_t msg) override;
 };
 
 } // namespace dtl

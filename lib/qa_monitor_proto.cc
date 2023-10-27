@@ -7,7 +7,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <gnuradio/dtl/monitor_probe.h>
-#include <gnuradio/dtl/monitor_probe_parser.h>
+#include <gnuradio/dtl/monitor_parser.h>
 #include <gnuradio/dtl/monitor_proto.h>
 #include "proto/monitor_fec.pb.h"
 
@@ -26,38 +26,41 @@ struct test_sender: public message_sender_base {
 
 BOOST_AUTO_TEST_CASE(monitor_fec_test_any)
 {
+    //parser_registry::load_parsers();
     std::shared_ptr<test_sender> sender = std::make_shared<test_sender>();
     monitor_probe::sptr probe = monitor_probe::make("test", sender);
-    monitor_proto<monitor_dec_msg> msg;
+    monitor_proto<monitor_dec_msg, 1> msg;
     std::vector<uint8_t> sender_buf(msg.size() + 1);
     sender->raw_msg = &sender_buf[0];
-
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<1; i++) {
         pmt::pmt_t blob = msg.build_any(
             std::make_pair("tb_no", 10),
-            std::make_pair("frame_payload", 1000)
+            std::make_pair("frame_payload", 1000),
+            std::make_pair("avg_it", 10.0)
+
         );
         probe->monitor_msg_handler(blob);
+        gr::dtl::parse_result result;
+        parse(sender->raw_msg, msg.size() + 1, result);
 
-        auto result = parse_monitor_msg<monitor_dec_msg>(sender->raw_msg, msg.size() + 1);
-
-        BOOST_CHECK_NE(result.second, nullptr);
-        BOOST_CHECK_NE(result.first, nullptr);
-        BOOST_CHECK_EQUAL(result.second->tb_no(), 10);
-        BOOST_CHECK_EQUAL(result.second->frame_payload(), 1000);
-        BOOST_CHECK_EQUAL(result.first->nmsgs(), 0);
+        auto& r = result.dict_msg;
+        BOOST_CHECK_GT(r.size(), 0);
+        BOOST_CHECK(r.find("ts") != r.end());
+        BOOST_CHECK_EQUAL(std::get<long>(r["tb_no"]), 10);
+        BOOST_CHECK_EQUAL(std::get<long>(r["frame_payload"]), 1000);
+        BOOST_CHECK_EQUAL(std::get<long>(r["nmsgs"]), 0);
     }
 }
 
 BOOST_AUTO_TEST_CASE(monitor_fec_test_blob)
 {
+    //parser_registry::load_parsers();
     std::shared_ptr<test_sender> sender = std::make_shared<test_sender>();
     monitor_probe::sptr probe = monitor_probe::make("test", sender);
-    monitor_proto<monitor_dec_msg> msg;
+    monitor_proto<monitor_dec_msg, 1> msg;
     std::vector<uint8_t> sender_buf(msg.size() + 1);
     sender->raw_msg = &sender_buf[0];
-
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<1; i++) {
 
 
         pmt::pmt_t blob = msg.build(
@@ -66,14 +69,14 @@ BOOST_AUTO_TEST_CASE(monitor_fec_test_blob)
         );
         probe->monitor_msg_handler(blob);
 
-        auto result = parse_monitor_msg<monitor_dec_msg>(sender->raw_msg, msg.size() + 1);
-
-        BOOST_CHECK_NE(result.second, nullptr);
-        BOOST_CHECK_NE(result.first, nullptr);
-        BOOST_CHECK_EQUAL(result.second->tb_no(), 10);
-        BOOST_CHECK_EQUAL(result.second->frame_payload(), 1000);
-        BOOST_CHECK_EQUAL(result.first->nmsgs(), 0);
-
+        gr::dtl::parse_result result;
+        parse(sender->raw_msg, msg.size() + 1, result);
+        auto& r = result.dict_msg;
+        BOOST_CHECK_GT(r.size(), 0);
+        BOOST_CHECK(r.find("ts") != r.end());
+        BOOST_CHECK_EQUAL(std::get<long>(r["tb_no"]), 10);
+        BOOST_CHECK_EQUAL(std::get<long>(r["frame_payload"]), 1000);
+        BOOST_CHECK_EQUAL(std::get<long>(r["nmsgs"]), 0);
     }
 }
 

@@ -14,7 +14,7 @@
 namespace gr {
 namespace dtl {
 
-INIT_DTL_LOGGER("zmq_probe");
+INIT_DTL_LOGGER("monitor_probe");
 
 using namespace std;
 
@@ -51,14 +51,10 @@ monitor_probe::make(const string& name, message_sender_base::sptr sender)
 
 monitor_probe_impl::monitor_probe_impl(const string& name, message_sender_base::sptr sender)
     : gr::block(
-          "zmq_probe", gr::io_signature::make(0, 0, 0), gr::io_signature::make(0, 0, 0)),
+          "monitor_probe", gr::io_signature::make(0, 0, 0), gr::io_signature::make(0, 0, 0)),
       d_probe_name(name),
       d_sender(sender)
 {
-
-    d_meta_msg = pmt::dict_add(pmt::make_dict(),
-                               pmt::string_to_symbol("probe_name"),
-                               pmt::string_to_symbol(d_probe_name));
     message_port_register_in(pmt::mp("in"));
     set_msg_handler(pmt::mp("in"), [this](pmt::pmt_t msg) { this->monitor_msg_handler(msg); });
 }
@@ -67,14 +63,15 @@ monitor_probe_impl::monitor_probe_impl(const string& name, message_sender_base::
 monitor_probe_impl::~monitor_probe_impl() {}
 
 
-void monitor_probe_impl::monitor_msg_handler(pmt::pmt_t msg)
+size_t monitor_probe_impl::monitor_msg_handler(pmt::pmt_t msg)
 {
+    size_t sz = 0;
     if (pmt::is_any(msg)) {
         // Handle as proto message
         std::shared_ptr<monitor_proto_msg> proto_msg =
             boost::any_cast<std::shared_ptr<monitor_proto_msg>>(pmt::any_ref(msg));
         proto_msg->set_nmsgs(this->nmsgs(pmt::mp("in")));
-        size_t sz = 1 + proto_msg->ByteSizeLong();
+        sz = 1 + proto_msg->ByteSizeLong();
         zmq::message_t zmq_msg(sz);
         uint8_t* buf = (uint8_t*)zmq_msg.data();
         buf[0] = TAG_PROTO;
@@ -89,8 +86,9 @@ void monitor_probe_impl::monitor_msg_handler(pmt::pmt_t msg)
         std::stringbuf buf;
         pmt::serialize(carrier_msg, buf);
         auto s = buf.str();
-        zmq::message_t zmq_msg(s.size());
-        memcpy(zmq_msg.data(), s.c_str(), s.size());
+        sz = s.size();
+        zmq::message_t zmq_msg(sz);
+        memcpy(zmq_msg.data(), s.c_str(), sz);
         if (d_sender != nullptr) {
             d_sender->send(&zmq_msg);
         }
@@ -102,12 +100,14 @@ void monitor_probe_impl::monitor_msg_handler(pmt::pmt_t msg)
                             pmt::from_long(this->nmsgs(pmt::mp("in"))));
         pmt::serialize(msg, buf);
         auto s = buf.str();
-        zmq::message_t zmq_msg(s.size());
-        memcpy(zmq_msg.data(), s.c_str(), s.size());
+        sz = s.size();
+        zmq::message_t zmq_msg(sz);
+        memcpy(zmq_msg.data(), s.c_str(), sz);
         if (d_sender != nullptr) {
             d_sender->send(&zmq_msg);
         }
     }
+    return sz;
 }
 
 } /* namespace dtl */
