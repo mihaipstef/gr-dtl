@@ -8,9 +8,11 @@
 #ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FEC_DECODER_IMPL_H
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FEC_DECODER_IMPL_H
 
-#include <gnuradio/dtl/fec.h>
-#include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
 #include "crc_util.h"
+#include <gnuradio/dtl/fec.h>
+#include <gnuradio/dtl/monitor_proto.h>
+#include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
+#include "proto/monitor_fec.pb.h"
 #include "repack.h"
 #include "tb_decoder.h"
 
@@ -28,7 +30,7 @@ private:
     std::vector<unsigned char> d_crc_buffer;
     crc_util d_crc;
     repack d_to_bytes;
-
+    monitor_proto<monitor_dec_msg, 1> monitor_msg_builder;
 
 public:
     ofdm_adaptive_fec_decoder_impl(const std::vector<fec_dec::sptr>& decoders, int frame_capacity, int max_bps, const std::string& len_key);

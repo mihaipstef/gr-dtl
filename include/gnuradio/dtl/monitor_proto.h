@@ -10,6 +10,8 @@
 
 
 #include <gnuradio/dtl/monitor.pb.h>
+#include <gnuradio/dtl/monitor_parser_registry.h>
+#include <gnuradio/dtl/monitor_parser.h>
 #include <gnuradio/dtl/api.h>
 #include <google/protobuf/any.pb.h>
 #include <google/protobuf/message.h>
@@ -19,7 +21,6 @@
 namespace gr {
 namespace dtl {
 
-
 using google::protobuf::Descriptor;
 using google::protobuf::FieldDescriptor;
 using google::protobuf::Message;
@@ -27,7 +28,6 @@ using google::protobuf::Reflection;
 
 
 uint64_t system_ts();
-
 
 #define HANDLE_TYPE(PAYLOAD, CPPTYPE, TYPE, METHOD, FD, V)       \
     case FieldDescriptor::CPPTYPE_##CPPTYPE: {                   \
@@ -37,7 +37,7 @@ uint64_t system_ts();
     }
 
 
-template <class M>
+template <class M, msg_type_id_t msg_id>
 class monitor_proto
 {
 
@@ -72,9 +72,13 @@ private:
         }
     }
 
+
 public:
 
-    typedef std::shared_ptr<monitor_proto<M>> sptr;
+    typedef std::shared_ptr<monitor_proto<M, msg_id>> sptr;
+    typedef payload_parser<M, msg_id> parser;
+
+    static const msg_type_id_t proto_msg_id = msg_id;
 
     monitor_proto()
     {
@@ -88,6 +92,7 @@ public:
         ts_msg = std::make_shared<monitor_proto_msg>();
         size_t sz = ts_msg->SpaceUsedLong() + payload->SpaceUsedLong();
         blob_internal_buf.resize(sz);
+        //parser_registry::register_parser(msg_id, &payload_parser<M, msg_id>::parse);
     }
 
     size_t size() {
@@ -101,7 +106,8 @@ public:
         ts_msg = std::make_shared<monitor_proto_msg>();
         payload = std::make_shared<M>();
         (set_payload_field(pairs), ...);
-        ts_msg->set_ts(system_ts());
+        ts_msg->set_time(system_ts());
+        ts_msg->set_proto_id(msg_id);
         ts_msg->mutable_payload()->PackFrom(*payload);
         ts_msg->SerializeToArray(&blob_internal_buf[0], ts_msg->ByteSizeLong());
         return pmt::make_blob(&blob_internal_buf[0], ts_msg->ByteSizeLong());
@@ -114,37 +120,15 @@ public:
         ts_msg = std::make_shared<monitor_proto_msg>();
         payload = std::make_shared<M>();
         (set_payload_field(pairs), ...);
-        ts_msg->set_ts(system_ts());
+        ts_msg->set_time(system_ts());
+        ts_msg->set_proto_id(msg_id);
         ts_msg->mutable_payload()->PackFrom(*payload);
         boost::any any_msg = ts_msg;
         return pmt::make_any(any_msg);
     }
 
-
-    std::pair<std::shared_ptr<monitor_proto_msg>, std::shared_ptr<M>>
-    parse_pmt(pmt::pmt_t& pmt_msg)
-    {
-        if (pmt::is_blob(pmt_msg)) {
-            return parse_proto(blob_data(pmt_msg), blob_length(pmt_msg));
-        }
-        return std::make_pair(nullptr, nullptr);
-    }
-
-
-    std::pair<std::shared_ptr<monitor_proto_msg>, std::shared_ptr<M>>
-    parse_proto(const void* raw_msg, size_t size)
-    {
-        std::shared_ptr<monitor_proto_msg> parsed_msg =
-            std::make_shared<monitor_proto_msg>();
-        parsed_msg->ParseFromArray(raw_msg, size);
-        if (parsed_msg->has_payload()) {
-            std::shared_ptr<M> parsed_payload = std::make_shared<M>();
-            parsed_msg->payload().UnpackTo(parsed_payload.get());
-            return std::make_pair(parsed_msg, parsed_payload);
-        }
-        return std::make_pair(parsed_msg, nullptr);
-    }
 };
+
 
 
 } // namespace dtl

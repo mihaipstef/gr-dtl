@@ -57,6 +57,10 @@ GR_PYBIND_MAKE_OOT(dtl
    gr::dtl
    "${dtl_python_files}")
 
+target_include_directories(dtl_python
+   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../../include
+)
+
 # copy in bindings .so file for use in QA test module
 add_custom_target(
   copy_bindings_for_tests ALL

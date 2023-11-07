@@ -47,7 +47,9 @@ list(APPEND dtl_sources
     ofdm_adaptive_fec_pack_bb_impl.cc
     monitor_msg.cc
     packet_defragmentation_impl.cc
-    packet_validator.cc)
+    packet_validator.cc
+    monitor_parser.cc
+    monitor_parser_registry.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -65,13 +67,15 @@ target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 target_link_libraries(gnuradio-dtl gnuradio-fec)
 #target_link_libraries(gnuradio-dtl $<TARGET_OBJECTS:proto> ${Protobuf_LIBRARIES})
 target_link_libraries(gnuradio-dtl dtl-proto ${Protobuf_LIBRARIES})
+add_dependencies(gnuradio-dtl copy_public_headers)
 
 
 target_include_directories(gnuradio-dtl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-  )
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../include
+)
 
 set_target_properties(gnuradio-dtl PROPERTIES DEFINE_SYMBOL "gnuradio_dtl_EXPORTS")
 
@@ -118,5 +122,6 @@ foreach(qa_file ${test_dtl_sources})
     gr_add_cpp_test(${target_name} ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file})
     target_include_directories(${target_name}
         PRIVATE ${PROTOBUF_INCLUDE_DIR}
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../include)
 endforeach(qa_file)

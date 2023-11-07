@@ -71,7 +71,7 @@ pmt::pmt_t monitor_msg(P ...pairs) {
     uint64_t ts = system_ts();
     pmt::pmt_t msg = pmt::dict_add(
         pmt::make_dict(),
-        to_pmt("ts"),
+        to_pmt("time"),
         pmt::from_uint64(ts)
     );
     auto add_kv = [&msg](const auto& kv) {
