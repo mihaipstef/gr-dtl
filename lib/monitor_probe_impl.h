@@ -19,10 +19,17 @@ class message_sender_impl : public message_sender
 private:
     zmq::context_t d_context;
     zmq::socket_t d_socket;
+    size_t counter;
+
+
 public:
     message_sender_impl(char* address,
                    bool bind);
+
     void send(zmq::message_t* msg) override;
+
+    size_t get_msg_counter() override;
+
 };
 
 

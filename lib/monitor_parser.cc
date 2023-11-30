@@ -28,6 +28,9 @@ msg_encoding_t parse(uint8_t* data, size_t size, parse_result& result)
                     std::shared_ptr<monitor_proto_msg> parsed_msg =
                         std::make_shared<monitor_proto_msg>();
                     parsed_msg->ParseFromArray(blob_data(blob), blob_length(blob));
+                    int nmsgs = pmt::to_long(pmt::car(pmt::cdr(pmt_msg)));
+                    //int nmsgs = pmt::to_long(pmt::car(pmt_msg));
+                    parsed_msg->set_nmsgs(nmsgs);
                     populate(parsed_msg.get(), &(result.dict_msg));
                     // execute registered payload parser
                     parser_registry::call_parser(parsed_msg->proto_id(), parsed_msg.get(),
