@@ -21,6 +21,10 @@ struct test_sender: public message_sender_base {
     {
         memcpy(raw_msg, msg->data(), msg->size());
     }
+    size_t get_msg_counter()
+    {
+        return 0;
+    }
 };
 
 

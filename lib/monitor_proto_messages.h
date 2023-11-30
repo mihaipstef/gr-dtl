@@ -17,8 +17,7 @@ namespace dtl {
 
 
 struct proto_messages {
-    static const msg_type_id_t INVALID_MSG = 0;
-    static const msg_type_id_t FEC_DEC_MSG = 1;
+    static const msg_type_id_t FEC_DEC_MSG = 0;
 };
 
 typedef monitor_proto<monitor_dec_msg, proto_messages::FEC_DEC_MSG> proto_fec_t;

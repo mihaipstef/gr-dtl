@@ -20,6 +20,7 @@ class DTL_API message_sender_base {
 public:
     typedef std::shared_ptr<message_sender_base> sptr;
     virtual void send(zmq::message_t* msg) = 0;
+    virtual size_t get_msg_counter() = 0;
 };
 
 

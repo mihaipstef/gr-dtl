@@ -30,11 +30,11 @@ class DTL_API parser_registry
 private:
     static parser_registry_t& registry();
 
+public:
+
     static void register_parser(
         msg_type_id_t msg_id,
         const parser_t& f);
-
-public:
 
     static void
     call_parser(msg_type_id_t msg_id, monitor_proto_msg* msg, msg_dict_t* result);

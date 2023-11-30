@@ -8,5 +8,8 @@ message monitor_proto_msg {
   oneof optional_nmsgs {
     int32 nmsgs = 3;
   }
-  google.protobuf.Any payload = 4;
+  oneof optional_sent_counter {
+    int64 sent_counter = 4;
+  }
+  google.protobuf.Any payload = 5;
 }

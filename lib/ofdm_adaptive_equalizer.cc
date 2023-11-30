@@ -263,6 +263,7 @@ void ofdm_adaptive_equalizer_base::frame_equalize(
         if (!d_pilot_carriers.empty()) {
             d_pilot_carr_set = (d_pilot_carr_set + 1) % d_pilot_carriers.size();
         }
+        get_noise();
     }
 }
 
@@ -279,6 +280,7 @@ double ofdm_adaptive_equalizer_base::get_snr() { return d_snr_estimator->snr(); 
 
 double ofdm_adaptive_equalizer_base::get_noise()
 {
+    d_snr_estimator->snr();
     double noise_db = d_snr_estimator->noise();
     DTL_LOG_DEBUG("get_noise {}", noise_db);
     return pow(10, noise_db / 10.0);
