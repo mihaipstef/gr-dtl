@@ -1,6 +1,6 @@
 #include "proto/monitor_fec.pb.h"
 #include <gnuradio/dtl/monitor_parser.h>
-#include <gnuradio/dtl/monitor_parser_registry.h>
+#include <gnuradio/dtl/monitor_registry.h>
 
 
 namespace gr {

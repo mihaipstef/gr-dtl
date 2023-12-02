@@ -28,6 +28,7 @@ class DTL_API parser_registry
 {
 
 private:
+
     static parser_registry_t& registry();
 
 public:
@@ -40,6 +41,14 @@ public:
     call_parser(msg_type_id_t msg_id, monitor_proto_msg* msg, msg_dict_t* result);
 };
 
+
+template <class... M>
+struct message_registry
+{
+    message_registry() {
+        (parser_registry::register_parser(M::proto_msg_id, &M::parser::parse), ...);
+    }
+};
 
 } // namespace dtl
 } // namespace gr
