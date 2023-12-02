@@ -28,22 +28,12 @@ void register_logger(const std::shared_ptr<gr::logger>& logger);
 
 struct dtl_logging_backend_wrapper {
     std::shared_ptr<spdlog::sinks::dist_sink_mt> backend;
-    dtl_logging_backend_wrapper()
-        : backend(std::make_shared<spdlog::sinks::dist_sink_mt>())
-    {
-        backend->add_sink(std::make_shared<spdlog::sinks::stdout_color_sink_st>());
-    }
+    dtl_logging_backend_wrapper();
 };
 
 struct dtl_logger_wrapper {
     std::shared_ptr<spdlog::logger> logger;
-    dtl_logger_wrapper(const std::string& name)
-    {
-        logger = std::make_shared<spdlog::logger>(name, dtl_logging_backend());
-        logger->set_level(logging::singleton().default_level());
-        logger->set_pattern("%D %H:%M:%S.%f %n:%v");
-        register_logger(logger);
-    }
+    dtl_logger_wrapper(const std::string& name);
 };
 
 #define INIT_DTL_LOGGER(name) static dtl_logger_wrapper _logger(name);
@@ -153,7 +143,7 @@ inline void _append_buf_to_stream(std::stringstream& ss, T* buf, int len)
         _logger.logger->debug("{}: {}", msg, ss.str()); \
     }
 
-#define DTL_LOG_BUFFER(msg, buffer, length)              \
+#define DTL_LOG_BUFFER(msg, buffer, length)             \
     {                                                   \
         std::stringstream ss;                           \
         _append_buf_to_stream(ss, buffer, length);      \

@@ -20,3 +20,5 @@
 ./include/gnuradio/dtl/ofdm_adaptive_fec_decoder.hError occurred while running CASTXML xml file does not exist
 ./include/gnuradio/dtl/ofdm_adaptive_fec_decoder.hError occurred while running CASTXML xml file does not exist
 ./include/gnuradio/dtl/ofdm_adaptive_frame_snr.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/ofdm_adaptive_equalizer.hError occurred while running CASTXML xml file does not exist
+./include/gnuradio/dtl/packet_validator.hError occurred while running CASTXML xml file does not exist

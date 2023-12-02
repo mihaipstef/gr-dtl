@@ -41,19 +41,25 @@ list(APPEND dtl_python_files
     ofdm_adaptive_frame_bb_python.cc
     log_python.cc
     ofdm_adaptive_frame_detect_bb_python.cc
-    zmq_probe_python.cc
+    monitor_probe_python.cc
     ofdm_adaptive_constellation_metric_vcvf_python.cc
     ofdm_adaptive_fec_frame_bvb_python.cc
     ofdm_adaptive_fec_decoder_python.cc
     fec_python.cc
     ofdm_adaptive_frame_to_stream_vbb_python.cc
     ofdm_adaptive_constellation_soft_cf_python.cc
-    ofdm_adaptive_fec_pack_bb_python.cc python_bindings.cc)
+    ofdm_adaptive_fec_pack_bb_python.cc
+    packet_defragmentation_python.cc
+    packet_validator_python.cc python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(dtl
    ../../..
    gr::dtl
    "${dtl_python_files}")
+
+target_include_directories(dtl_python
+   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../../include
+)
 
 # copy in bindings .so file for use in QA test module
 add_custom_target(

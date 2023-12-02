@@ -22,12 +22,15 @@ try:
         constellation_type_t,
         get_constellation_tag_key,
         estimated_snr_tag_key,
+        feedback_constellation_key,
+        fec_feedback_key,
         ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
-        ofdm_adaptive_equalizer,
+        ofdm_adaptive_payload_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
         noise_tag_key,
+        payload_length_key,
     )
 except ImportError:
     import os
@@ -38,12 +41,15 @@ except ImportError:
         constellation_type_t,
         get_constellation_tag_key,
         estimated_snr_tag_key,
+        feedback_constellation_key,
+        fec_feedback_key,
         ofdm_adaptive_config,
         ofdm_adaptive_frame_equalizer_vcvc,
-        ofdm_adaptive_equalizer,
+        ofdm_adaptive_payload_equalizer,
         ofdm_adaptive_frame_snr_simple,
         ofdm_adaptive_feedback_decision,
         noise_tag_key,
+        payload_length_key,
     )
 
 
@@ -76,7 +82,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             pilot_symbols = (
                 [], [], [cnst.map_to_points_v(x)[0] for x in (1, 0, 3, 0)], []
             )
-            equalizer = ofdm_adaptive_equalizer(
+            equalizer = ofdm_adaptive_payload_equalizer(
                 fft_len,
                 [k for k in consts],
                 ofdm_adaptive_frame_snr_simple(float(0.1)),
@@ -105,17 +111,21 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
             const_tag.offset = 0
             const_tag.key = get_constellation_tag_key()
             const_tag.value = pmt.from_long(c)
+            payload_tag = gr.tag_t()
+            payload_tag.offset = 0
+            payload_tag.key = payload_length_key()
+            payload_tag.value = pmt.from_long(1) # >0
             rx_signal = numpy.multiply(tx_signal, channel) + [x if y != 0 else 0 for (
                 x, y) in zip(numpy.random.normal(0, 0.001, len(tx_signal)), tx_signal)]
 
             src = blocks.vector_source_c(
-                rx_signal, False, fft_len, (chan_tag, const_tag))
+                rx_signal, False, fft_len, (chan_tag, const_tag, payload_tag))
 
             feedback_decision_sink = blocks.message_debug()
 
             eq = ofdm_adaptive_frame_equalizer_vcvc(
                 equalizer.base(), ofdm_adaptive_feedback_decision(
-                    1, 3, [(snr_th, (cnst, 0)) for (snr_th, (cnst, _)) in ofdm_adaptive_config.ofdm_adaptive_config.mcs]), 0, "tsb_key", True, True)
+                    1, 3, [(snr_th, (cnst, 0)) for (snr_th, (cnst, _)) in ofdm_adaptive_config.ofdm_adaptive_config.mcs]), 0, "tsb_key", "frame_no_key", True, True)
             self.tb.msg_connect(eq, 'feedback_port',
                                 feedback_decision_sink, 'store')
             sink = blocks.tsb_vector_sink_c(fft_len, tsb_key="tsb_key")
@@ -142,7 +152,7 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
 
             self.assertEqual(tx_data, rx_data)
             print([pmt.symbol_to_string(t.key) for t in sink.tags()])
-            self.assertEqual(len(sink.tags()), 6)
+            self.assertEqual(len(sink.tags()), 7)
             self.assertIn(get_constellation_tag_key(),
                           [t.key for t in sink.tags()])
             self.assertIn(estimated_snr_tag_key(), [
@@ -151,8 +161,8 @@ class qa_ofdm_adaptive_frame_equalizer_vcvc(gr_unittest.TestCase):
                           t.key for t in sink.tags()])
             self.assertEqual(feedback_decision_sink.num_messages(), 1)
             feedback_msg = feedback_decision_sink.get_message(0)
-            self.assertEqual(pmt.u8vector_elements(
-                pmt.cdr(feedback_msg)), [1, 0])
+            feedback_dict = pmt.to_python(feedback_msg)
+            self.assertEqual(feedback_dict, {pmt.to_python(feedback_constellation_key()): 1, pmt.to_python(fec_feedback_key()): 0})
 
 
 if __name__ == '__main__':

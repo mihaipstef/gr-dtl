@@ -36,6 +36,8 @@ public:
 
     void process_feedback(pmt::pmt_t feedback);
 
+    void process_feedback_header(pmt::pmt_t header_data);
+
     int general_work(int noutput_items,
                      gr_vector_int& ninput_items,
                      gr_vector_const_void_star& input_items,
@@ -63,9 +65,9 @@ private:
     constellation_type_t d_constellation;
     unsigned char d_fec_scheme;
     uint64_t d_tag_offset;
-    size_t d_frame_len;
+    int d_frame_len;
     pmt::pmt_t d_packet_len_tag;
-    size_t d_payload_carriers;
+    int d_payload_carriers;
     size_t d_bytes;
     unsigned char d_bps;
     bool d_waiting_full_frame;
@@ -79,6 +81,7 @@ private:
     int d_consecutive_empty_frames;
     std::chrono::time_point<std::chrono::steady_clock> d_start_time;
     std::chrono::duration<double> d_frame_duration;
+    constellation_type_t d_feedback_cnst;
 };
 
 } // namespace dtl

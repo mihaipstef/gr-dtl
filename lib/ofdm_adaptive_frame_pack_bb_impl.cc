@@ -7,17 +7,18 @@
 
 #include "logger.h"
 #include "ofdm_adaptive_frame_pack_bb_impl.h"
-
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
+#include <gnuradio/dtl/monitor_msg.h>
+#include <utility>
 
 namespace gr {
 namespace dtl {
 
 
-static const pmt::pmt_t PAYLOAD_CRC_FAILED_KEY = pmt::mp("payload_crc_failed");
-static const pmt::pmt_t PAYLOAD_CRC_SUCCESS_KEY = pmt::mp("payload_crc_success");
-static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor_port");
+static const pmt::pmt_t PAYLOAD_CRC_FAILED_KEY = pmt::mp("crc_fail_count");
+static const pmt::pmt_t PAYLOAD_CRC_SUCCESS_KEY = pmt::mp("crc_ok_count");
+static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 INIT_DTL_LOGGER("ofdm_adaptive_frame_pack_bb");
 
@@ -87,12 +88,12 @@ int ofdm_adaptive_frame_pack_bb_impl::work(int noutput_items,
 
     bool crc_ok = d_crc.verify_crc(out, n_written);
 
-    pmt::pmt_t monitor_msg = pmt::make_dict();
-    monitor_msg = pmt::dict_add(
-        monitor_msg, PAYLOAD_CRC_SUCCESS_KEY, pmt::from_long(d_crc.get_success()));
-    monitor_msg = pmt::dict_add(
-        monitor_msg, PAYLOAD_CRC_FAILED_KEY, pmt::from_float(d_crc.get_failed()));
-    message_port_pub(MONITOR_PORT, monitor_msg);
+    pmt::pmt_t msg = monitor_msg(
+                    std::make_pair(PAYLOAD_CRC_SUCCESS_KEY, d_crc.get_success()),
+                    std::make_pair(PAYLOAD_CRC_FAILED_KEY, d_crc.get_failed()),
+                    std::make_pair("payload_fer", d_crc.get_fail_rate()));
+
+    message_port_pub(MONITOR_PORT, msg);
 
     DTL_LOG_DEBUG("d_bits_per_symbol={}, n_written={}, "
                   "ninput_items={}, crc_ok={}",

@@ -51,7 +51,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     int max_empty_frames)
     : block("ofdm_adaptive_frame_bb",
             io_signature::make(1, 1, sizeof(char)),
-            io_signature::make(1, 1, sizeof(char))),
+            io_signature::make(1, 1, n_payload_carriers * frame_len * sizeof(char))),
       d_constellation(constellation_type_t::BPSK),
       d_fec_scheme(0),
       d_tag_offset(0),
@@ -65,13 +65,17 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_frame_count(0),
       d_frame_in_bytes(0),
       d_consecutive_empty_frames(0),
-      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate))
+      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
+      d_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
+    this->message_port_register_in(pmt::mp("header"));
+    this->set_msg_handler(pmt::mp("header"),
+                          [this](pmt::pmt_t msg) { this->process_feedback_header(msg); });
     d_bps = get_bits_per_symbol(d_constellation);
-    set_min_noutput_items(frame_length());
+    set_min_noutput_items(1);
     // d_bytes = input_length(d_frame_len, d_payload_carriers, d_bps);
     size_t frame_buffer_max_len =
         d_frame_len * d_payload_carriers * get_max_bps(constellations).second;
@@ -80,14 +84,36 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
     d_frame_store = frame_file_store(frames_fname);
 }
 
-
 void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
 {
     if (pmt::is_dict(feedback)) {
+        DTL_LOG_DEBUG("process_feedback: is dict");
         if (pmt::dict_has_key(feedback, feedback_constellation_key())) {
             constellation_type_t constellation =
                 static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
                     feedback,
+                    feedback_constellation_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            DTL_LOG_DEBUG("process_feedback: has key {}", (int)constellation);
+
+            // Update constellation only if valid data received
+            if (bps) {
+                d_feedback_cnst = constellation;
+            }
+        }
+    }
+    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+                  static_cast<int>(d_feedback_cnst));
+}
+
+void ofdm_adaptive_frame_bb_impl::process_feedback_header(pmt::pmt_t header_data)
+{
+    if (pmt::is_dict(header_data)) {
+        if (pmt::dict_has_key(header_data, feedback_constellation_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    header_data,
                     feedback_constellation_key(),
                     pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
             int bps = get_bits_per_symbol(constellation);
@@ -98,7 +124,7 @@ void ofdm_adaptive_frame_bb_impl::process_feedback(pmt::pmt_t feedback)
             }
         }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}",
+    DTL_LOG_DEBUG("process_feedback_header: d_constellation={}",
                   static_cast<int>(d_constellation));
 }
 
@@ -160,6 +186,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
 
     int read_index = 0;
     int write_index = 0;
+    int produced = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
 
@@ -176,7 +203,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     while (write_index < noutput_items && !wait_next_work) {
 
         int frame_payload = -1;
-
 
         int frame_bits = 0;
         vector<tag_t> fec_tags;
@@ -203,7 +229,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
 
         // If there is not enough room in the output buffer...
-        if (write_index + expected_frame_symbols > noutput_items) {
+        if (write_index + expected_frame_symbols > noutput_items * d_frame_len * d_payload_carriers) {
             // ...nothing we can do.
             break;
         }
@@ -223,6 +249,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                         &out[write_index],
                         expected_frame_symbols,
                         repacker);
+            assert(frame_out_symbols == expected_frame_symbols);
             d_waiting_full_frame = false;
             frame_payload = next_frame_nbytes;
             read_index += next_frame_nbytes;
@@ -246,7 +273,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
 
         // add tags
-        if (d_tag_offset + expected_frame_symbols <= nitems_written(0) + write_index) {
+        if (d_tag_offset + 1 == nitems_written(0) + write_index/expected_frame_symbols) {
 
             DTL_LOG_DEBUG("add tags: offset={}, "
                           "frame_in_bytes={}, "
@@ -272,13 +299,24 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                          d_tag_offset,
                          get_constellation_tag_key(),
                          pmt::from_long(static_cast<int>(cnst)));
-            // Add transported payload tag - number of payload bytes carried by the
-            // frame (including CRC)
             add_item_tag(0,
-                            d_tag_offset,
-                            payload_length_key(),
-                            pmt::from_long(frame_payload + d_crc.get_crc_len()));
-            d_tag_offset += expected_frame_symbols;
+                        d_tag_offset,
+                        feedback_constellation_key(),
+                        pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
+            // Add transported payload tag - number of payload bytes carried by the
+            // frame (including CRC) - if there are any
+            if (frame_payload) {
+                add_item_tag(0,
+                                d_tag_offset,
+                                payload_length_key(),
+                                pmt::from_long(frame_payload + d_crc.get_crc_len()));
+            } else {
+                add_item_tag(0,
+                                d_tag_offset,
+                                payload_length_key(),
+                                pmt::from_long(0));
+            }
+            ++d_tag_offset;
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,
                                 reinterpret_cast<char*>(&d_frame_buffer[0]));
@@ -288,6 +326,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                 std::this_thread::sleep_until(expected_time);
             }
             ++d_frame_count;
+            ++produced;
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(
                 monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
@@ -295,9 +334,9 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
     }
 
-    DTL_LOG_DEBUG("work: consumed={}, produced={}", read_index, write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}, write_index={}", read_index, produced, write_index);
     consume_each(read_index);
-    return write_index;
+    return produced;
 }
 
 void ofdm_adaptive_frame_bb_impl::rand_pad(unsigned char* buf,

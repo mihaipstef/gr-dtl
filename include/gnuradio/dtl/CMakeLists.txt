@@ -21,12 +21,17 @@ install(FILES
     ofdm_adaptive_feedback_decision.h
     ofdm_adaptive_frame_bb.h
     ofdm_adaptive_frame_detect_bb.h
-    zmq_probe.h
+    monitor_probe.h
     ofdm_adaptive_constellation_metric_vcvf.h
     ofdm_adaptive_fec_frame_bvb.h
     ofdm_adaptive_fec_decoder.h
     fec.h
     ofdm_adaptive_frame_to_stream_vbb.h
     ofdm_adaptive_constellation_soft_cf.h
-    ofdm_adaptive_fec_pack_bb.h DESTINATION include/gnuradio/dtl
+    ofdm_adaptive_fec_pack_bb.h
+    packet_defragmentation.h
+    monitor_parser.h
+    monitor_registry.h
+    monitor_proto.h
+    monitor_msg.h DESTINATION include/gnuradio/dtl
 )

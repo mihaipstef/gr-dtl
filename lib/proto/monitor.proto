@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+message monitor_proto_msg {
+  int64 time = 1;
+  int32 proto_id = 2;
+  oneof optional_nmsgs {
+    int32 nmsgs = 3;
+  }
+  oneof optional_sent_counter {
+    int64 sent_counter = 4;
+  }
+  google.protobuf.Any payload = 5;
+}

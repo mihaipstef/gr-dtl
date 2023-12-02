@@ -38,8 +38,8 @@ private:
     unsigned long d_tb_count;
     unsigned long d_cw_count;
 
-    unsigned char d_feedback_fec_idx;
-    constellation_type_t d_feedback_cnst;
+    unsigned char d_header_fec_idx;
+    constellation_type_t d_header_cnst;
     fec_enc::sptr d_current_enc;
     unsigned char d_current_fec_idx;
     constellation_type_t d_current_cnst;
@@ -47,6 +47,7 @@ private:
     tb_encoder::sptr d_tb_enc;
     int d_current_frame_len;
     int d_current_frame_offset;
+    int d_current_frame_payload;
     pmt::pmt_t d_len_key;
     uint64_t d_tag_offset;
     Action d_action;
@@ -61,6 +62,9 @@ private:
     unsigned long d_total_frames;
     std::chrono::duration<double> d_frame_duration;
     int d_max_empty_frames;
+    unsigned char d_feedback_fec_idx;
+    constellation_type_t d_feedback_cnst;
+    std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> d_expected_time;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,
@@ -71,7 +75,9 @@ public:
                                      const std::string& len_key);
     ~ofdm_adaptive_fec_frame_bvb_impl();
 
-    void process_feedback(pmt::pmt_t feedback) override;
+    void process_feedback(pmt::pmt_t feedback);
+
+    void process_feedback_header(pmt::pmt_t header_data);
 
     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
 

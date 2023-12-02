@@ -79,14 +79,15 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_tb_len(0),
       d_tb_count(0),
       d_cw_count(0),
-      d_feedback_fec_idx(1),
-      d_feedback_cnst(constellation_type_t::BPSK),
+      d_header_fec_idx(1),
+      d_header_cnst(constellation_type_t::BPSK),
       d_current_enc(nullptr),
       d_current_fec_idx(1),
       d_current_cnst(constellation_type_t::BPSK),
       d_current_bps(1),
       d_current_frame_len(0),
       d_current_frame_offset(0),
+      d_current_frame_payload(0),
       d_len_key(pmt::intern(len_key)),
       d_tag_offset(0),
       d_action(Action::PROCESS_INPUT),
@@ -96,7 +97,9 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_total_frames(0),
       d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
-      d_max_empty_frames(max_empty_frames)
+      d_max_empty_frames(max_empty_frames),
+      d_feedback_fec_idx(0),
+      d_feedback_cnst(constellation_type_t::UNKNOWN)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
@@ -125,6 +128,9 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
     this->message_port_register_in(pmt::mp("feedback"));
     this->set_msg_handler(pmt::mp("feedback"),
                           [this](pmt::pmt_t msg) { this->process_feedback(msg); });
+    this->message_port_register_in(pmt::mp("header"));
+    this->set_msg_handler(pmt::mp("header"),
+                          [this](pmt::pmt_t msg) { this->process_feedback_header(msg); });
     message_port_register_out(pmt::mp("monitor"));
     DTL_LOG_DEBUG("frame_capacity={}, max_bps={}", frame_capacity, max_bps);
 }
@@ -136,7 +142,7 @@ ofdm_adaptive_fec_frame_bvb_impl::~ofdm_adaptive_fec_frame_bvb_impl() {}
 
 bool ofdm_adaptive_fec_frame_bvb_impl::start()
 {
-    d_start_time = std::chrono::steady_clock::now();
+    //d_start_time = std::chrono::steady_clock::now();
     d_total_frames = 0;
     return block::start();
 }
@@ -161,9 +167,35 @@ void ofdm_adaptive_fec_frame_bvb_impl::process_feedback(pmt::pmt_t feedback)
                 pmt::dict_ref(feedback, fec_feedback_key(), pmt::from_long(0)));
         }
     }
-    DTL_LOG_DEBUG("process_feedback: d_constellation={}, d_fec_scheme={}",
+    DTL_LOG_DEBUG("process_feedback: d_feedback_cnst={}, d_feedback_fec_idx={}",
                   static_cast<int>(d_feedback_cnst),
                   d_feedback_fec_idx);
+}
+
+
+void ofdm_adaptive_fec_frame_bvb_impl::process_feedback_header(pmt::pmt_t header_data)
+{
+    if (pmt::is_dict(header_data)) {
+        if (pmt::dict_has_key(header_data, feedback_constellation_key())) {
+            constellation_type_t constellation =
+                static_cast<constellation_type_t>(pmt::to_long(pmt::dict_ref(
+                    header_data,
+                    feedback_constellation_key(),
+                    pmt::from_long(static_cast<int>(constellation_type_t::BPSK)))));
+            int bps = get_bits_per_symbol(constellation);
+            // Update constellation only if valid data received
+            if (bps) {
+                d_header_cnst = constellation;
+            }
+        }
+        if (pmt::dict_has_key(header_data, fec_feedback_key())) {
+            d_header_fec_idx = pmt::to_long(
+                pmt::dict_ref(header_data, fec_feedback_key(), pmt::from_long(0)));
+        }
+    }
+    DTL_LOG_DEBUG("process_feedback_header: d_header_cnst={}, d_header_fec_idx={}",
+                  static_cast<int>(d_header_cnst),
+                  d_header_fec_idx);
 }
 
 
@@ -196,17 +228,19 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  pmt::from_long(d_current_frame_offset & 0xfff));
 
     add_item_tag(0, d_tag_offset, fec_tb_key(), pmt::from_long(d_tb_count & 0xff));
+    add_item_tag(0,
+                 d_tag_offset,
+                 feedback_constellation_key(),
+                 pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
+    add_item_tag(0,
+                 d_tag_offset,
+                 fec_feedback_key(),
+                 pmt::from_long(d_feedback_fec_idx & 0xf));
     ++d_tag_offset;
-
-    auto now = std::chrono::steady_clock::now();
-    auto expected_time = d_start_time + d_total_frames * d_frame_duration;
-
-    if (now < expected_time) {
-        std::this_thread::sleep_until(expected_time);
-    }
-
     ++d_total_frames;
-    DTL_LOG_DEBUG("frame_out: tb_no={}", d_tb_count);
+
+    d_expected_time = d_start_time + d_total_frames * d_frame_duration;
+    DTL_LOG_DEBUG("frame_out: tb_no={}, frame_payaload={}", d_tb_count, frame_payload);
 }
 
 
@@ -263,6 +297,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                   ninput_items[0],
                   (int)d_action);
 
+    if (d_total_frames == 0) {
+        d_start_time = std::chrono::steady_clock::now();
+    } else {
+        auto now = std::chrono::steady_clock::now();
+        if (now < d_expected_time) {
+            std::this_thread::sleep_until(d_expected_time);
+        }
+    }
+
     // If no input but enough space in output buffer, generate an empty frame
     if (ninput_items[0] == 0 && noutput_items > 0) {
         int frame_payload = tb_offset_to_bytes();
@@ -294,14 +337,14 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         case Action::PROCESS_INPUT: {
 
             // Update constellation and FEC
-            if (d_feedback_cnst != d_current_cnst && d_current_frame_offset > 0) {
+            if (d_header_cnst != d_current_cnst && d_current_frame_offset > 0) {
                 d_action = Action::FINALIZE_FRAME;
                 continue;
             }
 
-            d_current_fec_idx = d_feedback_fec_idx;
+            d_current_fec_idx = d_header_fec_idx;
             d_current_enc = d_encoders[d_current_fec_idx];
-            d_current_cnst = d_feedback_cnst;
+            d_current_cnst = d_header_cnst;
             d_current_bps = get_bits_per_symbol(d_current_cnst);
 
             // Frame carries an integer number of bytes
@@ -360,7 +403,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 //...skip to next scheduled work.
                 wait_next_work = true;
             } else {
-
                 // Output the TB frame by frame
                 while (!d_tb_enc->ready() && produced_frames < noutput_items) {
 
@@ -380,20 +422,31 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                         d_current_bps);
 
                     // If we fill out the current frame ...
-                    if (out_frame_bytes == current_frame_available_bytes()) {
+                    int avail_bytes = current_frame_available_bytes();
+                    if (out_frame_bytes == avail_bytes) {
                         // add tags
                         add_frame_tags(d_frame_used_capacity * d_current_bps / 8 +
                                        out_frame_bytes);
                         d_current_frame_offset = 0;
+                        d_current_frame_payload = 0;
                         ++produced_frames;
                         write_index += (d_frame_capacity - d_frame_used_capacity);
                         d_frame_used_capacity = 0;
                     } else {
-                        d_current_frame_offset += out_frame_bytes;
-                        d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
-                        write_index += d_frame_used_capacity;
+                        if (d_current_frame_offset == 0) {
+                            d_current_frame_offset = out_frame_bytes;
+                            d_current_frame_payload += out_frame_bytes;
+                            d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
+                            write_index += d_frame_used_capacity;
+                        } else {
+                            d_frame_used_capacity = d_current_frame_offset + align_bytes_to_syms(out_frame_bytes);
+                            d_current_frame_payload += out_frame_bytes;
+                            write_index += d_frame_used_capacity;
+                        }
+
                     }
                     ++d_used_frames_count;
+
                 }
 
                 // If TB buffer empty check if we can start another TB in current frame
@@ -424,15 +477,16 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                           d_current_frame_offset);
         } break;
         case Action::FINALIZE_FRAME: {
-            DTL_LOG_DEBUG("finalize_frame: payload={}", d_current_frame_offset);
-            padded_frame_out(d_current_frame_offset);
+            DTL_LOG_DEBUG("finalize_frame: payload={}", d_current_frame_payload);
+            padded_frame_out(d_current_frame_payload);
             d_frame_used_capacity = 0;
             d_current_frame_offset = 0;
+            d_current_frame_payload = 0;
             d_action = Action::PROCESS_INPUT;
             ++produced_frames;
         } break;
         } // action switch
-    }     // input loop
+    } // input loop
 
     DTL_LOG_DEBUG("work_finish: d_frame_capacity={}, noutput={}, ninput={}, "
                   "read_index={}, write_index={}, tb_len={}, frame_offset={}, "

@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(zmq_probe.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(d7c4a880cbcfa874fef0d2f0b6427dd2)                     */
+/* BINDTOOL_HEADER_FILE(packet_defragmentation.h) */
+/* BINDTOOL_HEADER_FILE_HASH(9fb1f5aa7f187052f785bd5a4a906c19)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -23,24 +23,27 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/dtl/zmq_probe.h>
+#include <gnuradio/dtl/packet_defragmentation.h>
 // pydoc.h is automatically generated in the build directory
-#include <zmq_probe_pydoc.h>
+#include <packet_defragmentation_pydoc.h>
 
-void bind_zmq_probe(py::module& m)
+void bind_packet_defragmentation(py::module& m)
 {
 
-    using zmq_probe = ::gr::dtl::zmq_probe;
+    using packet_defragmentation = ::gr::dtl::packet_defragmentation;
 
 
-    py::class_<zmq_probe, gr::block, gr::basic_block, std::shared_ptr<zmq_probe>>(
-        m, "zmq_probe", D(zmq_probe))
+    py::class_<packet_defragmentation,
+               gr::tagged_stream_block,
+               gr::block,
+               gr::basic_block,
+               std::shared_ptr<packet_defragmentation>>(
+        m, "packet_defragmentation", D(packet_defragmentation))
 
-        .def(py::init(&zmq_probe::make),
-             py::arg("address"),
-             py::arg("probe_name"),
-             py::arg("bind") = true,
-             D(zmq_probe, make))
+        .def(py::init(&packet_defragmentation::make),
+             py::arg("validator"),
+             py::arg("len_key"),
+             D(packet_defragmentation, make))
 
 
         ;

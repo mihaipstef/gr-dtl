@@ -34,7 +34,7 @@ bool tb_decoder::process_frame(
     int frame_len,
     int bps,
     fec_info_t::sptr fec_info,
-    function<void(const vector<unsigned char>&, fec_info_t::sptr)> on_data_ready)
+    function<void(const vector<unsigned char>&, fec_info_t::sptr, int)> on_data_ready)
 {
 
     if (!fec_info) {
@@ -43,6 +43,7 @@ bool tb_decoder::process_frame(
     }
 
     int frame_payload_len = fec_info->d_frame_payload;
+    int avg_it = 0;
 
     DTL_LOG_DEBUG("process_frame: current_no={}, rcvd_no={}, rcvd_offset={}, "
                   "frame_len={}, frame_payload={}",
@@ -62,10 +63,10 @@ bool tb_decoder::process_frame(
         int ncws = compute_tb_len(d_fec_info->get_n(), frame_len);
 
         if (d_tb_buffers[RCV_BUF].size() >= expected_tb_len(fec_info, ncws)) {
-            decode(ncws);
+            decode(ncws, avg_it);
             d_buf_idx = 0;
             d_tb_buffers[RCV_BUF].clear();
-            on_data_ready(d_data_buffer, fec_info);
+            on_data_ready(d_data_buffer, fec_info, avg_it);
         }
         // If frame is part of a new TB
     } else {
@@ -83,9 +84,9 @@ bool tb_decoder::process_frame(
             copy(in, in + fec_info->d_tb_offset, back_inserter(d_tb_buffers[RCV_BUF]));
 
             int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
-            decode(tb_len);
+            decode(tb_len, avg_it);
             d_tb_buffers[RCV_BUF].clear();
-            on_data_ready(d_data_buffer, fec_info);
+            on_data_ready(d_data_buffer, fec_info, avg_it);
         } else {
 
             // Fill current TB buffer and decode current TB
@@ -97,8 +98,8 @@ bool tb_decoder::process_frame(
             // Decode
             if (d_tb_buffers[RCV_BUF].size() > 0 && d_fec_info) {
                 int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
-                decode(tb_len);
-                on_data_ready(d_data_buffer, d_fec_info);
+                decode(tb_len, avg_it);
+                on_data_ready(d_data_buffer, d_fec_info, avg_it);
             }
 
             // Start new TB buffer
@@ -121,6 +122,16 @@ bool tb_decoder::process_frame(
                  in + frame_payload_len + extra_bits,
                  back_inserter(d_tb_buffers[RCV_BUF]));
             d_buf_idx += frame_payload_len - fec_info->d_tb_offset;
+
+            int tb_len = compute_tb_len(d_fec_info->get_n(), frame_len);
+            int tb_size = 8 * align_bits_to_bytes(tb_len * fec_info->d_ncheck + fec_info->d_tb_payload_len);
+            if (frame_payload_len - fec_info->d_tb_offset == tb_size) {
+                decode(tb_len, avg_it);
+                on_data_ready(d_data_buffer, d_fec_info, avg_it);
+                d_buf_idx = 0;
+                d_tb_buffers[RCV_BUF].clear();
+            }
+
             DTL_LOG_DEBUG("rcv_buf_size={}, append={}",
                           d_tb_buffers[RCV_BUF].size(),
                           frame_payload_len + extra_bits - new_tb_offset);
@@ -129,7 +140,7 @@ bool tb_decoder::process_frame(
     return true;
 }
 
-int tb_decoder::decode(int tb_len)
+int tb_decoder::decode(int tb_len, int& avg_it)
 {
     static const float SHORTENED_VALUE = -5;
 
@@ -138,6 +149,7 @@ int tb_decoder::decode(int tb_len)
     int k = d_fec_info->get_k();
     int ncheck = n - k;
     int n_iterations = 0;
+    avg_it = 0;
 
     DTL_LOG_DEBUG("decode: ncws={}, n_it={}, sz={}, tb_payload_len={}, n={}",
                   tb_len,
@@ -175,7 +187,9 @@ int tb_decoder::decode(int tb_len)
         d_idx += k_;
 
         DTL_LOG_DEBUG("decode: n_it={}, k_={}", n_iterations, k_);
+        avg_it += n_iterations;
     }
+    avg_it /= tb_len;
 
     return tb_len * ncheck + d_fec_info->d_tb_payload_len;
 }
