@@ -31,7 +31,7 @@ install(FILES
     ofdm_adaptive_fec_pack_bb.h
     packet_defragmentation.h
     monitor_parser.h
-    monitor_parser_registry.h
+    monitor_registry.h
     monitor_proto.h
     monitor_msg.h DESTINATION include/gnuradio/dtl
 )

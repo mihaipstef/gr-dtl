@@ -1,6 +1,6 @@
 #include <gnuradio/dtl/monitor_parser.h>
-#include <gnuradio/dtl/monitor_parser_registry.h>
-#include "monitor_proto_messages.h"
+#include <gnuradio/dtl/monitor_registry.h>
+#include "ofdm_adaptive_monitor.h"
 
 
 namespace gr {
@@ -8,9 +8,7 @@ namespace dtl {
 
 
 parser_registry_t&  parser_registry::registry() {
-    static parser_registry_t _registry = {
-        { proto_messages::FEC_DEC_MSG, &proto_fec_t::parser::parse }
-    };
+    static parser_registry_t _registry;
     return _registry;
 }
 
@@ -36,7 +34,6 @@ void parser_registry::register_parser(msg_type_id_t msg_id,
             it->second.target<void(monitor_proto_msg*,
                                    std::map<std::string, std::string>&)>()) {
             throw std::runtime_error("A parser was already registered");
-            //std::cout << "A parser was already registered" << std::endl;
         }
     }
 }

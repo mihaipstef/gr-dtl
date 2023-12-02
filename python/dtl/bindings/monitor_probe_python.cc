@@ -9,7 +9,7 @@
 
 
 #include <gnuradio/dtl/monitor_parser.h>
-#include <gnuradio/dtl/monitor_parser_registry.h>
+#include <gnuradio/dtl/monitor_registry.h>
 #include <gnuradio/dtl/monitor_probe.h>
 #include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
