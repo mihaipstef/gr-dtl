@@ -49,8 +49,7 @@ list(APPEND dtl_sources
     packet_defragmentation_impl.cc
     packet_validator.cc
     monitor_parser.cc
-    monitor_registry.cc
-    ofdm_adaptive_monitor.cc)
+    monitor_registry.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)

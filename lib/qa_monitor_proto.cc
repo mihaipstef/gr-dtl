@@ -9,7 +9,7 @@
 #include <gnuradio/dtl/monitor_probe.h>
 #include <gnuradio/dtl/monitor_parser.h>
 #include <gnuradio/dtl/monitor_proto.h>
-#include "proto/monitor_fec.pb.h"
+#include "proto/monitor_ofdm.pb.h"
 
 namespace gr {
 namespace dtl {

@@ -163,7 +163,7 @@ class ofdm_receiver(gr.hier_block2):
         )
         self.payload_eq = dtl.ofdm_adaptive_frame_equalizer_vcvc(
             payload_equalizer.base(),
-            dtl.ofdm_adaptive_feedback_decision(2, 5, self.mcs, self.initial_mcs_id),
+            dtl.ofdm_adaptive_feedback_decision(2, 7, self.mcs, self.initial_mcs_id),
             self.cp_len,
             self.frame_length_tag_key,
             self.frame_no_tag_key,
