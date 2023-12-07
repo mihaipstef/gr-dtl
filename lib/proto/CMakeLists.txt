@@ -3,7 +3,7 @@ include(FindProtobuf)
 
 list (APPEND proto_schema_files
     monitor.proto
-    monitor_fec.proto)
+    monitor_ofdm.proto)
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 protobuf_generate_cpp(PROTO_SRC PROTO_HEADER ${proto_schema_files})

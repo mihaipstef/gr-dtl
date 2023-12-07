@@ -13,7 +13,7 @@
 #include <gnuradio/dtl/monitor_proto.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
 #include "ofdm_adaptive_monitor.h"
-#include "proto/monitor_fec.pb.h"
+#include "proto/monitor_ofdm.pb.h"
 #include "repack.h"
 #include "tb_decoder.h"
 

@@ -9,6 +9,7 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_EQUALIZER_VCVC_IMPL_H
 
 #include <gnuradio/dtl/ofdm_adaptive_frame_equalizer_vcvc.h>
+#include "ofdm_adaptive_monitor.h"
 
 namespace gr {
 namespace dtl {
@@ -27,6 +28,7 @@ private:
     int d_expected_frame_no;
     long d_lost_frames;
     long d_frames_count;
+    proto_eq_builder_t msg_builder;
 
 protected:
     void parse_length_tags(const std::vector<std::vector<tag_t>>& tags,

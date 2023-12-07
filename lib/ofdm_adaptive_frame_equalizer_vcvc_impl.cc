@@ -207,11 +207,11 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
 
     message_port_pub(FEEDBACK_PORT, feedback_msg);
 
-    pmt::pmt_t msg = monitor_msg(
-        make_pair(feedback_constellation_key(), static_cast<unsigned char>(feedback.first)),
-        make_pair(fec_key(), feedback.second),
-        make_pair(estimated_snr_tag_key(), d_eq->get_snr()),
-        make_pair(noise_tag_key(), d_eq->get_noise()),
+    pmt::pmt_t msg = msg_builder.build_any(
+        make_pair("constellation_key", static_cast<unsigned char>(feedback.first)),
+        make_pair("fec_key", feedback.second),
+        make_pair("estimated_snr_tag_key", d_eq->get_snr()),
+        make_pair("noise_tag_key", d_eq->get_noise()),
         make_pair("lost_frames_rate", 100*(double)d_lost_frames/d_frames_count));
     message_port_pub(MONITOR_PORT, msg);
 
