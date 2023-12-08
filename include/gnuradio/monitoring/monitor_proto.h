@@ -9,9 +9,9 @@
 #define INCLUDED_DTL_MONITOR_PROTO_H
 
 
-#include <gnuradio/dtl/monitor.pb.h>
-#include <gnuradio/dtl/monitor_registry.h>
-#include <gnuradio/dtl/monitor_parser.h>
+#include <gnuradio/monitoring/monitor.pb.h>
+#include <gnuradio/monitoring/monitor_registry.h>
+#include <gnuradio/monitoring/monitor_parser.h>
 #include <gnuradio/dtl/api.h>
 #include <google/protobuf/any.pb.h>
 #include <google/protobuf/message.h>

@@ -8,17 +8,20 @@
  */
 
 
-#include <gnuradio/dtl/monitor_parser.h>
-#include <gnuradio/dtl/monitor_registry.h>
-#include <gnuradio/dtl/monitor_probe.h>
+#include <gnuradio/monitoring/monitor_parser.h>
+#include <gnuradio/monitoring/monitor_registry.h>
+#include <gnuradio/monitoring/monitor_probe.h>
 #include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-#include <monitor_probe_pydoc.h>
+
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
 
 
 namespace py = pybind11;
+
 
 PYBIND11_MAKE_OPAQUE(::gr::dtl::msg_t);
 PYBIND11_MAKE_OPAQUE(::gr::dtl::msg_dict_t);
@@ -33,7 +36,7 @@ std::unique_ptr<gr::dtl::parse_result> parse_msg(py::buffer data, size_t size)
 }
 
 
-void bind_monitor_probe(py::module& m)
+void bind_monitoring(py::module& m)
 {
 
     using message_sender_base = ::gr::dtl::message_sender_base;
@@ -65,41 +68,57 @@ void bind_monitor_probe(py::module& m)
           "Parse monitor message");
 
     py::class_<message_sender_base, std::shared_ptr<message_sender_base>>(
-        m, "message_sender_base", D(message_sender_base))
+        m, "message_sender_base", "Message sender base class")
         .def("send",
              &message_sender_base::send,
              py::arg("msg"),
-             D(message_sender_base, send))
+             "Send method")
 
         ;
 
 
     py::class_<message_sender,
                gr::dtl::message_sender_base,
-               std::shared_ptr<message_sender>>(m, "message_sender", D(message_sender))
+               std::shared_ptr<message_sender>>(m, "message_sender", "Message sender")
 
         .def(py::init(&message_sender::make),
              py::arg("address"),
              py::arg("bind"),
-             D(message_sender, make))
+             "Message sender constructor")
 
 
         ;
 
 
     py::class_<monitor_probe, gr::block, gr::basic_block, std::shared_ptr<monitor_probe>>(
-        m, "monitor_probe", D(monitor_probe))
+        m, "monitor_probe", "Monitor probe")
 
         .def(py::init(&monitor_probe::make),
              py::arg("name"),
              py::arg("sender"),
-             D(monitor_probe, make))
+             "Monitor probe constructor")
 
 
         .def("monitor_msg_handler",
              &monitor_probe::monitor_msg_handler,
              py::arg("msg"),
-             D(monitor_probe, monitor_msg_handler))
+             "Message handler")
 
         ;
+}
+
+
+void* init_numpy()
+{
+    import_array();
+    return NULL;
+}
+
+PYBIND11_MODULE(monitoring_python, m)
+{
+    // Initialize the numpy C API
+    // (otherwise we will see segmentation faults)
+    init_numpy();
+    py::module::import("gnuradio.gr");
+    bind_monitoring(m);
 }

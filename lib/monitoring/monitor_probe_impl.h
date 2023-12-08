@@ -8,7 +8,7 @@
 #ifndef INCLUDED_DTL_MONITOR_PROBE_IMPL_H
 #define INCLUDED_DTL_MONITOR_PROBE_IMPL_H
 
-#include <gnuradio/dtl/monitor_probe.h>
+#include <gnuradio/monitoring/monitor_probe.h>
 
 namespace gr {
 namespace dtl {

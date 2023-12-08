@@ -5,16 +5,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "logger.h"
 #include "monitor_probe_impl.h"
-#include <gnuradio/dtl/monitor_proto.h>
+#include <gnuradio/monitoring/monitor_proto.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>
 
 namespace gr {
 namespace dtl {
-
-INIT_DTL_LOGGER("monitor_probe");
 
 using namespace std;
 
