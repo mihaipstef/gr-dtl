@@ -1,18 +1,18 @@
 # Data Transmission Laboratory Playground
 
-This is the DTL group OOT (out-of-tree) module to experiment with Gnuradio for teaching and research.
+With the constant growth of Software Defined Radio (SDR) technologies in wireless related fields we proposed to build an environment where we can easily develop, test and evaluate GNU Radio applications.
 
 ## Projects
 
-### Adaptive OFDM
+### Adaptive OFDM modem
 
-The goal is to build an OFDM TX/RX pair that adapts the transmission parameters to the channel condition to be used in lab for teaching and reasearch. Current implementation is heavily based on ```gr-digital``` module and only adapts the constellation it uses.
+The goal is to build a full duplex OFDM modem that adapts the transmission parameters to the channel condition to be used in lab for teaching and reasearch. Current implementation is based on ```gr-digital``` and ```gr-fec``` modules.
 
-### Cloud monitoring and control
+### Monitoring and test
 
-The goal is build an app that alows to monitor and control TX/RX pairs from a central point. Curently the proof of concept monitor app only collects some monitoring information.
+The goal is to build testing infrastructure for wireless communication protocols developed with GNU Radio that is easy to use, interoperable with any traffic generator and allows collection and analysis of PHY layer monitoring data.
 
-## Build the DTL OOT
+## Build the DTL OOT (out-of-tree) module
 
 Clone the git repository from github
 
@@ -31,7 +31,7 @@ make test
 sudo make install
 ```
 
-## Run example flows
+## Demo applications
 
 ```grc_run``` tool generates the Python code from the given ```*.grc``` and run it in background redirecting the standard output to files.
 
@@ -44,3 +44,8 @@ or
 grc_run ofdm_adaptive_pluto <logs directory>
 ```
 ![OFDM Adaptive ADALM Pluto example](assets/pluto.png)
+
+## Grafana dashboard example
+
+Our testing ecosystem uses Grafana for data vizualization. Here is a dashboard example:
+![Grafana dashboard example](assets/grafana_example.png)
