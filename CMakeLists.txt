@@ -131,8 +131,10 @@ add_custom_target(uninstall
 ########################################################################
 # Add subdirectories
 ########################################################################
+add_subdirectory(include/gnuradio/monitoring)
 add_subdirectory(include/gnuradio/dtl)
-add_subdirectory(lib)
+add_subdirectory(lib/monitoring)
+add_subdirectory(lib/dtl)
 add_subdirectory(apps)
 add_subdirectory(docs)
 
@@ -140,6 +142,7 @@ add_subdirectory(docs)
 if(ENABLE_PYTHON)
   message(STATUS "PYTHON and GRC components are enabled")
   add_subdirectory(python/dtl)
+  add_subdirectory(python/monitoring)
   add_subdirectory(grc)
 else(ENABLE_PYTHON)
   message(STATUS "PYTHON and GRC components are disabled")

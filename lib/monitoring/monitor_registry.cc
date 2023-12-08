@@ -1,6 +1,5 @@
-#include <gnuradio/dtl/monitor_parser.h>
-#include <gnuradio/dtl/monitor_registry.h>
-#include "ofdm_adaptive_monitor.h"
+#include <gnuradio/monitoring/monitor_parser.h>
+#include <gnuradio/monitoring/monitor_registry.h>
 
 
 namespace gr {

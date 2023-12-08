@@ -36,7 +36,7 @@ add_subdirectory(bindings)
 ########################################################################
 include(GrTest)
 
-set(GR_TEST_TARGET_DEPS gnuradio-dtl)
+set(GR_TEST_TARGET_DEPS gnuradio-dtl gnuradio-monitoring)
 
 # Create a package directory that tests can import. It includes everything
 # from `python/`.

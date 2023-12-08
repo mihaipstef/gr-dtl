@@ -8,7 +8,7 @@
 
 #include <chrono>
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/dtl/monitor_msg.h>
+#include <gnuradio/monitoring/monitor_msg.h>
 
 
 namespace gr {
