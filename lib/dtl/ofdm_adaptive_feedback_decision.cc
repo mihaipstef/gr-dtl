@@ -68,8 +68,13 @@ ofdm_adaptive_feedback_decision::get_feedback(double estimated_snr)
     if (estimated_snr < mcs.first) {
         assert(current_mcs_id > 0);
         update_decision(current_mcs_id-1);
-    } else if (current_mcs_id+1 < d_feedback_lut.size() && estimated_snr > (mcs.first + d_hyteresis)) {
-        update_decision(current_mcs_id+1);
+    } else if (current_mcs_id+1 < d_feedback_lut.size()) {
+        auto& better_mcs = d_feedback_lut[current_mcs_id+1];
+        if (estimated_snr > (better_mcs.first + d_hyteresis)) {
+            update_decision(current_mcs_id+1);
+        } else {
+            d_decision_counter = 0;
+        }
     } else {
         d_decision_counter = 0;
     }
