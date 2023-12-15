@@ -181,8 +181,11 @@ class ofdm_receiver(gr.hier_block2):
         self.connect(
             (hpd, 1),
             payload_fft,
-            (self.payload_eq, 0),
-            payload_serializer,
+            self.payload_eq
+        )
+        self.connect(
+            (self.payload_eq, 1),
+            payload_serializer
         )
 
         if self.fec:

@@ -57,9 +57,9 @@ ofdm_adaptive_frame_equalizer_vcvc_impl::ofdm_adaptive_frame_equalizer_vcvc_impl
     bool propagate_feedback_tags)
     : tagged_stream_block(
           "ofdm_adaptive_frame_equalizer_vcvc",
-          io_signature::make(1, 1, sizeof(gr_complex) * equalizer->fft_len()),
+          io_signature::make(1, 1, sizeof(gr_complex)*equalizer->fft_len()),
           io_signature::make2(
-              1, 2, sizeof(gr_complex) * equalizer->fft_len(), sizeof(gr_complex)),
+              1, 2, sizeof(gr_complex)*equalizer->fft_len(), sizeof(gr_complex)*equalizer->fft_len()),
           len_tag_key),
       d_fft_len(equalizer->fft_len()),
       d_cp_len(cp_len),
@@ -216,38 +216,39 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
     message_port_pub(MONITOR_PORT, msg);
 
     if (payload) {
-        // Propagate tags (except for the channel state and the TSB tag)
-        for (size_t i = 0; i < tags.size(); i++) {
-            if (tags[i].key != CHAN_TAPS_KEY &&
-                tags[i].key != pmt::mp(d_length_tag_key_str)) {
-                add_item_tag(0, nitems_written(0), tags[i].key, tags[i].value);
+        for (int oi=0; oi<2; ++oi) {
+            // Propagate tags (except for the channel state and the TSB tag)
+            for (size_t i = 0; i < tags.size(); i++) {
+                if (tags[i].key != CHAN_TAPS_KEY &&
+                    tags[i].key != pmt::mp(d_length_tag_key_str)) {
+                    add_item_tag(oi, nitems_written(0), tags[i].key, tags[i].value);
+                }
+            }
+
+            // Housekeeping
+            if (d_propagate_channel_state) {
+                add_item_tag(oi,
+                            nitems_written(0),
+                            CHAN_TAPS_KEY,
+                            pmt::init_c32vector(d_fft_len, d_channel_state));
+            }
+            add_item_tag(oi,
+                            nitems_written(0),
+                            noise_tag_key(),
+                            pmt::from_double(d_eq->get_noise()));
+            // Propagate feedback via tags
+            if (d_propagate_feedback_tags) {
+                add_item_tag(oi,
+                            nitems_written(0),
+                            estimated_snr_tag_key(),
+                            pmt::from_double(d_eq->get_snr()));
+                add_item_tag(oi,
+                            nitems_written(0),
+                            feedback_constellation_key(),
+                            pmt::from_long(static_cast<unsigned char>(feedback.first)));
+                add_item_tag(oi, nitems_written(0), fec_feedback_key(), pmt::from_long(feedback.second));
             }
         }
-
-        // Housekeeping
-        if (d_propagate_channel_state) {
-            add_item_tag(0,
-                        nitems_written(0),
-                        CHAN_TAPS_KEY,
-                        pmt::init_c32vector(d_fft_len, d_channel_state));
-        }
-        add_item_tag(0,
-                        nitems_written(0),
-                        noise_tag_key(),
-                        pmt::from_double(d_eq->get_noise()));
-        // Propagate feedback via tags
-        if (d_propagate_feedback_tags) {
-            add_item_tag(0,
-                        nitems_written(0),
-                        estimated_snr_tag_key(),
-                        pmt::from_double(d_eq->get_snr()));
-            add_item_tag(0,
-                        nitems_written(0),
-                        feedback_constellation_key(),
-                        pmt::from_long(static_cast<unsigned char>(feedback.first)));
-            add_item_tag(0, nitems_written(0), fec_feedback_key(), pmt::from_long(feedback.second));
-        }
-
         return n_ofdm_sym;
     }
     return 0;
