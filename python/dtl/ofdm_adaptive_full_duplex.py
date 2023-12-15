@@ -35,7 +35,7 @@ class ofdm_adaptive_full_duplex(gr.hier_block2):
         self.rx = dtl.ofdm_receiver(config)
         self.connect((self, 1), (self.rx, 0), (self, 0))
         self.connect((self.rx, 1), blocks.null_sink(gr.sizeof_char))
-        self.connect((self.rx, 4), blocks.null_sink(gr.sizeof_gr_complex))
+        self.connect((self.rx, 3), blocks.null_sink(gr.sizeof_gr_complex * config.fft_len))
 
         self.msg_connect(self.rx, "header", self.tx, "header")
         self.msg_connect(self.rx, "feedback", self.tx, "feedback")
