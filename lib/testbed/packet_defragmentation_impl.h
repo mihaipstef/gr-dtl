@@ -8,7 +8,7 @@
 #ifndef INCLUDED_DTL_IP_PACKET_IMPL_H
 #define INCLUDED_DTL_IP_PACKET_IMPL_H
 
-#include <gnuradio/dtl/packet_defragmentation.h>
+#include <gnuradio/testbed/packet_defragmentation.h>
 
 
 namespace gr {

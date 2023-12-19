@@ -14,5 +14,7 @@ install(FILES
     monitor_parser.h
     monitor_registry.h
     monitor_proto.h
-    monitor_msg.h DESTINATION include/gnuradio/monitoring
+    monitor_msg.h
+    packet_defragmentation.h
+    packet_validator.h DESTINATION include/gnuradio/testbed
 )

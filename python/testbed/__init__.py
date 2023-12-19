@@ -12,8 +12,8 @@ description here (python/__init__.py).
 '''
 import os
 try:
-    from .monitoring_python import *
+    from .testbed_python import *
 except ModuleNotFoundError:
     dirname, filename = os.path.split(os.path.abspath(__file__))
     __path__.append(os.path.join(dirname, "bindings"))
-    from .monitoring_python import *
+    from .testbed_python import *

@@ -11,7 +11,7 @@
 #include <gnuradio/expj.h>
 #include <gnuradio/io_signature.h>
 #include <gnuradio/math.h>
-#include <gnuradio/monitoring/monitor_msg.h>
+#include <gnuradio/testbed/monitor_msg.h>
 
 
 namespace gr {

@@ -7,7 +7,7 @@
 
 #include "fec_utils.h"
 #include "logger.h"
-#include <gnuradio/monitoring/monitor_msg.h>
+#include <gnuradio/testbed/monitor_msg.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
 #include "ofdm_adaptive_fec_decoder_impl.h"

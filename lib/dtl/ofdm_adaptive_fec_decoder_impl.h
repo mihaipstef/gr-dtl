@@ -10,7 +10,7 @@
 
 #include "crc_util.h"
 #include <gnuradio/dtl/fec.h>
-#include <gnuradio/monitoring/monitor_proto.h>
+#include <gnuradio/testbed/monitor_proto.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_decoder.h>
 #include "ofdm_adaptive_monitor.h"
 #include "proto/monitor_ofdm.pb.h"

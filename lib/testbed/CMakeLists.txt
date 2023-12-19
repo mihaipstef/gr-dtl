@@ -28,13 +28,13 @@ set_target_properties(monitoring-proto PROPERTIES CXX_VISIBILITY_PRESET default)
 GR_LIBRARY_FOO(monitoring-proto)
 # Copy public headers for lib build ...
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/monitoring/monitor.pb.h
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/monitor.pb.h ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/monitoring
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/testbed/monitor.pb.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/monitor.pb.h ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/testbed
     DEPENDS monitoring-proto
 )
 add_custom_target(
     copy_monitoring_proto_headers
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/monitoring/monitor.pb.h
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../../include/gnuradio/testbed/monitor.pb.h
 )
 #add_dependencies(copy_public_headers dtl-proto)
 # ... and install public headers to be used by other projects.
@@ -45,7 +45,9 @@ list(APPEND monitoring_sources
     monitor_probe_impl.cc
     monitor_msg.cc
     monitor_parser.cc
-    monitor_registry.cc)
+    monitor_registry.cc
+    packet_defragmentation_impl.cc
+    packet_validator.cc)
 
 set(monitoring_sources "${monitoring_sources}" PARENT_SCOPE)
 if(NOT monitoring_sources)
@@ -54,28 +56,28 @@ if(NOT monitoring_sources)
 endif(NOT monitoring_sources)
 
 
-add_library(gnuradio-monitoring SHARED ${monitoring_sources})
-set_target_properties(gnuradio-monitoring PROPERTIES CXX_VISIBILITY_PRESET default)
-target_link_libraries(gnuradio-monitoring gnuradio::gnuradio-runtime)
-target_link_libraries(gnuradio-monitoring ZeroMQ::ZeroMQ)
-target_link_libraries(gnuradio-monitoring monitoring-proto ${Protobuf_LIBRARIES})
-add_dependencies(gnuradio-monitoring copy_monitoring_proto_headers)
+add_library(dtl-testbed SHARED ${monitoring_sources})
+set_target_properties(dtl-testbed PROPERTIES CXX_VISIBILITY_PRESET default)
+target_link_libraries(dtl-testbed gnuradio::gnuradio-runtime)
+target_link_libraries(dtl-testbed ZeroMQ::ZeroMQ)
+target_link_libraries(dtl-testbed monitoring-proto ${Protobuf_LIBRARIES})
+add_dependencies(dtl-testbed copy_monitoring_proto_headers)
 
 
-target_include_directories(gnuradio-monitoring
+target_include_directories(dtl-testbed
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
     PUBLIC $<INSTALL_INTERFACE:include>
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../../include
 )
 
-set_target_properties(gnuradio-monitoring PROPERTIES DEFINE_SYMBOL "gnuradio_monitoring_EXPORTS")
+set_target_properties(dtl-testbed PROPERTIES DEFINE_SYMBOL "gnuradio_monitoring_EXPORTS")
 
 ########################################################################
 # Install built library files
 ########################################################################
 include(GrMiscUtils)
-GR_LIBRARY_FOO(gnuradio-monitoring)
+GR_LIBRARY_FOO(dtl-testbed)
 
 ########################################################################
 # Print summary

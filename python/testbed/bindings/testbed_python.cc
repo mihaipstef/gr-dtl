@@ -8,9 +8,9 @@
  */
 
 
-#include <gnuradio/monitoring/monitor_parser.h>
-#include <gnuradio/monitoring/monitor_registry.h>
-#include <gnuradio/monitoring/monitor_probe.h>
+#include <gnuradio/testbed/monitor_parser.h>
+#include <gnuradio/testbed/monitor_registry.h>
+#include <gnuradio/testbed/monitor_probe.h>
 #include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -114,11 +114,17 @@ void* init_numpy()
     return NULL;
 }
 
-PYBIND11_MODULE(monitoring_python, m)
+
+void bind_packet_validator(py::module& m);
+void bind_packet_defragmentation(py::module& m);
+
+PYBIND11_MODULE(testbed_python, m)
 {
     // Initialize the numpy C API
     // (otherwise we will see segmentation faults)
     init_numpy();
     py::module::import("gnuradio.gr");
     bind_monitoring(m);
+    bind_packet_validator(m);
+    bind_packet_defragmentation(m);
 }

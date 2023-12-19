@@ -9,8 +9,8 @@
 #define INCLUDED_DTL_IP_PACKET_H
 
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/dtl/packet_validator.h>
 #include <gnuradio/tagged_stream_block.h>
+#include <gnuradio/testbed/packet_validator.h>
 
 namespace gr {
 namespace dtl {

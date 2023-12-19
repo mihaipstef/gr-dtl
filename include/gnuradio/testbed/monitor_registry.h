@@ -9,8 +9,8 @@
 #define INCLUDED_DTL_MONITOR_PARSER_REGISTRY_H
 
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/monitoring/monitor.pb.h>
-#include <gnuradio/monitoring/monitor_parser.h>
+#include <gnuradio/testbed/monitor.pb.h>
+#include <gnuradio/testbed/monitor_parser.h>
 #include <memory>
 #include <unordered_map>
 

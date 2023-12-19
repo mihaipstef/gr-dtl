@@ -6,7 +6,7 @@
  */
 
 #include "monitor_probe_impl.h"
-#include <gnuradio/monitoring/monitor_proto.h>
+#include <gnuradio/testbed/monitor_proto.h>
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>
 
