@@ -12,12 +12,13 @@ class ofdm_transmitter(gr.hier_block2):
     """Adaptive OFDM Transmitter.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, name="tx"):
         gr.hier_block2.__init__(self, "ofdm_adaptive_tx",
                                 gr.io_signature.makev(
                                     1, 1, [gr.sizeof_char]),
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex))
         # Config
+        self.name = name
         self.sample_rate = config.sample_rate
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len

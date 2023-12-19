@@ -12,7 +12,7 @@ class ofdm_receiver(gr.hier_block2):
     """Adaptive OFDM Receiver.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, name="rx"):
         gr.hier_block2.__init__(self, "ofdm_adaptive_rx",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),
                                 gr.io_signature.makev(6, 6, [gr.sizeof_char, gr.sizeof_char, gr.sizeof_char, gr.sizeof_gr_complex * config.fft_len, gr.sizeof_gr_complex, gr.sizeof_float]))
@@ -21,6 +21,7 @@ class ofdm_receiver(gr.hier_block2):
         self.message_port_register_hier_out("feedback")
         self.message_port_register_hier_out("header")
 
+        self.name = name
         self.fft_len = config.fft_len
         self.cp_len = config.cp_len
         self.frame_length_tag_key = config.frame_length_tag_key

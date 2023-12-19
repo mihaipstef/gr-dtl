@@ -316,7 +316,8 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 return WORK_DONE;
             } else {
                 DTL_LOG_DEBUG("empty_frame: payload={}", frame_payload);
-                padded_frame_out(frame_payload);
+                add_frame_tags(frame_payload);
+                memset(out, 0, d_frame_capacity);
                 return 1;
             }
         } else {
@@ -416,6 +417,9 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                                   align_bytes_to_syms(out_frame_bytes),
                                   d_current_frame_offset);
 
+                    // Reset frame buffer in case frame is not filled
+                    memset(&out[write_index], 0, d_frame_capacity);
+
                     d_tb_enc->buf_out(
                         &out[write_index],
                         min(out_frame_bytes * 8, d_tb_enc->remaining_buf_size()),
@@ -446,7 +450,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
                     }
                     ++d_used_frames_count;
-
                 }
 
                 // If TB buffer empty check if we can start another TB in current frame
@@ -478,7 +481,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         } break;
         case Action::FINALIZE_FRAME: {
             DTL_LOG_DEBUG("finalize_frame: payload={}", d_current_frame_payload);
-            padded_frame_out(d_current_frame_payload);
+            add_frame_tags(d_current_frame_payload);
             d_frame_used_capacity = 0;
             d_current_frame_offset = 0;
             d_current_frame_payload = 0;
