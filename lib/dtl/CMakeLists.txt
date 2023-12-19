@@ -44,9 +44,7 @@ list(APPEND dtl_sources
     ofdm_adaptive_frame_to_stream_vbb_impl.cc
     fec_utils.cc
     ofdm_adaptive_constellation_soft_cf_impl.cc
-    ofdm_adaptive_fec_pack_bb_impl.cc
-    packet_defragmentation_impl.cc
-    packet_validator.cc)
+    ofdm_adaptive_fec_pack_bb_impl.cc)
 
 set(dtl_sources "${dtl_sources}" PARENT_SCOPE)
 if(NOT dtl_sources)
@@ -62,7 +60,7 @@ target_link_libraries(gnuradio-dtl gnuradio::gnuradio-runtime)
 target_link_libraries(gnuradio-dtl gnuradio-digital)
 target_link_libraries(gnuradio-dtl ZeroMQ::ZeroMQ)
 target_link_libraries(gnuradio-dtl gnuradio-fec)
-target_link_libraries(gnuradio-dtl gnuradio-monitoring)
+target_link_libraries(gnuradio-dtl dtl-testbed)
 #target_link_libraries(gnuradio-dtl $<TARGET_OBJECTS:proto> ${Protobuf_LIBRARIES})
 target_link_libraries(gnuradio-dtl dtl-proto ${Protobuf_LIBRARIES})
 #add_dependencies(gnuradio-dtl copy_public_headers)
@@ -114,7 +112,7 @@ if(NOT test_dtl_sources)
     return()
 endif(NOT test_dtl_sources)
 
-list(APPEND GR_TEST_TARGET_DEPS gnuradio-monitoring gnuradio-dtl ${Protobuf_LIBRARIES})
+list(APPEND GR_TEST_TARGET_DEPS dtl-testbed gnuradio-dtl ${Protobuf_LIBRARIES})
 foreach(qa_file ${test_dtl_sources})
     set(target_name "dtl_${qa_file}")
     gr_add_cpp_test(${target_name} ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file})

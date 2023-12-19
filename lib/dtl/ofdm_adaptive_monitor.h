@@ -9,8 +9,8 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_MONITOR_H
 
 
-#include <gnuradio/monitoring/monitor_registry.h>
-#include <gnuradio/monitoring/monitor_proto.h>
+#include <gnuradio/testbed/monitor_registry.h>
+#include <gnuradio/testbed/monitor_proto.h>
 #include "proto/monitor_ofdm.pb.h"
 
 namespace gr {

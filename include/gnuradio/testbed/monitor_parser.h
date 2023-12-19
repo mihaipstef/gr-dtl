@@ -9,8 +9,8 @@
 #define INCLUDED_DTL_MONITOR_PROBE_PARSER_H
 
 #include <gnuradio/dtl/api.h>
-#include <gnuradio/monitoring/monitor.pb.h>
-#include <gnuradio/monitoring/monitor_probe.h>
+#include <gnuradio/testbed/monitor.pb.h>
+#include <gnuradio/testbed/monitor_probe.h>
 #include <map>
 #include <memory>
 #include <pmt/pmt.h>

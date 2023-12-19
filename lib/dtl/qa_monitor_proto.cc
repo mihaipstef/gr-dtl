@@ -6,9 +6,9 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include <gnuradio/monitoring/monitor_probe.h>
-#include <gnuradio/monitoring/monitor_parser.h>
-#include <gnuradio/monitoring/monitor_proto.h>
+#include <gnuradio/testbed/monitor_probe.h>
+#include <gnuradio/testbed/monitor_parser.h>
+#include <gnuradio/testbed/monitor_proto.h>
 #include "ofdm_adaptive_monitor.h"
 #include "proto/monitor_ofdm.pb.h"
 

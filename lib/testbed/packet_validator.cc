@@ -6,8 +6,7 @@
  */
 
 
-#include "logger.h"
-#include <gnuradio/dtl/packet_validator.h>
+#include <gnuradio/testbed/packet_validator.h>
 #include <netinet/ip.h>
 #include <cstring>
 #include <string>

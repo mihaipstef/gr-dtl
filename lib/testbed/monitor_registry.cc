@@ -1,5 +1,5 @@
-#include <gnuradio/monitoring/monitor_parser.h>
-#include <gnuradio/monitoring/monitor_registry.h>
+#include <gnuradio/testbed/monitor_parser.h>
+#include <gnuradio/testbed/monitor_registry.h>
 
 
 namespace gr {
