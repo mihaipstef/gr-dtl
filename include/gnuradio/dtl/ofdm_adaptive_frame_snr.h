@@ -32,7 +32,11 @@ public:
         d_snr_estimator = std::make_shared<T>(alpha);
     }
 
-    virtual void reset() override { d_snr_estimator = std::make_shared<T>(d_snr_estimator->alpha()); }
+    virtual void reset() override {
+        double a = d_snr_estimator->alpha();
+        d_snr_estimator.reset();
+        d_snr_estimator = std::make_shared<T>(a);
+    }
     virtual int update(int noutput_items, const gr_complex* input) override
     {
         return d_snr_estimator->update(noutput_items, input);

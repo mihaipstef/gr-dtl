@@ -232,12 +232,12 @@ void ofdm_adaptive_equalizer_base::frame_equalize(
     for (int i = 0; i < n_sym; i++) {
         pilot_symbols_set = (d_symbols_skipped + i) % d_pilot_symbols.size();
         for (int k = 0; k < d_fft_len; k++) {
-            bool is_pilot_carreier =
+            bool is_pilot_carrier =
                 !d_pilot_carriers.empty() && d_pilot_carriers[d_pilot_carr_set][k];
-            if (!d_occupied_carriers[k] && !is_pilot_carreier) {
+            if (!d_occupied_carriers[k] && !is_pilot_carrier) {
                 continue;
             }
-            if (is_pilot_carreier) {
+            if (is_pilot_carrier) {
                 pilot_eq = frame[i * d_fft_len + k] / d_channel_state[k];
                 // Update SNR estimation with each pilot
                 d_snr_estimator->update(1, &pilot_eq);

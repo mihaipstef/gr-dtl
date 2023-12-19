@@ -75,7 +75,7 @@ int ofdm_adaptive_frame_to_stream_vbb_impl::general_work(
 
     int nframes = min(ninput_items[0], noutput_items / d_frame_capacity);
 
-    DTL_LOG_DEBUG("general_work: frames={}", noutput_items, nframes);
+    DTL_LOG_DEBUG("general_work: frames={}", nframes);
     for (int i=0; i<nframes; ++i) {
         // copy input frame to output
         memcpy(&out[i*d_frame_capacity], &in[i*d_frame_capacity], d_frame_capacity);

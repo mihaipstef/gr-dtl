@@ -142,7 +142,7 @@ int ofdm_adaptive_frame_equalizer_vcvc_impl::work(int noutput_items,
         }
     }
 
-    DTL_LOG_DEBUG("frame_no={}, payload={}, carrier_offset", current_frame_no, payload, carrier_offset);
+    DTL_LOG_DEBUG("frame_no={}, payload={}, carrier_offset={}", current_frame_no, payload, carrier_offset);
 
     auto cnst_tag_it = find_constellation_tag(tags);
     if (cnst_tag_it == tags.end()) {
