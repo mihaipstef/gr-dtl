@@ -1,8 +1,0 @@
-UpdateCTestConfiguration  from :/home/mstef/dtl-flows/gr-dtl/DartConfiguration.tcl
-UpdateCTestConfiguration  from :/home/mstef/dtl-flows/gr-dtl/DartConfiguration.tcl
-Test project /home/mstef/dtl-flows/gr-dtl
-Constructing a list of tests
-Updating test list for fixtures
-Added 0 tests to meet fixture requirements
-Checking test dependency graph...
-Checking test dependency graph end
