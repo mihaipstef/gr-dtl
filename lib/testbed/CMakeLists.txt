@@ -38,8 +38,7 @@ add_custom_target(
 )
 #add_dependencies(copy_public_headers dtl-proto)
 # ... and install public headers to be used by other projects.
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/monitor.pb.h DESTINATION include/gnuradio/monitoring)
-
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/monitor.pb.h DESTINATION include/gnuradio/testbed)
 
 list(APPEND monitoring_sources
     monitor_probe_impl.cc
