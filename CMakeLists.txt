@@ -135,7 +135,6 @@ add_subdirectory(include/gnuradio/testbed)
 add_subdirectory(include/gnuradio/dtl)
 add_subdirectory(lib/testbed)
 add_subdirectory(lib/dtl)
-add_subdirectory(apps)
 add_subdirectory(docs)
 
 # NOTE: manually update below to use GRC to generate C++ flowgraphs w/o python
