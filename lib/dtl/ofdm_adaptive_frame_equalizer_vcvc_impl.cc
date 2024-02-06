@@ -7,7 +7,7 @@
 
 #include "ofdm_adaptive_frame_equalizer_vcvc_impl.h"
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/expj.h>
 #include <gnuradio/io_signature.h>
 #include <gnuradio/math.h>

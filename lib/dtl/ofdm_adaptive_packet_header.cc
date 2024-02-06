@@ -7,7 +7,7 @@
 
 #include <gnuradio/dtl/ofdm_adaptive_packet_header.h>
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
 #include <algorithm>

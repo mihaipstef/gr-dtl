@@ -39,7 +39,6 @@ list(APPEND dtl_python_files
     ofdm_adaptive_feedback_decision_python.cc
     ofdm_adaptive_feedback_format_python.cc
     ofdm_adaptive_frame_bb_python.cc
-    log_python.cc
     ofdm_adaptive_frame_detect_bb_python.cc
     ofdm_adaptive_constellation_metric_vcvf_python.cc
     ofdm_adaptive_fec_frame_bvb_python.cc

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include "ofdm_adaptive_constellation_metric_vcvf_impl.h"
 #include <gnuradio/io_signature.h>
 

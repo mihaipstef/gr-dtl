@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/ofdm_adaptive_feedback_decision.h>
 #include <algorithm>
 #include <cassert>

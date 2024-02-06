@@ -15,11 +15,11 @@
  */
 
 
-static const char* __doc_gr_dtl_packet_defragmentation = R"doc()doc";
+static const char* __doc_gr_dtl_convergence_layer = R"doc()doc";
 
 
-static const char* __doc_gr_dtl_packet_defragmentation_packet_defragmentation =
+static const char* __doc_gr_dtl_convergence_layer_convergence_layer =
     R"doc()doc";
 
 
-static const char* __doc_gr_dtl_packet_defragmentation_make = R"doc()doc";
+static const char* __doc_gr_dtl_convergence_layer_make = R"doc()doc";

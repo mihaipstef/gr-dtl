@@ -7,7 +7,7 @@
 
 #include "ofdm_adaptive_fec_pack_bb_impl.h"
 #include <gnuradio/io_signature.h>
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 
 namespace gr {
 namespace dtl {

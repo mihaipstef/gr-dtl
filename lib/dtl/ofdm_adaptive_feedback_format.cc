@@ -9,7 +9,7 @@
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/math.h>
 #include <cstring>
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <volk/volk_alloc.hh>
 
 

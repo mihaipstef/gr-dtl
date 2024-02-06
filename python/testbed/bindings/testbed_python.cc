@@ -116,7 +116,10 @@ void* init_numpy()
 
 
 void bind_packet_validator(py::module& m);
-void bind_packet_defragmentation(py::module& m);
+void bind_convergence_layer(py::module& m);
+void bind_log(py::module& m);
+
+
 
 PYBIND11_MODULE(testbed_python, m)
 {
@@ -126,5 +129,6 @@ PYBIND11_MODULE(testbed_python, m)
     py::module::import("gnuradio.gr");
     bind_monitoring(m);
     bind_packet_validator(m);
-    bind_packet_defragmentation(m);
+    bind_convergence_layer(m);
+    bind_log(m);
 }
