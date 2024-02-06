@@ -9,7 +9,7 @@
 #include <cstring>
 #include <gnuradio/dtl/api.h>
 #include <iostream>
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 
 
 namespace gr {

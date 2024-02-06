@@ -7,16 +7,17 @@
 
 
 #include <gnuradio/testbed/packet_validator.h>
+#include <gnuradio/testbed/logger.h>
 #include <netinet/ip.h>
 #include <cstring>
 #include <string>
 
-#include <iomanip>
-#include <iostream>
-
 
 namespace gr {
 namespace dtl {
+
+
+INIT_DTL_LOGGER("packet_validator");
 
 
 ip_validator::ip_validator(const std::string& src_addr) : d_src_addr(src_addr) {}
@@ -66,11 +67,7 @@ packet_validator::validation_result ethernet_validator::valid(const uint8_t* buf
         return std::make_tuple(false, len);
     }
 
-    std::cout
-        << "packet_in="; //<< std::hex << ntohs(*((uint16_t*)(buf + 12))) << std::endl;
-    for (int i = 0; i < len; ++i)
-        std::cout << " " << std::setfill('0') << std::setw(2) << std::hex << (int)buf[i];
-    std::cout << std::endl;
+    DTL_LOG_BUFFER("Packet in", buf, len);
 
     bool ether_start = (0 == memcmp(buf, &d_dst_addr[0], 6));
     size_t packet_len = 14 + ntohs(*((uint16_t*)(buf + 16)));
@@ -101,10 +98,7 @@ packet_validator::validation_result modified_ethernet_validator::valid(const uin
 
     bool ether_start = (0 == memcmp(buf, &d_dst_addr[0], 6));
     size_t packet_len = ntohs(*((uint16_t*)(buf + 12)));
-    std::cout << "[from_phy] packet_in="; //<< std::hex << ntohs(*((uint16_t*)(buf + 12))) << std::endl;
-    for (int i = 0; i < len; ++i)
-        std::cout << " " << std::setfill('0') << std::setw(2) << std::hex << (int)buf[i];
-    std::cout << std::endl;
+    DTL_LOG_BUFFER("Packet in", buf, len);
     return std::make_tuple(ether_start, packet_len);
 }
 

@@ -7,7 +7,7 @@
 
 #include "tb_encoder.h"
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include "repack.h"
 #include <cstring>
 

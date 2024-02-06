@@ -7,7 +7,7 @@
 
 #include "ofdm_adaptive_chunks_to_symbols_bc_impl.h"
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 
 #include <gnuradio/io_signature.h>
 

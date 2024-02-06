@@ -5,5 +5,7 @@ install(FILES
     monitor_proto.h
     monitor_msg.h
     packet_validator.h
-    phy_converge.h DESTINATION include/gnuradio/testbed
+    phy_converge.h
+    logger.h
+    log.h DESTINATION include/gnuradio/testbed
 )

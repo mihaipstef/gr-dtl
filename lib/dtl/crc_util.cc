@@ -7,7 +7,7 @@
 
 #include "crc_util.h"
 #include <limits>
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 
 namespace gr {
 namespace dtl {

@@ -3,7 +3,8 @@ find_package(pybind11 REQUIRED)
 list(APPEND testbed_python_files
    phy_converge_python.cc
    packet_validator_python.cc
-   testbed_python.cc)
+   testbed_python.cc
+   log_python.cc)
 
    pybind11_add_module(testbed_python ${testbed_python_files})
 target_link_libraries(

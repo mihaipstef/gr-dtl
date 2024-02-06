@@ -7,7 +7,7 @@
 
 #include "ofdm_adaptive_frame_detect_bb_impl.h"
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/io_signature.h>
 #include <vector>
 

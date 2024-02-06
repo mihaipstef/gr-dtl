@@ -33,7 +33,7 @@ endif
 #include "ofdm_adaptive_fec_frame_bvb_impl.h"
 
 #include "fec_utils.h"
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
 #include "repack.h"

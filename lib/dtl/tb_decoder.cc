@@ -8,7 +8,7 @@
 #include "tb_decoder.h"
 
 #include "fec_utils.h"
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <cstring>
 
 namespace gr {

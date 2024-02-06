@@ -6,7 +6,7 @@
  */
 
 #include "frame_file_store.h"
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <math.h>
 
 namespace gr {

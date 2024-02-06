@@ -35,7 +35,8 @@ list(APPEND monitoring_sources
     monitor_registry.cc
     packet_validator.cc
     from_phy_impl.cc
-    to_phy_impl.cc)
+    to_phy_impl.cc
+    logger.cc)
 
 set(monitoring_sources "${monitoring_sources}" PARENT_SCOPE)
 if(NOT monitoring_sources)
@@ -60,6 +61,7 @@ target_include_directories(dtl-testbed
 )
 
 set_target_properties(dtl-testbed PROPERTIES DEFINE_SYMBOL "gnuradio_monitoring_EXPORTS")
+target_compile_definitions(dtl-testbed PRIVATE DTL_LOGGING_ENABLE=${DTL_LOGGING_ENABLE})
 
 ########################################################################
 # Install built library files

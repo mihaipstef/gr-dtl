@@ -7,15 +7,14 @@
 
 #include "from_phy_impl.h"
 #include <gnuradio/io_signature.h>
+#include <gnuradio/testbed/logger.h>
 #include <tuple>
-
-#include <iostream>
-#include <iomanip>
 
 
 namespace gr {
 namespace dtl {
 
+INIT_DTL_LOGGER("from_phy")
 
 from_phy::sptr from_phy::make(transported_protocol_t protocol, packet_validator::sptr validator, const std::string& len_key)
 {
@@ -84,13 +83,13 @@ int from_phy_impl::work(int noutput_items,
     size_t input_buf_len = ninput_items[0];
     size_t offset_in = 0;
 
-    std::cout << "[from_phy] " << std::dec << "output_sz=" << noutput_items << "; input_sz=" << ninput_items[0] << std::endl;
+    DTL_LOG_DEBUG("work start: ninput={}, noutput={}",  ninput_items[0], noutput_items);
 
     while (offset_in < input_buf_len) {
         size_t packet_len = 0;
         bool valid_packet = is_valid(&in[offset_in], input_buf_len - offset_in, packet_len);
 
-        std::cout << "[from_phy] " << std::dec << "valid=" << valid_packet << "; len=" << packet_len << "; pdu_sz=" << ninput_items[0] << std::endl;
+        DTL_LOG_DEBUG("is_valid: result={}, d_tail_packet_len={}, packet_len={}, expected_len={}", valid_packet, d_tail_packet_len, packet_len, d_expected_len);
 
         // If buffer starts with expected frame/packet header
         if (valid_packet) {
@@ -135,7 +134,6 @@ int from_phy_impl::work(int noutput_items,
                 d_tail_packet_len += to_consume;
                 if (d_tail_packet_len == d_expected_len) {
                     //done
-                    std::cout << "[from_phy] jumbo done" << std::dec << "; offset=" <<  nitems_written(0) << std::endl;
                     add_item_tag(0, nitems_written(0), d_len_key, pmt::from_long(d_expected_len));
                     d_tail_packet_len = 0;
                     d_expected_len = 0;
@@ -154,15 +152,15 @@ int from_phy_impl::work(int noutput_items,
                 offset_in += to_consume;
             }
         }
-        std::cout << "[from_phy] " << std::dec << "offset_in=" << offset_in << "; offset_out=" << d_offset_out << "; d_tail_packet_len=" << d_tail_packet_len  << "; expected_len=" << d_expected_len << std::endl;
+        DTL_LOG_DEBUG("step: offset_in={}, offset_out={}, d_tail_packet_len={}, expected_len={}",
+            offset_in, d_offset_out, d_tail_packet_len, d_expected_len);
     }
+
     if (d_tail_packet_len) {
         return 0;
     }
 
-    std::cout << "[from_phy] " << "packet_out="; //<< std::hex << ntohs(*((uint16_t*)(buf + 12))) << std::endl;
-    for (int i=0; i<d_offset_out; ++i) std::cout << " " << std::setfill('0') << std::setw(2) << std::hex << (int)out[i];
-    std::cout << std::endl;
+    DTL_LOG_BUFFER("Packet out", out, d_offset_out);
     int produced = d_offset_out;
     d_offset_out = 0;
     return produced;

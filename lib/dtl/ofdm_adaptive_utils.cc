@@ -6,7 +6,7 @@
  */
 
 #include "constellation.h"
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/api.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <algorithm>

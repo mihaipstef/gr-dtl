@@ -9,7 +9,7 @@
 #include "config.h"
 #endif
 
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 
 #include <gnuradio/dtl/ofdm_adaptive_equalizer.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>

@@ -7,7 +7,7 @@
 
 
 #include <algorithm>
-#include "logger.h"
+#include <gnuradio/testbed/logger.h>
 #include "ofdm_adaptive_frame_bb_impl.h"
 #include <thread>
 
