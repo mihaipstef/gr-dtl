@@ -12,7 +12,7 @@ void bind_packet_validator(py::module& m)
     using packet_validator = ::gr::dtl::packet_validator;
     using ip_validator = ::gr::dtl::ip_validator;
     using ethernet_validator = ::gr::dtl::ethernet_validator;
-
+    using modified_ethernet_validator = ::gr::dtl::modified_ethernet_validator;
 
     py::class_<packet_validator, std::shared_ptr<packet_validator>>(
         m, "packet_validator", "Packet validator")
@@ -29,9 +29,7 @@ void bind_packet_validator(py::module& m)
     py::class_<ip_validator, gr::dtl::packet_validator, std::shared_ptr<ip_validator>>(
         m, "ip_validator", "L3 packet validator")
 
-        .def(py::init<std::string const&>(),
-             py::arg("src_addr"),
-             "L3 packet validator")
+        .def(py::init<std::string const&>(), py::arg("src_addr"), "L3 packet validator")
         .def(py::init<gr::dtl::ip_validator const&>(),
              py::arg("arg0"),
              "L3 packet validator")
@@ -49,21 +47,28 @@ void bind_packet_validator(py::module& m)
     py::class_<ethernet_validator,
                gr::dtl::packet_validator,
                std::shared_ptr<ethernet_validator>>(
-        m, "ethernet_validator", "L2 packet validator")
-
-        .def(py::init<std::string const&>(),
-             py::arg("dst_addr"),
-             "L2 packet validator")
+        m, "ethernet_validator", "L2 frame validator")
+        .def(py::init<std::string const&>(), py::arg("dst_addr"), "L2 packet validator")
         .def(py::init<gr::dtl::ethernet_validator const&>(),
              py::arg("arg0"),
              "L2 packet validator")
-
-
         .def("valid",
              &ethernet_validator::valid,
              py::arg("buf"),
              py::arg("len"),
-             "Check if L2 packet is valid")
+             "Check if L2 frame is valid");
 
-        ;
+    py::class_<modified_ethernet_validator,
+               gr::dtl::packet_validator,
+               std::shared_ptr<modified_ethernet_validator>>(
+        m, "modified_ethernet_validator", "Modified ethernet frame validator")
+        .def(py::init<std::string const&>(), py::arg("dst_addr"), "L2 packet validator")
+        .def(py::init<gr::dtl::modified_ethernet_validator const&>(),
+             py::arg("arg0"),
+             "L2 packet validator")
+        .def("valid",
+             &modified_ethernet_validator::valid,
+             py::arg("buf"),
+             py::arg("len"),
+             "Check if L2 frame is valid");
 }

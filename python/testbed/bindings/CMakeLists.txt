@@ -1,7 +1,7 @@
 find_package(pybind11 REQUIRED)
 
 list(APPEND testbed_python_files
-   packet_defragmentation_python.cc
+   phy_converge_python.cc
    packet_validator_python.cc
    testbed_python.cc)
 

@@ -109,7 +109,9 @@ class ofdm_transmitter(gr.hier_block2):
         self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
         if self.fec:
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
-            repack = blocks.repack_bits_bb(8, 1)
+            self.connect((self, 0), blocks.tag_debug(1, self.packet_length_tag_key))
+
+            repack = blocks.repack_bits_bb(8, 1, self.packet_length_tag_key)
             self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
                                                              frame_capacity,
                                                              frame_rate,
@@ -140,7 +142,6 @@ class ofdm_transmitter(gr.hier_block2):
         else:
             # HACK: Adding a repack just before frame builder improves scheduler performance (not sure why)
             repack = blocks.repack_bits_bb(8, 8)
-
             self.frame_unpack = dtl.ofdm_adaptive_frame_bb(
                 self.packet_length_tag_key,
                 self.constellations, self.frame_length, frame_rate,

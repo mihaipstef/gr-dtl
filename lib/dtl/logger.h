@@ -93,7 +93,7 @@ inline void format<unsigned char>(std::stringstream& ss)
 template<>
 inline void format<const unsigned char>(std::stringstream& ss)
 {
-    ss << std::setw(2) << std::hex;
+    ss  << std::setw(2) << std::hex;
 }
 
 // template<>
@@ -129,9 +129,9 @@ inline void _append_buf_to_stream(std::stringstream& ss, T* buf, int len)
     format<T>(ss);
     for (int i=0; i<len; ++i) {
         if (sizeof(T) == 1) {
-            ss << "," << (int)buf[i];
+            ss << " " << std::setfill('0') << (int)buf[i];
         } else {
-            ss << "," << buf[i];
+            ss << " " << buf[i];
         }
     }
 }
