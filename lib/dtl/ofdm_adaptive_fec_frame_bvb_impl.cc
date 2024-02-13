@@ -36,7 +36,7 @@ endif
 #include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
-#include "repack.h"
+#include <gnuradio/testbed/repack.h>
 #include <thread>
 
 namespace gr {

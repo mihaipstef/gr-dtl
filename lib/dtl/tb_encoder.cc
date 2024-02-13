@@ -8,7 +8,7 @@
 #include "tb_encoder.h"
 
 #include <gnuradio/testbed/logger.h>
-#include "repack.h"
+#include <gnuradio/testbed/repack.h>
 #include <cstring>
 
 namespace gr {

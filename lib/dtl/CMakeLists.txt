@@ -28,7 +28,6 @@ list(APPEND dtl_sources
     ofdm_adaptive_feedback_decision.cc
     ofdm_adaptive_feedback_format.cc
     ofdm_adaptive_frame_bb_impl.cc
-    repack.cc
     ofdm_adaptive_frame_detect_bb_impl.cc
     constellation.cc
     crc_util.cc

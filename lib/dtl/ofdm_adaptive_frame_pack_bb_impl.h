@@ -10,7 +10,7 @@
 
 #include "crc_util.h"
 #include "frame_file_store.h"
-#include "repack.h"
+#include <gnuradio/testbed/repack.h>
 #include <gnuradio/blocks/repack_bits_bb.h>
 #include <gnuradio/dtl/ofdm_adaptive_frame_pack_bb.h>
 
