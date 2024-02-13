@@ -13,7 +13,7 @@
 #include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
 #include <random>
-#include "repack.h"
+#include <gnuradio/testbed/repack.h>
 
 namespace gr {
 namespace dtl {

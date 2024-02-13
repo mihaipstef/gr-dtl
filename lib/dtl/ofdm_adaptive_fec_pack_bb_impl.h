@@ -9,7 +9,7 @@
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FEC_PACK_BB_IMPL_H
 
 #include <gnuradio/dtl/ofdm_adaptive_fec_pack_bb.h>
-#include "repack.h"
+#include <gnuradio/testbed/repack.h>
 
 namespace gr {
 namespace dtl {
