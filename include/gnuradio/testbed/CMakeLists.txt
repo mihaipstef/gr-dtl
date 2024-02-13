@@ -7,5 +7,6 @@ install(FILES
     packet_validator.h
     phy_converge.h
     logger.h
-    log.h DESTINATION include/gnuradio/testbed
+    log.h
+    repack.h DESTINATION include/gnuradio/testbed
 )

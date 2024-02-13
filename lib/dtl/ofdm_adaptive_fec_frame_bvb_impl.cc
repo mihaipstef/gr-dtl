@@ -375,8 +375,10 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                         to_read = std::min(tb_payload_max, d_current_pdu_remain);
                         to_read = std::min(to_read,  ninput_items[0]-read_index);
                         d_current_pdu_remain -= to_read;
+                        DTL_LOG_DEBUG("jumbo consume: to_read={}, pdu_remain={}", to_read, d_current_pdu_remain);
+                    } else {
+                        DTL_LOG_DEBUG("Tag not found: to_read={}, pdu_remain={}", to_read, d_current_pdu_remain);
                     }
-                    DTL_LOG_DEBUG("Tag not found: to_read={}, pdu_remain={}", to_read, d_current_pdu_remain);
                     break;
                 } else {
                     int pdu_len = pmt::to_long(len_tag->value);

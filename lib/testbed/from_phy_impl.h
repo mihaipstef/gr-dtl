@@ -23,6 +23,8 @@ private:
     transported_protocol_t d_protocol;
     packet_validator::sptr d_validator;
     size_t d_offset_out;
+    size_t d_tag_offset;
+
 
     bool is_valid(const uint8_t* buf, size_t buf_len, size_t& packet_len);
     size_t copy_pdu(uint8_t* out, const uint8_t* buf, size_t len);

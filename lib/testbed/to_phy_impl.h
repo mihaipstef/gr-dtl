@@ -21,10 +21,14 @@ private:
     pmt::pmt_t d_len_key;
     size_t d_pdu_len;
     pmt::pmt_t d_pdu;
+    int d_in_consumed;
+    int d_out_used;
+    uint8_t d_bpb;
 
 protected:
-    int calculate_output_stream_length(const gr_vector_int& ninput_items) override;
-
+    int next_pdu(const gr_vector_int& ninput_items);
+    void forecast(int noutput_items,
+                                        gr_vector_int& ninput_items_required) override;
 public:
     to_phy_impl(transported_protocol_t protocol, const std::string& len_key);
     ~to_phy_impl();

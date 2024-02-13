@@ -73,6 +73,8 @@ target_include_directories(gnuradio-dtl
 )
 
 set_target_properties(gnuradio-dtl PROPERTIES DEFINE_SYMBOL "gnuradio_dtl_EXPORTS")
+target_compile_definitions(gnuradio-dtl PRIVATE DTL_LOGGING_ENABLE=${DTL_LOGGING_ENABLE})
+
 
 if(APPLE)
     set_target_properties(gnuradio-dtl PROPERTIES
