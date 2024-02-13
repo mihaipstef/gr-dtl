@@ -35,7 +35,8 @@ from_phy_impl::from_phy_impl(transported_protocol_t protocol, packet_validator::
       d_len_key(pmt::mp(len_key)),
       d_protocol(protocol),
       d_validator(validator),
-      d_offset_out(0)
+      d_offset_out(0),
+      d_tag_offset(0)
 {
 }
 
@@ -73,6 +74,7 @@ int from_phy_impl::calculate_output_stream_length(const gr_vector_int& ninput_it
     return tagged_stream_block::calculate_output_stream_length(ninput_items);
 }
 
+
 int from_phy_impl::work(int noutput_items,
                          gr_vector_int& ninput_items,
                          gr_vector_const_void_star& input_items,
@@ -96,7 +98,11 @@ int from_phy_impl::work(int noutput_items,
 
             // If unfinished frame/packet
             if (d_tail_packet_len) {
-                //do stuff
+                // leave it fot the upper layers to handle as it is
+                add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(d_tail_packet_len));
+                DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0), d_tail_packet_len, d_tag_offset);
+                d_tag_offset += d_tail_packet_len;
+                d_tail_packet_len = 0;
             }
 
             // Start with new frame/packet
@@ -110,9 +116,11 @@ int from_phy_impl::work(int noutput_items,
             if (offset_in + packet_len <= input_buf_len) {
                 // copy to output and mark it ready
                 size_t produced = copy_pdu(&out[d_offset_out], &in[offset_in], packet_len);
-                add_item_tag(0, nitems_written(0) + d_offset_out, d_len_key, pmt::from_long(produced));
+                add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(produced));
+                DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0) + d_offset_out, produced, d_tag_offset);
                 offset_in += packet_len;
                 d_offset_out += produced;
+                d_tag_offset += produced;
             // If frame/packet is not available in the buffer...
             } else {
                 // ...start jumbo mode processing.
@@ -120,7 +128,7 @@ int from_phy_impl::work(int noutput_items,
                 d_tail_packet_len = produced;
                 d_offset_out += produced;
                 assert(d_tail_packet_len < d_expected_len);
-                break;
+                offset_in = input_buf_len; // Consumed everything
             }
         // If buffer doesn't start with expected header
         } else {
@@ -134,20 +142,23 @@ int from_phy_impl::work(int noutput_items,
                 d_tail_packet_len += to_consume;
                 if (d_tail_packet_len == d_expected_len) {
                     //done
-                    add_item_tag(0, nitems_written(0), d_len_key, pmt::from_long(d_expected_len));
+                    add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(d_expected_len));
+                    DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0), d_expected_len, d_tag_offset);
+                    d_tag_offset += d_expected_len;
                     d_tail_packet_len = 0;
                     d_expected_len = 0;
-                    break;
                 }
             //otherwise...
             } else {
                 // ...try output everything in a PDU for upper layer.
                 size_t to_consume = input_buf_len - offset_in;
-                if (packet_len) {
+                if (packet_len > 14) {
                     to_consume = std::min(to_consume, packet_len);
                 }
                 size_t produced = copy_pdu(&out[d_offset_out], &in[offset_in], to_consume);
-                add_item_tag(0, nitems_written(0) + d_offset_out, d_len_key, pmt::from_long(produced));
+                add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(produced));
+                DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0) + d_offset_out, produced, d_tag_offset);
+                d_tag_offset += produced;
                 d_offset_out += produced;
                 offset_in += to_consume;
             }
@@ -163,6 +174,7 @@ int from_phy_impl::work(int noutput_items,
     DTL_LOG_BUFFER("Packet out", out, d_offset_out);
     int produced = d_offset_out;
     d_offset_out = 0;
+    d_tag_offset = 0;
     return produced;
 }
 

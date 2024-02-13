@@ -73,7 +73,6 @@ class ofdm_transmitter(gr.hier_block2):
         frame_capacity = dtl.ofdm_adaptive.frame_capacity(
                 self.frame_length, self.occupied_carriers)
         frame_rate = self.sample_rate / ((self.frame_length + header_len + len(self.sync_words)) * (self.fft_len + self.cp_len))
-
         header = dtl.ofdm_adaptive_packet_header(
             [self.occupied_carriers[0]
                 for _ in range(header_len)], header_len, self.frame_length,
@@ -109,9 +108,11 @@ class ofdm_transmitter(gr.hier_block2):
         self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
         if self.fec:
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
-            self.connect((self, 0), blocks.tag_debug(1, self.packet_length_tag_key))
+            self.connect((self, 0), blocks.tag_debug(1, "to_phy"))
 
-            repack = blocks.repack_bits_bb(8, 1, self.packet_length_tag_key)
+            # repack = blocks.repack_bits_bb(8, 1, "")#self.packet_length_tag_key)
+            #self.connect(self.to_stream, blocks.tag_debug(1, "to_stream"))
+
             self.fec_frame = dtl.ofdm_adaptive_fec_frame_bvb(self.ldpc_encs,
                                                              frame_capacity,
                                                              frame_rate,
@@ -126,7 +127,7 @@ class ofdm_transmitter(gr.hier_block2):
             self.connect(
                 (self, 0),
                 # payload_scrambler,
-                repack,
+                #repack,
                 self.fec_frame,
                 self.to_stream,
                 payload_mod,

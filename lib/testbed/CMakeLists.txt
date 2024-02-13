@@ -36,7 +36,8 @@ list(APPEND monitoring_sources
     packet_validator.cc
     from_phy_impl.cc
     to_phy_impl.cc
-    logger.cc)
+    logger.cc
+    repack.cc)
 
 set(monitoring_sources "${monitoring_sources}" PARENT_SCOPE)
 if(NOT monitoring_sources)
