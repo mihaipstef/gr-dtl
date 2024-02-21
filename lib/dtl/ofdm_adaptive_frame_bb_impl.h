@@ -8,15 +8,19 @@
 #ifndef INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_IMPL_H
 #define INCLUDED_DTL_OFDM_ADAPTIVE_FRAME_BB_IMPL_H
 
+
 #include <chrono>
 #include "crc_util.h"
 #include "frame_file_store.h"
 #include <gnuradio/dtl/ofdm_adaptive_frame_bb.h>
-#include <random>
 #include <gnuradio/testbed/repack.h>
+#include "pdu_consumer.h"
+#include <random>
+
 
 namespace gr {
 namespace dtl {
+
 
 /*!
  * \brief Prepare the frame by adding the payload CRC, unpacking and tagging the
@@ -66,7 +70,7 @@ private:
     unsigned char d_fec_scheme;
     uint64_t d_tag_offset;
     int d_frame_len;
-    pmt::pmt_t d_packet_len_tag;
+    pmt::pmt_t d_len_key;
     int d_payload_carriers;
     size_t d_bytes;
     unsigned char d_bps;

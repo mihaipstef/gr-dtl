@@ -106,9 +106,10 @@ class ofdm_transmitter(gr.hier_block2):
         #     reset_tag_key=self.packet_length_tag_key
         # )
         self.to_stream = dtl.ofdm_adaptive_frame_to_stream_vbb(frame_capacity, self.packet_length_tag_key)
+        self.connect((self, 0), blocks.tag_debug(1, "to_phy"))
+
         if self.fec:
             self.ldpc_encs = dtl.make_ldpc_encoders(self.codes_alist)
-            self.connect((self, 0), blocks.tag_debug(1, "to_phy"))
 
             # repack = blocks.repack_bits_bb(8, 1, "")#self.packet_length_tag_key)
             #self.connect(self.to_stream, blocks.tag_debug(1, "to_stream"))

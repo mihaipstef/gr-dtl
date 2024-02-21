@@ -56,7 +56,7 @@ ofdm_adaptive_frame_bb_impl::ofdm_adaptive_frame_bb_impl(
       d_fec_scheme(0),
       d_tag_offset(0),
       d_frame_len(frame_len),
-      d_packet_len_tag(pmt::mp(len_tag_key)),
+      d_len_key(pmt::mp(len_tag_key)),
       d_payload_carriers(n_payload_carriers),
       d_waiting_full_frame(false),
       d_waiting_for_input(false),
@@ -205,7 +205,6 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         int frame_payload = -1;
 
         int frame_bits = 0;
-        vector<tag_t> fec_tags;
 
         // keep constellation during one frame or one TB (depending if FEC is present)
         constellation_type_t cnst = d_constellation;
@@ -291,7 +290,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             // Add TSB length tag - frame payload length in symbols
             add_item_tag(0,
                          d_tag_offset,
-                         d_packet_len_tag,
+                         d_len_key,
                          pmt::from_long(expected_frame_symbols));
 
             // Add constellation tag - constellation used for the frame

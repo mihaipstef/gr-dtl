@@ -364,43 +364,15 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 throw runtime_error("Misconfiguration: TB should be able to carry  at least 1 user data bit");
             }
 
-            int to_read = 0;//ninput_items[0] - read_index;
-            while (read_index + to_read < ninput_items[0]) {
+            int to_read = consumer.advance(ninput_items[0], tb_payload_max, read_index, [this](int offset) {
                 std::vector<tag_t> tags;
-                get_tags_in_window(tags, 0, read_index + to_read, read_index + to_read + 1);
+                this->get_tags_in_window(tags, 0, offset, offset + 1);
                 auto len_tag = find_tag(tags, d_len_key);
                 if (len_tag == tags.end()) {
-                    // Stop. Do nothing!
-                    if (d_current_pdu_remain) {
-                        to_read = std::min(tb_payload_max, d_current_pdu_remain);
-                        to_read = std::min(to_read,  ninput_items[0]-read_index);
-                        d_current_pdu_remain -= to_read;
-                        DTL_LOG_DEBUG("jumbo consume: to_read={}, pdu_remain={}", to_read, d_current_pdu_remain);
-                    } else {
-                        DTL_LOG_DEBUG("Tag not found: to_read={}, pdu_remain={}", to_read, d_current_pdu_remain);
-                    }
-                    break;
-                } else {
-                    int pdu_len = pmt::to_long(len_tag->value);
-                    if (to_read + pdu_len <= tb_payload_max) {
-                        // Do not advance if there is not a full PDU in the buffer
-                        if (to_read + pdu_len <= ninput_items[0] - read_index) {
-                            DTL_LOG_DEBUG("pdu detected: len={}", pdu_len);
-                            to_read += pdu_len;
-                        } else {
-                            break;
-                        }
-                    } else if (to_read == 0) {
-                        to_read = tb_payload_max;
-                        d_current_pdu_remain = pdu_len - to_read;
-                        DTL_LOG_DEBUG("jumbo pdu detected: len={}, to_read={}, remain={}", pdu_len, to_read, d_current_pdu_remain);
-                        break;
-                    } else {
-                        // Stop. Do nothing!
-                        break;
-                    }
+                    return std::optional<tag_t>{};
                 }
-            };
+                return std::optional<tag_t>(*len_tag);
+            });
 
             //assert(to_read <= ninput_items[0] - read_index);
             // int available_in = ninput_items[0] - read_index;
