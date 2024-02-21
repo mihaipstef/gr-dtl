@@ -13,6 +13,7 @@
 #include <gnuradio/dtl/fec.h>
 #include <gnuradio/dtl/ofdm_adaptive_fec_frame_bvb.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
+#include "pdu_consumer.h"
 #include "tb_encoder.h"
 
 
@@ -66,6 +67,7 @@ private:
     constellation_type_t d_feedback_cnst;
     std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> d_expected_time;
     int d_current_pdu_remain;
+    pdu_consumer consumer;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,

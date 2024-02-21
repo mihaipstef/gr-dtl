@@ -26,16 +26,16 @@ const pmt::pmt_t pdu_in()
 }
 
 
-to_phy::sptr to_phy::make(transported_protocol_t protocol, const std::string& len_key)
+to_phy::sptr to_phy::make(transported_protocol_t protocol, int bpb, const std::string& len_key)
 {
-    return gnuradio::make_block_sptr<to_phy_impl>(protocol, len_key);
+    return gnuradio::make_block_sptr<to_phy_impl>(protocol, bpb, len_key);
 }
 
 
 /*
  * The private constructor
  */
-to_phy_impl::to_phy_impl(transported_protocol_t protocol, const std::string& len_key)
+to_phy_impl::to_phy_impl(transported_protocol_t protocol, int bpb, const std::string& len_key)
     : gr::tagged_stream_block("to_phy",
                               gr::io_signature::make(0, 0, 0),
                               gr::io_signature::make(1, 1, sizeof(uint8_t)),
@@ -45,7 +45,7 @@ to_phy_impl::to_phy_impl(transported_protocol_t protocol, const std::string& len
       d_pdu_len(0),
       d_in_consumed(0),
       d_out_used(0),
-      d_bpb(8)
+      d_bpb(bpb)
 {
     message_port_register_in(pdu_in());
 }
@@ -80,6 +80,7 @@ int to_phy_impl::work(int noutput_items,
                          gr_vector_void_star& output_items)
 {
     DTL_LOG_DEBUG("work_start: noutput={}, consumed={}, d_pdu_len={}", noutput_items, d_in_consumed, d_pdu_len);
+
     int out_len = 0;
     if (d_pdu_len == 0) {
         d_pdu_len = next_pdu(ninput_items);
@@ -89,7 +90,7 @@ int to_phy_impl::work(int noutput_items,
             return 0;
         }
     }
-    repack r(8, 1);
+    repack r(8, 8/d_bpb);
     auto out = static_cast<uint8_t*>(output_items[0]);
     size_t len = 0;
     const uint8_t* in = (const uint8_t*)uniform_vector_elements(d_pdu, len);
@@ -110,7 +111,7 @@ int to_phy_impl::work(int noutput_items,
     outed += r.repack_lsb_first(in+d_in_consumed, to_consume, out + outed);
     d_in_consumed += to_consume;
     d_out_used += outed;
-    DTL_LOG_DEBUG("end: used={}, consumed={}, d_pdu_len={}", d_out_used, d_in_consumed, d_pdu_len);
+    DTL_LOG_DEBUG("end: used={}, consumed={}, d_pdu_len={}, to_consume={}, outed={}", d_out_used, d_in_consumed, d_pdu_len, to_consume, outed);
 
     if (d_in_consumed == d_pdu_len) {
         d_pdu_len = 0;

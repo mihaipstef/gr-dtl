@@ -33,7 +33,7 @@ class DTL_API to_phy : virtual public gr::tagged_stream_block
 {
 public:
     typedef std::shared_ptr<to_phy> sptr;
-    static sptr make(transported_protocol_t protocol, const std::string& len_key);
+    static sptr make(transported_protocol_t protocol, int bpb, const std::string& len_key);
 };
 
 } // namespace dtl

@@ -42,5 +42,6 @@ void bind_convergence_layer(py::module& m)
         .def(py::init(&to_phy::make),
              py::arg("protocol"),
              py::arg("len_key"),
+             py::arg("bpb"),
              "Upper layer to PHY block constructor");
 }

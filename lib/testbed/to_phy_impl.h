@@ -30,7 +30,7 @@ protected:
     void forecast(int noutput_items,
                                         gr_vector_int& ninput_items_required) override;
 public:
-    to_phy_impl(transported_protocol_t protocol, const std::string& len_key);
+    to_phy_impl(transported_protocol_t protocol, int bpb, const std::string& len_key);
     ~to_phy_impl();
 
     // Where all the action really happens
