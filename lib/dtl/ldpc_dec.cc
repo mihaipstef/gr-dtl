@@ -24,14 +24,14 @@ vector<fec_dec::sptr> DTL_API make_ldpc_decoders(const vector<string>& alist_fna
 {
     vector<fec_dec::sptr> decoders{nullptr};
     for (auto& fname: alist_fnames) {
-        ldpc_dec::sptr dec(new ldpc_dec(fname, sqrt(2), 15));
+        ldpc_dec::sptr dec(new ldpc_dec(fname, 15));
         decoders.push_back(dec);
     }
     return decoders;
 }
 
 
-ldpc_dec::ldpc_dec(const std::string& alist_fname, float sigma, int max_it)
+ldpc_dec::ldpc_dec(const std::string& alist_fname, int max_it)
 {
     DTL_LOG_DEBUG("constructor: alist={}", alist_fname);
 

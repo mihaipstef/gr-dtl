@@ -28,7 +28,7 @@ private:
 
 
 public:
-    ldpc_dec(const std::string& alist_fname, float sigma, int max_it);
+    ldpc_dec(const std::string& alist_fname, int max_it);
     int decode(const float* in_data, int *nit, unsigned char* out_data) override;
     int get_k() override;
     int get_n() override;
