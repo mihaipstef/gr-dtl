@@ -19,6 +19,7 @@ namespace dtl {
 
 INIT_DTL_LOGGER("to_phy")
 
+
 const pmt::pmt_t pdu_in()
 {
     static const pmt::pmt_t val = pmt::mp("pdus");
@@ -26,9 +27,12 @@ const pmt::pmt_t pdu_in()
 }
 
 
-to_phy::sptr to_phy::make(transported_protocol_t protocol, int bpb, const std::string& len_key)
+to_phy::sptr to_phy::make(transported_protocol_t protocol, data_type_t out_type, const std::string& len_key)
 {
-    return gnuradio::make_block_sptr<to_phy_impl>(protocol, bpb, len_key);
+    if (out_type == data_type_t::BIT) {
+        return gnuradio::make_block_sptr<to_phy_impl>(protocol, 8, len_key);
+    }
+    return gnuradio::make_block_sptr<to_phy_impl>(protocol, 1, len_key);
 }
 
 
