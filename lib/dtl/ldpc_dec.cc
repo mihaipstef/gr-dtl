@@ -52,7 +52,7 @@ ldpc_dec::ldpc_dec(const std::string& alist_fname, float sigma, int max_it)
         }
         cout.rdbuf(orig_buf);
     }
-    d_bp.set_alist_sigma(d_list, sigma);
+    d_bp.set_alist(d_list);
     d_bp.set_max_iterations(max_it);
     d_bp.set_K(d_code.dimension());
     d_cw_buf.resize(d_code.get_N());
