@@ -33,9 +33,9 @@ endif
 #include "ofdm_adaptive_fec_frame_bvb_impl.h"
 
 #include "fec_utils.h"
-#include <gnuradio/testbed/logger.h>
 #include <gnuradio/dtl/ofdm_adaptive_utils.h>
 #include <gnuradio/io_signature.h>
+#include <gnuradio/testbed/logger.h>
 #include <gnuradio/testbed/repack.h>
 #include <thread>
 
@@ -96,7 +96,7 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_consecutive_empty_frames(0),
       d_crc(4, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF),
       d_total_frames(0),
-      d_frame_duration(std::chrono::duration<double>(1.0/frame_rate)),
+      d_frame_duration(std::chrono::duration<double>(1.0 / frame_rate)),
       d_max_empty_frames(max_empty_frames),
       d_feedback_fec_idx(0),
       d_feedback_cnst(constellation_type_t::UNKNOWN),
@@ -107,17 +107,17 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
         throw(std::runtime_error("No encoder found!"));
     }
     auto it_max_n = max_element(d_encoders.begin() + 1,
-                          d_encoders.end(),
-                          [](const decltype(d_encoders)::value_type& l,
-                             const decltype(d_encoders)::value_type& r) {
-                              return l->get_n() < r->get_n();
-                          });
+                                d_encoders.end(),
+                                [](const decltype(d_encoders)::value_type& l,
+                                   const decltype(d_encoders)::value_type& r) {
+                                    return l->get_n() < r->get_n();
+                                });
     auto it_max_k = max_element(d_encoders.begin() + 1,
-                          d_encoders.end(),
-                          [](const decltype(d_encoders)::value_type& l,
-                             const decltype(d_encoders)::value_type& r) {
-                              return l->get_k() < r->get_k();
-                          });
+                                d_encoders.end(),
+                                [](const decltype(d_encoders)::value_type& l,
+                                   const decltype(d_encoders)::value_type& r) {
+                                    return l->get_k() < r->get_k();
+                                });
 
     int ncws = compute_tb_len((*it_max_n)->get_n(), d_frame_capacity * max_bps);
     d_tb_enc = make_shared<tb_encoder>((*it_max_n)->get_n() * ncws, (*it_max_n)->get_n());
@@ -143,7 +143,7 @@ ofdm_adaptive_fec_frame_bvb_impl::~ofdm_adaptive_fec_frame_bvb_impl() {}
 
 bool ofdm_adaptive_fec_frame_bvb_impl::start()
 {
-    //d_start_time = std::chrono::steady_clock::now();
+    // d_start_time = std::chrono::steady_clock::now();
     d_total_frames = 0;
     return block::start();
 }
@@ -201,7 +201,7 @@ void ofdm_adaptive_fec_frame_bvb_impl::process_feedback_header(pmt::pmt_t header
 
 
 void ofdm_adaptive_fec_frame_bvb_impl::forecast(int noutput_items,
-                                           gr_vector_int& ninput_items_required)
+                                                gr_vector_int& ninput_items_required)
 {
     ninput_items_required[0] = 0;
 }
@@ -233,10 +233,8 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
                  d_tag_offset,
                  feedback_constellation_key(),
                  pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
-    add_item_tag(0,
-                 d_tag_offset,
-                 fec_feedback_key(),
-                 pmt::from_long(d_feedback_fec_idx & 0xf));
+    add_item_tag(
+        0, d_tag_offset, fec_feedback_key(), pmt::from_long(d_feedback_fec_idx & 0xf));
     ++d_tag_offset;
     ++d_total_frames;
 
@@ -311,7 +309,8 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     if (ninput_items[0] == 0 && noutput_items > 0) {
         int frame_payload = tb_offset_to_bytes();
         if (output_available >= 1) {
-            if (d_max_empty_frames >= 0 &&  ++d_consecutive_empty_frames >= d_max_empty_frames) {
+            if (d_max_empty_frames >= 0 &&
+                ++d_consecutive_empty_frames >= d_max_empty_frames) {
                 DTL_LOG_DEBUG("work_done: consecutive_empty_frames={}",
                               d_consecutive_empty_frames);
                 return WORK_DONE;
@@ -358,56 +357,71 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
             // d_current_frame_len *= 8;
 
-            int tb_payload_max = d_tb_len * d_current_enc->get_k() - d_crc.get_crc_len() * 8;
+            int tb_payload_max =
+                d_tb_len * d_current_enc->get_k() - d_crc.get_crc_len() * 8;
 
             if (tb_payload_max <= 0) {
-                throw runtime_error("Misconfiguration: TB should be able to carry  at least 1 user data bit");
+                throw runtime_error("Misconfiguration: TB should be able to carry  at "
+                                    "least 1 user data bit");
             }
 
-            int to_read = consumer.advance(ninput_items[0], tb_payload_max, read_index, [this](int offset) {
-                std::vector<tag_t> tags;
-                this->get_tags_in_window(tags, 0, offset, offset + 1);
-                auto len_tag = find_tag(tags, d_len_key);
-                if (len_tag == tags.end()) {
-                    return std::optional<tag_t>{};
-                }
-                return std::optional<tag_t>(*len_tag);
-            });
+            int to_read = consumer.advance(
+                ninput_items[0], tb_payload_max, read_index, [this](int offset) {
+                    std::vector<tag_t> tags;
+                    this->get_tags_in_window(tags, 0, offset, offset + 1);
+                    auto len_tag = find_tag(tags, d_len_key);
+                    if (len_tag == tags.end()) {
+                        return std::optional<tag_t>{};
+                    }
+                    return std::optional<tag_t>(*len_tag);
+                });
 
-            //assert(to_read <= ninput_items[0] - read_index);
-            // int available_in = ninput_items[0] - read_index;
-            // int to_read = min(available_in, tb_payload_max);
+            // assert(to_read <= ninput_items[0] - read_index);
+            //  int available_in = ninput_items[0] - read_index;
+            //  int to_read = min(available_in, tb_payload_max);
 
-            // Copy user data in payload and CRC buffers
-            memcpy(&d_tb_payload[0], &in[read_index], to_read);
-            int crc_buf_len = to_bytes.repack_lsb_first(&in[read_index], to_read, &d_crc_buffer[0]);
-            //DTL_LOG_BUFFER("buf_to_tx", &d_crc_buffer[0], crc_buf_len);
-            // Compute CRC and move the value in payload buffer
-            d_crc.append_crc(&d_crc_buffer[0], crc_buf_len);
-            to_bits.repack_lsb_first(&d_crc_buffer[crc_buf_len], d_crc.get_crc_len(), &d_tb_payload[to_read]);
+            if (to_read) {
+                // Copy user data in payload and CRC buffers
+                memcpy(&d_tb_payload[0], &in[read_index], to_read);
+                int crc_buf_len =
+                    to_bytes.repack_lsb_first(&in[read_index], to_read, &d_crc_buffer[0]);
+                // DTL_LOG_BUFFER("buf_to_tx", &d_crc_buffer[0], crc_buf_len);
+                //  Compute CRC and move the value in payload buffer
+                d_crc.append_crc(&d_crc_buffer[0], crc_buf_len);
+                to_bits.repack_lsb_first(&d_crc_buffer[crc_buf_len],
+                                         d_crc.get_crc_len(),
+                                         &d_tb_payload[to_read]);
 
-            // encode
-            d_tb_enc->encode(&d_tb_payload[0], to_read + d_crc.get_crc_len() * 8, d_current_enc, d_tb_len);
+                // encode
+                // Compute new tb len if len<max
+                d_tb_enc->encode(&d_tb_payload[0],
+                                 to_read + d_crc.get_crc_len() * 8,
+                                 d_current_enc,
+                                 d_tb_len);
 
-            read_index += to_read;
+                read_index += to_read;
 
-            d_action = Action::OUTPUT_BUFFER;
-            consumed_input += to_read;
+                d_action = Action::OUTPUT_BUFFER;
+                consumed_input += to_read;
 
-            d_used_frames_count = 0;
-            ++d_tb_count;
-            d_consecutive_empty_frames = 0;
+                d_used_frames_count = 0;
+                ++d_tb_count;
+                d_consecutive_empty_frames = 0;
 
-            DTL_LOG_DEBUG("input_processed: tb_len={}, tb_payload={}, read_index={}, "
-                          "padding_syms={}, tb_no={}, to_read={}",
-                          d_tb_enc->size(),
-                          d_tb_enc->buf_payload(),
-                          read_index,
-                          d_frame_padding_syms,
-                          d_tb_count,
-                          to_read);
+                DTL_LOG_DEBUG("input_processed: tb_len={}, tb_payload={}, read_index={}, "
+                              "padding_syms={}, tb_no={}, to_read={}",
+                              d_tb_enc->size(),
+                              d_tb_enc->buf_payload(),
+                              read_index,
+                              d_frame_padding_syms,
+                              d_tb_count,
+                              to_read);
+            } else {
+                d_action = Action::FINALIZE_FRAME;
+                wait_next_work = true;
+            }
 
-        } break;
+        }
 
         // Empty TB buffer in output buffer
         case Action::OUTPUT_BUFFER: {
@@ -424,11 +438,12 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                     int out_frame_bytes =
                         min(bytes_left_in_tb, current_frame_available_bytes());
 
-                    DTL_LOG_DEBUG("output_buffer: bytes={}, syms={}, offset={}, write_index={}",
-                                  out_frame_bytes,
-                                  align_bytes_to_syms(out_frame_bytes),
-                                  d_current_frame_offset,
-                                  write_index);
+                    DTL_LOG_DEBUG(
+                        "output_buffer: bytes={}, syms={}, offset={}, write_index={}",
+                        out_frame_bytes,
+                        align_bytes_to_syms(out_frame_bytes),
+                        d_current_frame_offset,
+                        write_index);
 
                     // Reset frame buffer in case frame is not filled
                     memset(&out[write_index], 0, d_frame_capacity);
@@ -456,11 +471,11 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                             d_frame_used_capacity = align_bytes_to_syms(out_frame_bytes);
                             write_index += d_frame_used_capacity;
                         } else {
-                            d_frame_used_capacity = d_current_frame_offset + align_bytes_to_syms(out_frame_bytes);
+                            d_frame_used_capacity = d_current_frame_offset +
+                                                    align_bytes_to_syms(out_frame_bytes);
                             d_current_frame_payload += out_frame_bytes;
                             write_index += d_frame_used_capacity;
                         }
-
                     }
                     ++d_used_frames_count;
                 }
@@ -491,18 +506,21 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                           (int)d_action,
                           consumed_input,
                           d_current_frame_offset);
-        } break;
+        }
         case Action::FINALIZE_FRAME: {
             add_frame_tags(d_current_frame_payload);
             d_action = Action::PROCESS_INPUT;
             ++produced_frames;
-            //assert(write_index + d_frame_capacity - d_frame_used_capacity != produced_frames * d_frame_capacity);
-            DTL_LOG_DEBUG("finalize_frame: payload={}, produced_frame={}, write_index={}, used_capacity={}, sanity_check={}",
-            d_current_frame_payload,
-            produced_frames,
-            write_index,
-            d_frame_used_capacity,
-            write_index + d_frame_capacity - d_frame_used_capacity == produced_frames * d_frame_capacity);
+            // assert(write_index + d_frame_capacity - d_frame_used_capacity !=
+            // produced_frames * d_frame_capacity);
+            DTL_LOG_DEBUG("finalize_frame: payload={}, produced_frame={}, "
+                          "write_index={}, used_capacity={}, sanity_check={}",
+                          d_current_frame_payload,
+                          produced_frames,
+                          write_index,
+                          d_frame_used_capacity,
+                          write_index + d_frame_capacity - d_frame_used_capacity ==
+                              produced_frames * d_frame_capacity);
 
             write_index = produced_frames * d_frame_capacity;
             d_frame_used_capacity = 0;
@@ -510,7 +528,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
             d_current_frame_payload = 0;
         } break;
         } // action switch
-    } // input loop
+    }     // input loop
 
     DTL_LOG_DEBUG("work_finish: d_frame_capacity={}, noutput={}, ninput={}, "
                   "read_index={}, write_index={}, tb_len={}, frame_offset={}, "
