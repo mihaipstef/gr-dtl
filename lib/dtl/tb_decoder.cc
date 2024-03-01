@@ -142,7 +142,7 @@ bool tb_decoder::process_frame(
 
 int tb_decoder::decode(int tb_len, int& avg_it)
 {
-    static const float SHORTENED_VALUE = -5;
+    static const float SHORTENED_VALUE = -15;
 
     int payload_len = d_fec_info->d_tb_payload_len;
     int n = d_fec_info->get_n();

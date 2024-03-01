@@ -20,6 +20,7 @@ using namespace std;
 INIT_DTL_LOGGER("ofdm_adaptive_frame_bb")
 
 static const pmt::pmt_t FRAME_COUNT_KEY = pmt::mp("frame_count_key");
+static const pmt::pmt_t FRAME_PAYLOAD_KEY = pmt::mp("frame_payload_key");
 static const pmt::pmt_t MONITOR_PORT = pmt::mp("monitor");
 
 ofdm_adaptive_frame_bb::sptr
@@ -329,6 +330,8 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(
                 monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
+            monitor_msg = pmt::dict_add(
+                monitor_msg, FRAME_COUNT_KEY, pmt::from_long(frame_payload));
             message_port_pub(MONITOR_PORT, monitor_msg);
         }
     }
