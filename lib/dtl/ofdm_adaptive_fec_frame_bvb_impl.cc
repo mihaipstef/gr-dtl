@@ -100,7 +100,8 @@ ofdm_adaptive_fec_frame_bvb_impl::ofdm_adaptive_fec_frame_bvb_impl(
       d_max_empty_frames(max_empty_frames),
       d_feedback_fec_idx(0),
       d_feedback_cnst(constellation_type_t::UNKNOWN),
-      d_current_pdu_remain(0)
+      d_current_pdu_remain(0),
+      d_loaded_frames(0)
 {
     // Find longest code
     if (d_encoders.size() <= 1) {
@@ -237,8 +238,6 @@ void ofdm_adaptive_fec_frame_bvb_impl::add_frame_tags(int frame_payload)
         0, d_tag_offset, fec_feedback_key(), pmt::from_long(d_feedback_fec_idx & 0xf));
     ++d_tag_offset;
     ++d_total_frames;
-
-    d_expected_time = d_start_time + d_total_frames * d_frame_duration;
     DTL_LOG_DEBUG("frame_out: tb_no={}, frame_payaload={}", d_tb_count, frame_payload);
 }
 
@@ -274,6 +273,14 @@ int ofdm_adaptive_fec_frame_bvb_impl::current_frame_available_bytes()
 }
 
 
+int ofdm_adaptive_fec_frame_bvb_impl::produce_one_frame()
+{
+    DTL_LOG_DEBUG("produced: loaded_frames={}", d_loaded_frames);
+    d_expected_time += d_frame_duration;
+    return static_cast<int>(static_cast<bool>(d_loaded_frames--));
+}
+
+
 int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                                                    gr_vector_int& ninput_items,
                                                    gr_vector_const_void_star& input_items,
@@ -285,7 +292,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
     int write_index = d_current_frame_offset;
     int read_index = 0;
     int consumed_input = 0;
-    int produced_frames = 0;
     int output_available = noutput_items * d_frame_capacity;
     repack to_bytes(1, 8);
     repack to_bits(8, 1);
@@ -297,16 +303,22 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                   (int)d_action);
 
     if (d_total_frames == 0) {
-        d_start_time = std::chrono::steady_clock::now();
+        d_expected_time = std::chrono::steady_clock::now();
     } else {
         auto now = std::chrono::steady_clock::now();
         if (now < d_expected_time) {
+            DTL_LOG_DEBUG("produced wait");
             std::this_thread::sleep_until(d_expected_time);
+        }
+        // Produce
+        if (d_loaded_frames) {
+            consume_each(0);
+            return produce_one_frame();
         }
     }
 
     // If no input but enough space in output buffer, generate an empty frame
-    if (ninput_items[0] == 0 && noutput_items > 0) {
+    if (ninput_items[0] == 0 && noutput_items > 0 && d_loaded_frames == 0) {
         int frame_payload = tb_offset_to_bytes();
         if (output_available >= 1) {
             if (d_max_empty_frames >= 0 &&
@@ -318,7 +330,8 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 DTL_LOG_DEBUG("empty_frame: payload={}", frame_payload);
                 add_frame_tags(frame_payload);
                 memset(out, 0, d_frame_capacity);
-                return 1;
+                ++d_loaded_frames;
+                return produce_one_frame();
             }
         } else {
             return 0;
@@ -431,7 +444,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                 wait_next_work = true;
             } else {
                 // Output the TB frame by frame
-                while (!d_tb_enc->ready() && produced_frames < noutput_items) {
+                while (!d_tb_enc->ready() && d_loaded_frames < noutput_items) {
 
                     int bytes_left_in_tb =
                         align_bits_to_bytes(d_tb_enc->remaining_buf_size());
@@ -461,7 +474,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                                        out_frame_bytes);
                         d_current_frame_offset = 0;
                         d_current_frame_payload = 0;
-                        ++produced_frames;
+                        ++d_loaded_frames;
                         write_index += (d_frame_capacity - d_frame_used_capacity);
                         d_frame_used_capacity = 0;
                     } else {
@@ -510,19 +523,19 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         case Action::FINALIZE_FRAME: {
             add_frame_tags(d_current_frame_payload);
             d_action = Action::PROCESS_INPUT;
-            ++produced_frames;
+            ++d_loaded_frames;
             // assert(write_index + d_frame_capacity - d_frame_used_capacity !=
-            // produced_frames * d_frame_capacity);
+            // d_loaded_frames * d_frame_capacity);
             DTL_LOG_DEBUG("finalize_frame: payload={}, produced_frame={}, "
                           "write_index={}, used_capacity={}, sanity_check={}",
                           d_current_frame_payload,
-                          produced_frames,
+                          d_loaded_frames,
                           write_index,
                           d_frame_used_capacity,
                           write_index + d_frame_capacity - d_frame_used_capacity ==
-                              produced_frames * d_frame_capacity);
+                              d_loaded_frames * d_frame_capacity);
 
-            write_index = produced_frames * d_frame_capacity;
+            write_index = d_loaded_frames * d_frame_capacity;
             d_frame_used_capacity = 0;
             d_current_frame_offset = 0;
             d_current_frame_payload = 0;
@@ -540,11 +553,17 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                   write_index,
                   d_tb_len,
                   d_current_frame_offset,
-                  produced_frames,
+                  d_loaded_frames,
                   consumed_input);
 
-    consume_each(consumed_input);
-    return produced_frames;
+
+
+    if (d_loaded_frames) {
+        // Consume all but produce only one and defer the reset for next calls
+        consume_each(consumed_input);
+        return produce_one_frame();
+    }
+    return 0;
 }
 
 } /* namespace dtl */
