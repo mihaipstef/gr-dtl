@@ -31,6 +31,7 @@ private:
     int tb_offset_to_bytes();
     int current_frame_available_bytes();
     int align_bytes_to_syms(int nbytes);
+    int produce_one_frame();
 
     std::vector<fec_enc::sptr> d_encoders;
     int d_frame_capacity;
@@ -68,6 +69,7 @@ private:
     std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> d_expected_time;
     int d_current_pdu_remain;
     pdu_consumer consumer;
+    int d_loaded_frames;
 
 public:
     ofdm_adaptive_fec_frame_bvb_impl(const std::vector<fec_enc::sptr>& encoders,
