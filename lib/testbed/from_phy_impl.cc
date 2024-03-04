@@ -155,11 +155,11 @@ int from_phy_impl::work(int noutput_items,
                 if (packet_len > 14) {
                     to_consume = std::min(to_consume, packet_len);
                 }
-                size_t produced = copy_pdu(&out[d_offset_out], &in[offset_in], to_consume);
-                add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(produced));
-                DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0) + d_offset_out, produced, d_tag_offset);
-                d_tag_offset += produced;
-                d_offset_out += produced;
+                memcpy(&out[d_offset_out], &in[offset_in], to_consume);
+                add_item_tag(0, nitems_written(0) + d_tag_offset, d_len_key, pmt::from_long(to_consume));
+                DTL_LOG_DEBUG("add tag offset={}, value={}, tag_offset={}", nitems_written(0) + d_offset_out, to_consume, d_tag_offset);
+                d_tag_offset += to_consume;
+                d_offset_out += to_consume;
                 offset_in += to_consume;
             }
         }
