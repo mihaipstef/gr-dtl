@@ -118,7 +118,6 @@ int ofdm_adaptive_fec_decoder_impl::general_work(int noutput_items,
 
         DTL_LOG_DEBUG("nitems_read={}, read_index={}, frame_len={}", nitems_read(0), read_index, len);
 
-
         if (test != 3) {
             DTL_LOG_ERROR("Tags missing: check_bitmap={}, lookup_offset={}",
                           test,
