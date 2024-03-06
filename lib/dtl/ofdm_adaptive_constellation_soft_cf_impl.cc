@@ -86,7 +86,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                                 this->nitems_read(0) + read_index,
                                 this->nitems_read(0) + read_index + 1);
         int test = 0;
-        double sigma = 0.1;
+        double sigma = 0.001;
         for (auto& tag : tags) {
             DTL_LOG_DEBUG("offset={}, key={}", tag.offset, pmt::symbol_to_string(tag.key));
             if (tag.key == get_constellation_tag_key()) {
@@ -98,10 +98,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
                 //remove_item_tag(0, tag);
             } else if (tag.key == noise_tag_key()) {
                 double noise = pmt::to_double(tag.value);
-                double sigma_noise = sqrt(noise);
-                if (sigma_noise > sigma) {
-                    sigma = sigma_noise;
-                }
+                sigma = sqrt(noise);
                 test |= 4;
             }
             if (test == 7) {
@@ -121,7 +118,7 @@ int ofdm_adaptive_constellation_soft_cf_impl::general_work(
         set_relative_rate(bps, 1);
         set_output_multiple(len * bps);
 
-        DTL_LOG_DEBUG("work: ninput={}, noutput={}, cnst={}, len={}, bps={}", ninput_items[0], noutput_items, (int)cnst, len, bps);
+        DTL_LOG_DEBUG("work: ninput={}, noutput={}, cnst={}, len={}, bps={}, sigma={}", ninput_items[0], noutput_items, (int)cnst, len, bps, sigma);
 
         if (read_index + len > ninput_items[0]) {
             break;
