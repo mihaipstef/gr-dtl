@@ -312,7 +312,6 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
         }
         // Produce
         if (d_loaded_frames) {
-            consume_each(0);
             return produce_one_frame();
         }
     }
@@ -371,7 +370,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
             // d_current_frame_len *= 8;
 
             int tb_payload_max =
-                d_tb_len * d_current_enc->get_k() - d_crc.get_crc_len() * 8;
+                (d_tb_len * d_current_enc->get_k())/8 - d_crc.get_crc_len();
 
             if (tb_payload_max <= 0) {
                 throw runtime_error("Misconfiguration: TB should be able to carry  at "
@@ -395,20 +394,16 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
 
             if (to_read) {
                 // Copy user data in payload and CRC buffers
-                memcpy(&d_tb_payload[0], &in[read_index], to_read);
-                int crc_buf_len =
-                    to_bytes.repack_lsb_first(&in[read_index], to_read, &d_crc_buffer[0]);
-                // DTL_LOG_BUFFER("buf_to_tx", &d_crc_buffer[0], crc_buf_len);
+                memcpy(&d_crc_buffer[0], &in[read_index], to_read);
                 //  Compute CRC and move the value in payload buffer
-                d_crc.append_crc(&d_crc_buffer[0], crc_buf_len);
-                to_bits.repack_lsb_first(&d_crc_buffer[crc_buf_len],
-                                         d_crc.get_crc_len(),
-                                         &d_tb_payload[to_read]);
+                d_crc.append_crc(&d_crc_buffer[0], to_read);
+                to_bits.repack_lsb_first(&d_crc_buffer[0],
+                                         to_read + d_crc.get_crc_len(),
+                                         &d_tb_payload[0]);
 
-                // encode
-                // Compute new tb len if len<max
+                // TODO: Compute new tb len if len<max
                 d_tb_enc->encode(&d_tb_payload[0],
-                                 to_read + d_crc.get_crc_len() * 8,
+                                 (to_read + d_crc.get_crc_len()) * 8,
                                  d_current_enc,
                                  d_tb_len);
 
@@ -513,6 +508,7 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                     // Did not output the entire buffer, wait for next scheduler
                     // allocation
                     wait_next_work = true;
+                    break;
                 }
             }
             DTL_LOG_DEBUG("output_buffer: next={}, consumed={}, offset={}",
@@ -521,24 +517,26 @@ int ofdm_adaptive_fec_frame_bvb_impl::general_work(int noutput_items,
                           d_current_frame_offset);
         }
         case Action::FINALIZE_FRAME: {
-            add_frame_tags(d_current_frame_payload);
-            d_action = Action::PROCESS_INPUT;
-            ++d_loaded_frames;
-            // assert(write_index + d_frame_capacity - d_frame_used_capacity !=
-            // d_loaded_frames * d_frame_capacity);
-            DTL_LOG_DEBUG("finalize_frame: payload={}, produced_frame={}, "
-                          "write_index={}, used_capacity={}, sanity_check={}",
-                          d_current_frame_payload,
-                          d_loaded_frames,
-                          write_index,
-                          d_frame_used_capacity,
-                          write_index + d_frame_capacity - d_frame_used_capacity ==
-                              d_loaded_frames * d_frame_capacity);
+            if (d_action == Action::FINALIZE_FRAME) {
+                add_frame_tags(d_current_frame_payload);
+                d_action = Action::PROCESS_INPUT;
+                ++d_loaded_frames;
+                // assert(write_index + d_frame_capacity - d_frame_used_capacity !=
+                // d_loaded_frames * d_frame_capacity);
+                DTL_LOG_DEBUG("finalize_frame: payload={}, produced_frame={}, "
+                            "write_index={}, used_capacity={}, sanity_check={}",
+                            d_current_frame_payload,
+                            d_loaded_frames,
+                            write_index,
+                            d_frame_used_capacity,
+                            write_index + d_frame_capacity - d_frame_used_capacity ==
+                                d_loaded_frames * d_frame_capacity);
 
-            write_index = d_loaded_frames * d_frame_capacity;
-            d_frame_used_capacity = 0;
-            d_current_frame_offset = 0;
-            d_current_frame_payload = 0;
+                write_index = d_loaded_frames * d_frame_capacity;
+                d_frame_used_capacity = 0;
+                d_current_frame_offset = 0;
+                d_current_frame_payload = 0;
+            }
         } break;
         } // action switch
     }     // input loop

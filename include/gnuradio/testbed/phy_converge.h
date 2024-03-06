@@ -17,8 +17,6 @@ namespace dtl {
 
 
 enum class DTL_API transported_protocol_t { IPV4_ONLY = 0, ETHER_IPV4, MODIFIED_ETHER };
-enum class DTL_API data_type_t { BIT = 0, BYTE };
-
 
 class DTL_API from_phy : virtual public gr::tagged_stream_block
 {
@@ -34,7 +32,7 @@ class DTL_API to_phy : virtual public gr::tagged_stream_block
 {
 public:
     typedef std::shared_ptr<to_phy> sptr;
-    static sptr make(transported_protocol_t protocol, data_type_t out_type, const std::string& len_key);
+    static sptr make(transported_protocol_t protocol, const std::string& len_key);
 };
 
 } // namespace dtl

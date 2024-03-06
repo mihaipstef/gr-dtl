@@ -39,7 +39,7 @@ public:
     from_phy_impl(transported_protocol_t protocol, packet_validator::sptr validator, const std::string& len_key);
     ~from_phy_impl();
 
-    // Where all the action really happens
+
     int work(int noutput_items,
              gr_vector_int& ninput_items,
              gr_vector_const_void_star& input_items,

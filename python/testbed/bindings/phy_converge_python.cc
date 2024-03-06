@@ -12,7 +12,6 @@ void bind_convergence_layer(py::module& m)
     using from_phy = ::gr::dtl::from_phy;
     using to_phy = ::gr::dtl::to_phy;
     using transported_protocol_t = ::gr::dtl::transported_protocol_t;
-    using data_type_t = ::gr::dtl::data_type_t;
 
     py::enum_<transported_protocol_t>(m, "transported_protocol_t")
         .value("IPV4_ONLY", transported_protocol_t::IPV4_ONLY)
@@ -21,13 +20,6 @@ void bind_convergence_layer(py::module& m)
         .export_values();
 
     py::implicitly_convertible<int, transported_protocol_t>();
-
-    py::enum_<data_type_t>(m, "data_type_t")
-        .value("BIT", data_type_t::BIT)
-        .value("BYTE", data_type_t::BYTE)
-        .export_values();
-
-    py::implicitly_convertible<int, data_type_t>();
 
     py::class_<from_phy,
                gr::tagged_stream_block,
@@ -50,6 +42,5 @@ void bind_convergence_layer(py::module& m)
         .def(py::init(&to_phy::make),
              py::arg("protocol"),
              py::arg("len_key"),
-             py::arg("data_type"),
              "Upper layer to PHY block constructor");
 }
