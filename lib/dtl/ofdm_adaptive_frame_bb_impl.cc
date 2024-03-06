@@ -188,8 +188,15 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
     int read_index = 0;
     int write_index = 0;
     int produced = 0;
+    int produced_payload = 0;
     int expected_frame_symbols = 0;
     std::uniform_int_distribution<> rnd_bytes_dist(0, 255);
+
+    auto expected_time = d_start_time + d_frame_count * d_frame_duration;
+    auto now = std::chrono::steady_clock::now();
+    if (now < expected_time) {
+        std::this_thread::sleep_until(expected_time);
+    }
 
     DTL_LOG_DEBUG("work: d_frame_len={}, d_payload_carriers={}, "
                   "noutput_items={}, nitems_written={}, ninput_items={}",
@@ -305,6 +312,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
                         pmt::from_long(static_cast<int>(d_feedback_cnst) & 0xf));
             // Add transported payload tag - number of payload bytes carried by the
             // frame (including CRC) - if there are any
+            produced_payload += frame_payload;
             if (frame_payload) {
                 add_item_tag(0,
                                 d_tag_offset,
@@ -320,13 +328,9 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
             d_frame_store.store(frame_payload,
                                 d_frame_count & 0xFFF,
                                 reinterpret_cast<char*>(&d_frame_buffer[0]));
-            auto now = std::chrono::steady_clock::now();
-            auto expected_time = d_start_time + d_frame_count * d_frame_duration;
-            if (now < expected_time) {
-                std::this_thread::sleep_until(expected_time);
-            }
             ++d_frame_count;
             ++produced;
+
             pmt::pmt_t monitor_msg = pmt::make_dict();
             monitor_msg = pmt::dict_add(
                 monitor_msg, FRAME_COUNT_KEY, pmt::from_long(d_frame_count));
@@ -336,7 +340,7 @@ int ofdm_adaptive_frame_bb_impl::general_work(int noutput_items,
         }
     }
 
-    DTL_LOG_DEBUG("work: consumed={}, produced={}, write_index={}", read_index, produced, write_index);
+    DTL_LOG_DEBUG("work: consumed={}, produced={}, write_index={}, produced_payload={}", read_index, produced, write_index, produced_payload);
     consume_each(read_index);
     return produced;
 }

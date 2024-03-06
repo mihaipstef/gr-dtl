@@ -171,7 +171,8 @@ int from_phy_impl::work(int noutput_items,
         return 0;
     }
 
-    DTL_LOG_BUFFER("Packet out", out, d_offset_out);
+    //DTL_LOG_BUFFER("Packet out", out, d_offset_out);
+
     int produced = d_offset_out;
     d_offset_out = 0;
     d_tag_offset = 0;

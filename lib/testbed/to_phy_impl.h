@@ -10,7 +10,6 @@
 
 #include <gnuradio/testbed/phy_converge.h>
 
-
 namespace gr {
 namespace dtl {
 
@@ -23,14 +22,15 @@ private:
     pmt::pmt_t d_pdu;
     int d_in_consumed;
     int d_out_used;
-    uint8_t d_bpb;
+
+    bool is_output_enough(int noutput_items, int pdu_len);
 
 protected:
     int next_pdu(const gr_vector_int& ninput_items);
     void forecast(int noutput_items,
                                         gr_vector_int& ninput_items_required) override;
 public:
-    to_phy_impl(transported_protocol_t protocol, int bpb, const std::string& len_key);
+    to_phy_impl(transported_protocol_t protocol, const std::string& len_key);
     ~to_phy_impl();
 
     // Where all the action really happens
