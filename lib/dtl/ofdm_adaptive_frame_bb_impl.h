@@ -58,13 +58,15 @@ private:
                              size_t bits_per_symbol);
     size_t frame_length();
 
-    void rand_pad(unsigned char* buf, size_t len, std::uniform_int_distribution<>& dist);
+    void rand_pad(unsigned char* buf, size_t len, int bps);
 
     int frame_out(const unsigned char* in,
                    int nbytes_in,
                    unsigned char* out,
                    int nsyms_out,
                    repack& repacker);
+
+    void add_tags(int payload, int frame_syms, constellation_type_t cnst);
 
     constellation_type_t d_constellation;
     unsigned char d_fec_scheme;
@@ -74,7 +76,6 @@ private:
     int d_payload_carriers;
     size_t d_bytes;
     unsigned char d_bps;
-    bool d_waiting_full_frame;
     bool d_waiting_for_input;
     int d_max_empty_frames;
     crc_util d_crc;
@@ -86,6 +87,8 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> d_start_time;
     std::chrono::duration<double> d_frame_duration;
     constellation_type_t d_feedback_cnst;
+    int d_frame_capacity;
+    pdu_consumer consumer;
 };
 
 } // namespace dtl
