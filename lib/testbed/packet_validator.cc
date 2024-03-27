@@ -9,6 +9,7 @@
 #include <gnuradio/testbed/packet_validator.h>
 #include <gnuradio/testbed/logger.h>
 #include <netinet/ip.h>
+#include <cassert>
 #include <cstring>
 #include <string>
 
@@ -18,6 +19,24 @@ namespace dtl {
 
 
 INIT_DTL_LOGGER("packet_validator");
+
+
+std::vector<uint8_t> parse_mac(const std::string& addr_str) {
+    std::vector<uint8_t> addr;
+    std::istringstream iss(addr_str);
+    std::string token;
+    int token_count = 0;
+    size_t chars_processed = 0;
+    while(std::getline(iss, token, ':') || addr.size() < 6) {
+        uint8_t v = std::stoul(token, &chars_processed, 16);
+        if (chars_processed && chars_processed <= 2) {
+            addr.push_back(v);
+        } else {
+            break;
+        }
+    }
+    return addr;
+}
 
 
 ip_validator::ip_validator(const std::string& src_addr) : d_src_addr(src_addr) {}
@@ -47,16 +66,9 @@ packet_validator::validation_result ip_validator::valid(const uint8_t* buf, size
 }
 
 
-ethernet_validator::ethernet_validator(const std::string& dst_addr) : d_dst_addr(6, 0)
+ethernet_validator::ethernet_validator(const std::string& dst_addr) : d_dst_addr(parse_mac(dst_addr))
 {
-    sscanf(dst_addr.c_str(),
-           "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-           &d_dst_addr[0],
-           &d_dst_addr[1],
-           &d_dst_addr[2],
-           &d_dst_addr[3],
-           &d_dst_addr[4],
-           &d_dst_addr[5]);
+    assert(d_dst_addr.size() == 6);
 }
 
 
@@ -76,16 +88,9 @@ packet_validator::validation_result ethernet_validator::valid(const uint8_t* buf
 
 
 modified_ethernet_validator::modified_ethernet_validator(const std::string& dst_addr)
-    : d_dst_addr(6, 0)
+    : d_dst_addr(parse_mac(dst_addr))
 {
-    sscanf(dst_addr.c_str(),
-           "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-           &d_dst_addr[0],
-           &d_dst_addr[1],
-           &d_dst_addr[2],
-           &d_dst_addr[3],
-           &d_dst_addr[4],
-           &d_dst_addr[5]);
+    assert(d_dst_addr.size() == 6);
 }
 
 
